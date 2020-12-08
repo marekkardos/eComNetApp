@@ -5,13 +5,17 @@ using Core.Entities;
 using Core.Entities.OrderAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Logging;
 
 namespace Data
 {
     public class StoreContext : DbContext
     {
-        public StoreContext(DbContextOptions<StoreContext> options) : base(options)
+        private readonly ILoggerFactory _logFactory;
+
+        public StoreContext(DbContextOptions<StoreContext> options, ILoggerFactory logFactory) : base(options)
         {
+            _logFactory = logFactory;
         }
 
         public DbSet<Product> Products { get; set; }
@@ -46,6 +50,8 @@ namespace Data
                     }
                 }
             }
+
+            //StoreContextSeedForMigration.Seed(modelBuilder, _logFactory);
         }
     }
 }

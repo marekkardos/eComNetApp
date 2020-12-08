@@ -27,6 +27,13 @@ namespace Api.StartupConfigurations
                     Description = "description"
                 });
 
+                c.SwaggerDoc("Products", new OpenApiInfo
+                {
+                    Title = "Api",
+                    Version = "v1",
+                    Description = "description"
+                });
+
                 c.IncludeXmlComments(
                     Path.Combine(AppContext.BaseDirectory,
                         $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"));
@@ -39,6 +46,8 @@ namespace Api.StartupConfigurations
 
             app.UseSwaggerUI(c =>
             {
+                c.SwaggerEndpoint("/swagger/Products/swagger.json", "Products Api");
+
                 c.SwaggerEndpoint("/swagger/WeatherForecast/swagger.json", "WeatherForecast Api");
 
                 c.SwaggerEndpoint("/swagger/ValuesControllerExample/swagger.json", "ValuesControllerExample Api");

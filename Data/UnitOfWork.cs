@@ -10,7 +10,6 @@ namespace Data
     {
         private readonly StoreContext _context;
         private readonly IServiceProvider _serviceProvider;
-        //private Hashtable _repositories;
 
         public UnitOfWork(StoreContext context, IServiceProvider serviceProvider)
         {
@@ -31,23 +30,6 @@ namespace Data
         public IGenericRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity
         {
             return _serviceProvider.GetService<IGenericRepository<TEntity>>();
-
-            //_repositories ??= new Hashtable();
-
-            //var type = typeof(TEntity).Name;
-
-            //if (_repositories.ContainsKey(type))
-            //{
-            //    return (IGenericRepository<TEntity>) _repositories[type];
-            //}
-
-            //var repositoryType = typeof(GenericRepository<>);
-            //var repositoryInstance =
-            //    Activator.CreateInstance(repositoryType.MakeGenericType(typeof(TEntity)), _context);
-
-            //_repositories.Add(type, repositoryInstance);
-
-            //return (IGenericRepository<TEntity>) _repositories[type];
         }
     }
 }
