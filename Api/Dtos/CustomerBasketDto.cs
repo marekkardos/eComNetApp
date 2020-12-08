@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace API.Dtos
+namespace Api.Dtos
 {
     public class CustomerBasketDto
     {

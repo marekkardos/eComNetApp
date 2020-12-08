@@ -441,3 +441,8 @@ $RECYCLE.BIN/
 !.vscode/launch.json
 !.vscode/extensions.json
 *.db
+
+##
+## Confidential settings
+##
+appsettings.json

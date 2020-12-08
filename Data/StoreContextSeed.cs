@@ -9,7 +9,7 @@ using Core.Entities;
 using Core.Entities.OrderAggregate;
 using Microsoft.Extensions.Logging;
 
-namespace Infrastructure.Data
+namespace Data
 {
     public class StoreContextSeed
     {

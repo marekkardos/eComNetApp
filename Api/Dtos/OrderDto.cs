@@ -1,4 +1,4 @@
-namespace API.Dtos
+namespace Api.Dtos
 {
     public class OrderDto
     {

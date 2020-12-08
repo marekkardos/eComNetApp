@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace API.Dtos
+namespace Api.Dtos
 {
     public class OrderToReturnDto
     {

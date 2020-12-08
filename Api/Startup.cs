@@ -1,12 +1,15 @@
+using Api.ApiResponses;
 using Api.StartupConfigurations;
-using Infrastructure.Data;
+using AutoMapper;
+using Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.EntityFrameworkCore;
-using Infrastructure.Identity;
+using System.Linq;
+using Api.Dtos.Mapping;
 
 namespace Api
 {
@@ -19,18 +22,29 @@ namespace Api
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            DaoConfigureDi.ConfigureServices(services, Configuration);
 
-            services.AddDbContext<StoreContext>(x =>
-                x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
-
-            services.AddDbContext<AppIdentityDbContext>(x => 
+            services.Configure<ApiBehaviorOptions>(options =>
             {
-                x.UseSqlite(Configuration.GetConnectionString("IdentityConnection"));
+                options.InvalidModelStateResponseFactory = actionContext =>
+                {
+                    var errors = actionContext.ModelState
+                        .Where(e => e.Value.Errors.Count > 0)
+                        .SelectMany(x => x.Value.Errors)
+                        .Select(x => x.ErrorMessage).ToArray();
+
+                    var errorResponse = new ApiValidationErrorResponse
+                    {
+                        Errors = errors
+                    };
+
+                    return new BadRequestObjectResult(errorResponse);
+                };
             });
-            
+
+            services.AddAutoMapper(typeof(MappingProfiles));
             services.AddControllers();
 
             SwaggerConfiguration.ConfigureServices(services);
@@ -44,7 +58,6 @@ namespace Api
             ApiVersioning.Add(services);
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -60,10 +73,7 @@ namespace Api
 
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }
 }

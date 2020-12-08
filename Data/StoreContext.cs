@@ -6,7 +6,7 @@ using Core.Entities.OrderAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace Infrastructure.Data
+namespace Data
 {
     public class StoreContext : DbContext
     {
