@@ -22,8 +22,7 @@ namespace Data
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             //services.AddScoped(typeof(IProductRepository), typeof(ProductRepository));
-            services.AddScoped<IProductRepository, ProductRepository>();
-            services.AddScoped<IProductRepository, ProductRepository>();
+            //services.AddScoped<IProductRepository, ProductRepository>();
         }
     }
 }
