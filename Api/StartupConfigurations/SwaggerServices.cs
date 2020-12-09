@@ -20,19 +20,20 @@ namespace Api.StartupConfigurations
                     Description = "description"
                 });
 
-                c.SwaggerDoc("ValuesControllerExample", new OpenApiInfo
-                {
-                    Title = "Api",
-                    Version = "v1",
-                    Description = "description"
-                });
-
                 c.SwaggerDoc("Products", new OpenApiInfo
                 {
                     Title = "Api",
                     Version = "v1",
                     Description = "description"
                 });
+
+                c.SwaggerDoc("Buggy", new OpenApiInfo
+                {
+                    Title = "Api",
+                    Version = "v1",
+                    Description = "description"
+                });
+                
 
                 c.IncludeXmlComments(
                     Path.Combine(AppContext.BaseDirectory,
@@ -50,7 +51,7 @@ namespace Api.StartupConfigurations
 
                 c.SwaggerEndpoint("/swagger/WeatherForecast/swagger.json", "WeatherForecast Api");
 
-                c.SwaggerEndpoint("/swagger/ValuesControllerExample/swagger.json", "ValuesControllerExample Api");
+                c.SwaggerEndpoint("/swagger/Buggy/swagger.json", "Buggy Api");
 
                 //c.RoutePrefix = "";
             });

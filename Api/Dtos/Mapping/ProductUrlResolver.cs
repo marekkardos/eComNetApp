@@ -17,7 +17,7 @@ namespace Api.Dtos.Mapping
         {
             if(!string.IsNullOrEmpty(source.PictureUrl))
             {
-                return _config["ApiUrl"] + source.PictureUrl;
+                return _config["ApiUrlContent"] + source.PictureUrl;
             }
 
             return null;

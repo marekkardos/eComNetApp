@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Test CORS</title>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+		<script>
+			function DoIt()
+			{
+				console.log("DoIt function");
+				console.log("ajax request to the resource which will require cors enabled");    
+				
+				$.ajax
+				({
+					dataType: "json",
+					url: "https://localhost:44369/api/Products/-2", //"https://api.github.com",
+					success: function(data)
+					{
+						console.log("log response on success");
+						console.log(data);
+					}
+				});
+			}
+		</script>
+    </head>
+<body>
+
+	<h1>A Web Page</h1>
+<p id="demo">A Paragraph</p>
+<button type="button" onclick="DoIt()">Try it</button>
+
+</body>
+</html>

@@ -7,6 +7,7 @@ namespace Api.Dtos.Mapping
     public class OrderItemUrlResolver : IValueResolver<OrderItem, OrderItemDto, string>
     {
         private readonly IConfiguration _config;
+
         public OrderItemUrlResolver(IConfiguration config)
         {
             _config = config;
@@ -16,7 +17,7 @@ namespace Api.Dtos.Mapping
         {
             if (!string.IsNullOrEmpty(source.ItemOrdered.PictureUrl))
             {
-                return _config["ApiUrl"] + source.ItemOrdered.PictureUrl;
+                return _config["ApiUrlContent"] + source.ItemOrdered.PictureUrl;
             }
 
             return null;

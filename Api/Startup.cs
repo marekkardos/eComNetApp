@@ -1,3 +1,4 @@
+using System.IO;
 using Api.ApiResponses;
 using Api.StartupConfigurations;
 using AutoMapper;
@@ -10,6 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
 using Api.Dtos.Mapping;
+using API.Middleware;
+using Microsoft.Extensions.FileProviders;
 
 namespace Api
 {
@@ -24,56 +27,94 @@ namespace Api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            DaoConfigureDi.ConfigureServices(services, Configuration);
-
-            services.Configure<ApiBehaviorOptions>(options =>
-            {
-                options.InvalidModelStateResponseFactory = actionContext =>
-                {
-                    var errors = actionContext.ModelState
-                        .Where(e => e.Value.Errors.Count > 0)
-                        .SelectMany(x => x.Value.Errors)
-                        .Select(x => x.ErrorMessage).ToArray();
-
-                    var errorResponse = new ApiValidationErrorResponse
-                    {
-                        Errors = errors
-                    };
-
-                    return new BadRequestObjectResult(errorResponse);
-                };
-            });
-
-            services.AddAutoMapper(typeof(MappingProfiles));
             services.AddControllers();
-
-            SwaggerConfiguration.ConfigureServices(services);
+            
+            services.AddCors(opt =>
+            {
+                opt.AddPolicy("CustomCorsPolicy", policy =>
+                {
+                    policy
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        //.AllowCredentials()
+                        .AllowAnyOrigin();
+                });
+            });
 
             services.AddMvc(m =>
-            {
-                // e.g application/xml
-                m.ReturnHttpNotAcceptable = true;
-            });
+                {
+                    // e.g application/xml
+                    m.ReturnHttpNotAcceptable = true;
+                })
+                .SetCompatibilityVersion(CompatibilityVersion.Latest)
+                .ConfigureApiBehaviorOptions(options =>
+                {
+                    options.InvalidModelStateResponseFactory = actionContext =>
+                    {
+                        var errors = actionContext.ModelState
+                            .Where(e => e.Value.Errors.Count > 0)
+                            .SelectMany(x => x.Value.Errors)
+                            .Select(x => x.ErrorMessage).ToArray();
+
+                        var errorResponse = new ApiValidationErrorResponse
+                        {
+                            Errors = errors
+                        };
+
+                        return new BadRequestObjectResult(errorResponse);
+                    };
+                });
+
+            DaoConfigureDi.ConfigureServices(services, Configuration);
+
+            services.AddAutoMapper(typeof(MappingProfiles));
+            
+            SwaggerConfiguration.ConfigureServices(services);
 
             ApiVersioning.Add(services);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
+            app.UseMiddleware<ExceptionMiddleware>();
+            app.UseStatusCodePagesWithReExecute("/errors/{0}");
 
-                SwaggerConfiguration.ConfigurePipeline(app);
-            }
+            //if (env.IsDevelopment())
+            //{
+            //    //app.UseDeveloperExceptionPage();
+            //}
 
             app.UseHttpsRedirection();
+            
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(Directory.GetCurrentDirectory(), "Content")
+                ),
+                RequestPath = "/content"
+            });
 
             app.UseRouting();
 
+            // CORS headers are only sent on cross domain requests and the
+            // ASP.NET CORS module is smart enough to detect whether a same domain request
+            // is firing and if it is, doesn't send the headers. 
+            // test with: testCORS.html in Api folder
+            app.UseCors("CustomCorsPolicy");
+
+            app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+            if (env.IsDevelopment())
+            {
+                SwaggerConfiguration.ConfigurePipeline(app);
+            }
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+                //endpoints.MapFallbackToController("Index", "Fallback");
+            });
         }
     }
 }
