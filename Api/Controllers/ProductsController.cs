@@ -7,9 +7,11 @@ using Api.Helpers;
 using AutoMapper;
 using Core.Entities;
 using Core.Interfaces;
+using Core.QueryHandlers;
 using Core.Specifications;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 
 namespace API.Controllers
 {
@@ -20,17 +22,20 @@ namespace API.Controllers
         private readonly IGenericRepository<ProductBrand> _productBrandRepo;
         private readonly IGenericRepository<ProductType> _productTypeRepo;
         private readonly IMapper _mapper;
+        private readonly IMediator _mediator;
 
         public ProductsController(
             IGenericRepository<Product> productsRepo,
             IGenericRepository<ProductBrand> productBrandRepo, 
             IGenericRepository<ProductType> productTypeRepo,
-            IMapper mapper)
+            IMapper mapper,
+            IMediator mediator)
         {
             _mapper = mapper;
             _productTypeRepo = productTypeRepo;
             _productBrandRepo = productBrandRepo;
             _productsRepo = productsRepo;
+            _mediator = mediator;
         }
 
         //[Cached(600)]
@@ -38,18 +43,11 @@ namespace API.Controllers
         public async Task<ActionResult<Pagination<ProductToReturnDto>>> GetProducts(
             [FromQuery] ProductSpecParams productParams)
         {
-            var spec = new ProductsWithTypesAndBrandsSpecification(productParams);
+            var result = await _mediator.Send(new GetProductsQueryRequest {ProductParams = productParams});
 
-            var countSpec = new ProductWithFiltersForCountSpecificication(productParams);
+            var data = _mapper.Map<IReadOnlyList<Product>, IReadOnlyList<ProductToReturnDto>>(result.Data);
 
-            var totalItems = await _productsRepo.CountAsync(countSpec);
-
-            var products = await _productsRepo.ListAsync(spec);
-
-            var data = _mapper
-                .Map<IReadOnlyList<Product>, IReadOnlyList<ProductToReturnDto>>(products);
-
-            return Ok(new Pagination<ProductToReturnDto>(productParams.PageIndex, productParams.PageSize, totalItems,
+            return Ok(new Pagination<ProductToReturnDto>(productParams.PageIndex, productParams.PageSize, result.TotalItems,
                 data));
         }
 
@@ -63,7 +61,10 @@ namespace API.Controllers
 
             var product = await _productsRepo.GetEntityWithSpec(spec);
 
-            if (product == null) return NotFound(new ApiResponse(404));
+            if (product == null)
+            {
+                return NotFound(new ApiResponse(404));
+            }
 
             return _mapper.Map<Product, ProductToReturnDto>(product);
         }

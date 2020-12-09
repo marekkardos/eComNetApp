@@ -12,6 +12,8 @@ using Microsoft.Extensions.Hosting;
 using System.Linq;
 using Api.Dtos.Mapping;
 using API.Middleware;
+using Core.Entities;
+using MediatR;
 using Microsoft.Extensions.FileProviders;
 
 namespace Api
@@ -64,6 +66,8 @@ namespace Api
                         return new BadRequestObjectResult(errorResponse);
                     };
                 });
+
+            services.AddMediatR(typeof(BaseEntity));
 
             DaoConfigureDi.ConfigureServices(services, Configuration);
 
