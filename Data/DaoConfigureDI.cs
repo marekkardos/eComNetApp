@@ -21,6 +21,7 @@ namespace Data
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            services.AddScoped<IBasketRepository, BasketRepository>();
             //services.AddScoped(typeof(IProductRepository), typeof(ProductRepository));
             //services.AddScoped<IProductRepository, ProductRepository>();
         }

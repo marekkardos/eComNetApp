@@ -15,6 +15,7 @@ using API.Middleware;
 using Core.Entities;
 using MediatR;
 using Microsoft.Extensions.FileProviders;
+using StackExchange.Redis;
 
 namespace Api
 {
@@ -41,6 +42,12 @@ namespace Api
                         //.AllowCredentials()
                         .AllowAnyOrigin();
                 });
+            });
+
+            services.AddSingleton<IConnectionMultiplexer>(c => {
+                var configuration = ConfigurationOptions.Parse(Configuration
+                    .GetConnectionString("Redis"), true);
+                return ConnectionMultiplexer.Connect(configuration);
             });
 
             services.AddMvc(m =>

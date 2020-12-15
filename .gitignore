@@ -446,3 +446,4 @@ $RECYCLE.BIN/
 ## Confidential settings
 ##
 appsettings.json
+/.tye
