@@ -1,3 +1,10 @@
+import {
+  debounceTime,
+  map,
+  distinctUntilChanged,
+  filter
+} from "rxjs/operators";
+import { fromEvent } from 'rxjs';
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { IProduct } from '../shared/models/product';
 import { ShopService } from './shop.service';
@@ -11,7 +18,7 @@ import { ShopParams } from '../shared/models/shopParams';
   styleUrls: ['./shop.component.scss']
 })
 export class ShopComponent implements OnInit {
-  @ViewChild('search') searchTerm: ElementRef;
+  @ViewChild('search', { static: false }) searchTerm: ElementRef;
   products: IProduct[];
   brands: IBrand[];
   types: IType[];
@@ -31,6 +38,35 @@ export class ShopComponent implements OnInit {
     this.getProducts(true);
     this.getBrands();
     this.getTypes();
+  }
+
+  ngAfterViewInit() {
+
+    fromEvent(this.searchTerm.nativeElement, 'keyup').pipe(
+
+      // get value
+      map((event: any) => {
+        return event.target.value;
+      })
+      // if character length greater then 2
+      , filter(res => res.length == 0 || res.length > 2)
+
+      // Time in milliseconds between key events
+      , debounceTime(500)
+
+      // If previous query is diffent from current   
+      , distinctUntilChanged()
+
+      // subscription for response
+    ).subscribe((text: string) => {
+
+      const params = this.shopService.getShopParams();
+      params.search = text;
+      params.pageNumber = 1;
+      this.shopService.setShopParams(params);
+      this.getProducts();
+
+    });
   }
 
   getProducts(useCache = false) {

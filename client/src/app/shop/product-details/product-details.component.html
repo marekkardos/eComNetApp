@@ -12,7 +12,10 @@
             <span class="font-weight-bold" style="font-size: 1.5em;">{{quantity}}</span>
                 <i (click)="incrementQuantity()" class="fa fa-plus-circle text-warning mx-2" style="cursor: pointer; font-size: 2em;"></i>
                 <button (click)="addItemToBasket()" class="btn btn-outline-primary btn-lg ml-4">Add to Cart</button>
+                
             </div>
+            <button type="button" routerLink="/shop"
+                        class="btn btn-outline-secondary">Back</button>
         </div>
         <div class="row mt-5">
             <div class="col-12 ml-3">
