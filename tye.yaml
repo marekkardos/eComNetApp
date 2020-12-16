@@ -5,14 +5,20 @@
 #    https://aka.ms/AA7q20u
 #
 name: ecomnetapp
+
+# extensions:
+# - name: seq
+#   logPath: ./.logs
+
 services:
 - name: api
   project: Api/Api.csproj
+  # only for local development
+  bindings:
+    - port: 20323
+      protocol: https
 - name: redis
   image: redis
   bindings:
-  - port: 6379
-    connectionString: "${host}:${port}" 
-- name: redis-cli
-  image: redis
-  args: "redis-cli -h redis MONITOR"
+  - containerPort: 6379
+    connectionString: "${host}:${port}"

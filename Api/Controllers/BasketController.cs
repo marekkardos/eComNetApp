@@ -4,6 +4,7 @@ using Api.Dtos;
 using AutoMapper;
 using Core.Entities;
 using Core.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -19,7 +20,8 @@ namespace API.Controllers
             _basketRepository = basketRepository;
         }
 
-        [HttpGet]
+        [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<CustomerBasket>> GetBasketById(string id)
         {
             var basket = await _basketRepository.GetBasketAsync(id);
@@ -37,7 +39,7 @@ namespace API.Controllers
             return Ok(updatedBasket);
         }
 
-        [HttpDelete]
+        [HttpDelete("{id}")]
         public async Task DeleteBasketAsync(string id)
         {
             await _basketRepository.DeleteBasketAsync(id);
