@@ -17,7 +17,7 @@ export class TestErrorComponent implements OnInit {
   }
 
   get404Error() {
-    this.http.get(this.baseUrl + 'products/42').subscribe(response => {
+    this.http.get(this.baseUrl + 'products/999999').subscribe(response => {
       console.log(response);
     }, error => {
       console.log(error);

@@ -39,7 +39,7 @@ export class BasketService {
   }
 
   getBasket(id: string) {
-    return this.http.get(this.baseUrl + 'basket?id=' + id)
+    return this.http.get(this.baseUrl + 'basket/' + id)
       .pipe(
         map((basket: IBasket) => {
           this.basketSource.next(basket);
@@ -109,7 +109,7 @@ export class BasketService {
   }
 
   deleteBasket(basket: IBasket) {
-    return this.http.delete(this.baseUrl + 'basket?id=' + basket.id).subscribe(() => {
+    return this.http.delete(this.baseUrl + 'basket/' + basket.id).subscribe(() => {
       this.basketSource.next(null);
       this.basketTotalSource.next(null);
       localStorage.removeItem('basket_id');

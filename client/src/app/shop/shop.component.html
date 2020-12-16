@@ -41,8 +41,10 @@
 
                 <div class="form-inline" *ngIf="products">
                     <!-- (keyup.enter)="onSearch()"  -->
-                    <input 
-                            class="form-control mr-2" #search style="width: 300px" placeholder="Search" type="text">
+                    <input class="form-control mr-2" #search 
+                           [(ngModel)]="shopParams.search"
+                           (keyup)="onKeyUp($event)"
+                           style="width: 300px" placeholder="Search" type="text">
                     <button (click)="onSearch()" class="btn btn-outline-primary my-2">Search</button>
                     <button (click)="onReset()" class="btn btn-outline-success ml-2 my-2">Reset</button>
                 </div>

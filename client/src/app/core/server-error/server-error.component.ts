@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-server-error',
@@ -8,6 +9,7 @@ import { Router } from '@angular/router';
 })
 export class ServerErrorComponent implements OnInit {
   error: any;
+  isProduction: boolean = environment.production;
 
   constructor(private router: Router) {
     const navigation = this.router.getCurrentNavigation();
