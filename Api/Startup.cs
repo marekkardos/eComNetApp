@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
 using Api.Dtos.Mapping;
+using Api.Identity;
 using API.Middleware;
 using Core.Entities;
 using MediatR;
@@ -75,14 +76,14 @@ namespace Api
                 });
 
             services.AddMediatR(typeof(BaseEntity));
-
-            DaoConfigureDi.ConfigureServices(services, Configuration);
-
             services.AddAutoMapper(typeof(MappingProfiles));
-            
-            SwaggerConfiguration.ConfigureServices(services);
 
-            ApiVersioning.Add(services);
+            services.AddCustomDataServices(Configuration);
+            services.AddCustomIdentityServices(Configuration);
+            services.AddCustomSwaggerServices();
+            services.AddCustomApiVersioning();
+
+            services.AddScoped<ITokenService, TokenService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -118,7 +119,7 @@ namespace Api
 
             if (env.IsDevelopment())
             {
-                SwaggerConfiguration.ConfigurePipeline(app);
+                SwaggerServiceExtensions.ConfigurePipeline(app);
             }
 
             app.UseEndpoints(endpoints =>

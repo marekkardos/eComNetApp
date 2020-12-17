@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Api.Controllers;
 using Api.Dtos;
@@ -22,7 +23,8 @@ namespace API.Controllers
 
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<CustomerBasket>> GetBasketById(string id)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<CustomerBasket>> GetBasketById([Required] string id)
         {
             var basket = await _basketRepository.GetBasketAsync(id);
 
@@ -30,6 +32,8 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<CustomerBasket>> UpdateBasket(CustomerBasketDto basket)
         {
             var customerBasket = _mapper.Map<CustomerBasketDto, CustomerBasket>(basket);
@@ -40,7 +44,9 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task DeleteBasketAsync(string id)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task DeleteBasketAsync([Required] string id)
         {
             await _basketRepository.DeleteBasketAsync(id);
         }

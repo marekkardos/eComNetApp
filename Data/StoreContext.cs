@@ -30,11 +30,16 @@ namespace Data
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-            if (Database.ProviderName != "Microsoft.EntityFrameworkCore.Sqlite")
+            if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
             {
-                return;
+                SqlLiteSpecificMapping(modelBuilder); ;
             }
 
+            //StoreContextSeedForMigration.Seed(modelBuilder, _logFactory);
+        }
+
+        private static void SqlLiteSpecificMapping(ModelBuilder modelBuilder)
+        {
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 var properties = entityType.ClrType.GetProperties().Where(p => p.PropertyType == typeof(decimal));
@@ -52,8 +57,6 @@ namespace Data
                         .HasConversion(new DateTimeOffsetToBinaryConverter());
                 }
             }
-
-            //StoreContextSeedForMigration.Seed(modelBuilder, _logFactory);
         }
     }
 }

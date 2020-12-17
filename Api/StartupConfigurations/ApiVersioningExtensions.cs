@@ -4,9 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Api.StartupConfigurations
 {
-    public static class ApiVersioning
+    public static class ApiVersioningExtensions
     {
-        public static void Add(IServiceCollection services)
+        public static void AddCustomApiVersioning(this IServiceCollection services)
         {
             services.AddApiVersioning(options =>
             {

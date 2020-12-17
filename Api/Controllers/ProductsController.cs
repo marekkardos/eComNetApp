@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using Api.ApiResponses;
 using Api.Controllers;
@@ -40,6 +41,7 @@ namespace API.Controllers
 
         //[Cached(600)]
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<Pagination<ProductToReturnDto>>> GetProducts(
             [FromQuery] ProductSpecParams productParams)
         {
@@ -63,13 +65,14 @@ namespace API.Controllers
 
             if (product == null)
             {
-                return NotFound(new ApiResponse(404));
+                return NotFound(new ApiResponse(HttpStatusCode.NotFound));
             }
 
             return _mapper.Map<Product, ProductToReturnDto>(product);
         }
 
         [HttpGet("brands")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IReadOnlyList<ProductBrand>>> GetProductBrands()
         {
             return Ok(await _productBrandRepo.ListAllAsync());
@@ -77,6 +80,7 @@ namespace API.Controllers
 
         //[Cached(1000)]
         [HttpGet("types")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IReadOnlyList<ProductType>>> GetProductTypes()
         {
             return Ok(await _productTypeRepo.ListAllAsync());

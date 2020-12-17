@@ -8,7 +8,7 @@ namespace Data
 {
     public static class DaoConfigureDi
     {
-        public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+        public static void AddCustomDataServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<StoreContext>(x =>
                 x.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
@@ -22,8 +22,6 @@ namespace Data
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IBasketRepository, BasketRepository>();
-            //services.AddScoped(typeof(IProductRepository), typeof(ProductRepository));
-            //services.AddScoped<IProductRepository, ProductRepository>();
         }
     }
 }

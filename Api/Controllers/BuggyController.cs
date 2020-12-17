@@ -1,7 +1,7 @@
 using System;
+using System.Net;
 using Api.ApiResponses;
 using Api.Controllers;
-using Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,10 +10,8 @@ namespace API.Controllers
     [ApiExplorerSettings(GroupName = "Buggy")]
     public class BuggyController : BaseApiController
     {
-        private readonly StoreContext _context;
-        public BuggyController(StoreContext context)
+        public BuggyController()
         {
-            _context = context;
         }
 
         [HttpGet("testauth")]
@@ -26,7 +24,7 @@ namespace API.Controllers
         [HttpGet("notfound")]
         public ActionResult GetNotFoundRequest()
         {
-            return NotFound(new ApiResponse(404));
+            return NotFound(new ApiResponse(HttpStatusCode.NotFound));
         }
 
         [HttpGet("servererror")]
@@ -38,7 +36,7 @@ namespace API.Controllers
         [HttpGet("badrequest")]
         public ActionResult GetBadRequest()
         {
-            return BadRequest(new ApiResponse(400));
+            return BadRequest(new ApiResponse(HttpStatusCode.BadRequest));
         }
 
         [HttpGet("badrequest/{id}")]

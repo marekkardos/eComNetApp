@@ -7,9 +7,9 @@ using System.Reflection;
 
 namespace Api.StartupConfigurations
 {
-    public static class SwaggerConfiguration
+    public static class SwaggerServiceExtensions
     {
-        public static void ConfigureServices(IServiceCollection services)
+        public static void AddCustomSwaggerServices(this IServiceCollection services)
         {
             services.AddSwaggerGen(c =>
             {
@@ -40,7 +40,14 @@ namespace Api.StartupConfigurations
                     Version = "v1",
                     Description = "description"
                 });
-                
+
+                c.SwaggerDoc("Account", new OpenApiInfo
+                {
+                    Title = "Api",
+                    Version = "v1",
+                    Description = "description"
+                });
+
 
                 c.IncludeXmlComments(
                     Path.Combine(AppContext.BaseDirectory,
@@ -61,6 +68,8 @@ namespace Api.StartupConfigurations
                 c.SwaggerEndpoint("/swagger/WeatherForecast/swagger.json", "WeatherForecast Api");
 
                 c.SwaggerEndpoint("/swagger/Buggy/swagger.json", "Buggy Api");
+
+                c.SwaggerEndpoint("/swagger/Account/swagger.json", "Account Api");
 
                 //c.RoutePrefix = "";
             });

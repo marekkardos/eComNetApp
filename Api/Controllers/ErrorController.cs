@@ -1,6 +1,7 @@
+using System.Net;
 using Api.ApiResponses;
 using Api.Controllers;
- using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
@@ -8,7 +9,7 @@ namespace API.Controllers
     [ApiExplorerSettings(IgnoreApi = true)]
     public class ErrorController : BaseApiController
     {
-        public IActionResult Error(int code)
+        public IActionResult Error(HttpStatusCode code)
         {
             return new ObjectResult(new ApiResponse(code));
         }

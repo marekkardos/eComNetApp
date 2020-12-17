@@ -1,6 +1,6 @@
 using Core.Entities.Identity;
 
-namespace Core.Interfaces
+namespace Api.Identity
 {
     public interface ITokenService
     {

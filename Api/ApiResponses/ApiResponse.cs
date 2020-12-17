@@ -1,13 +1,13 @@
-using System;
+using System.Net;
 
 namespace Api.ApiResponses
 {
     public class ApiResponse
     {
-        public ApiResponse(int statusCode, string message = null)
+        public ApiResponse(HttpStatusCode statusCode, string message = null)
         {
-            StatusCode = statusCode;
-            Message = message ?? GetDefaultMessageForStatusCode(statusCode);
+            StatusCode = (int)statusCode;
+            Message = message ?? GetDefaultMessageForStatusCode((int)statusCode);
         }
 
         public int StatusCode { get; set; }
@@ -20,7 +20,7 @@ namespace Api.ApiResponses
                 400 => "A bad request, you have made",
                 401 => "Authorized, you are not",
                 404 => "Resource found, it was not",
-                500 => "Errors are the path to the dark side. Errors lead to anger.  Anger leads to hate.  Hate leads to career change",
+                500 => "Server Error",
                 _ => null
             };
         }
