@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Core.Entities;
 using Core.Interfaces;
-using Core.Specifications;
+using Core.Specifications.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace Data

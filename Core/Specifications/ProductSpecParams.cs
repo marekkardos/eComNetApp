@@ -1,6 +1,8 @@
+using Core.Specifications.Base;
+
 namespace Core.Specifications
 {
-    public class ProductSpecParams
+    public class ProductSpecParams : IPagingSpecParams
     {
         private const int MaxPageSize = 50;
         public int PageIndex {get; set;} = 1;

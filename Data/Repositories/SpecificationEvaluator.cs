@@ -1,6 +1,6 @@
 using System.Linq;
 using Core.Entities;
-using Core.Specifications;
+using Core.Specifications.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace Data
@@ -13,7 +13,10 @@ namespace Data
 
             if (spec.Criteria != null)
             {
-                query = query.Where(spec.Criteria);
+                foreach (var criteria in spec.Criteria)
+                {
+                    query = query.Where(criteria);
+                }
             }
 
             if (spec.OrderBy != null)
@@ -26,9 +29,14 @@ namespace Data
                 query = query.OrderByDescending(spec.OrderByDescending);
             }
 
-            if (spec.IsPagingEnabled)
+            if (spec.Skip != null && spec.Skip != 0)
             {
-                query = query.Skip(spec.Skip).Take(spec.Take);
+                query = query.Skip(spec.Skip.Value);
+            }
+
+            if (spec.Take != null)
+            {
+                query = query.Take(spec.Take.Value);
             }
 
             query = spec.Includes.Aggregate(query, (current, include) => current.Include(include));

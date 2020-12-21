@@ -1,45 +1,50 @@
-using System;
-using System.Linq.Expressions;
 using Core.Entities;
+using Core.Specifications.Base;
+using Core.Specifications.Builder;
 
 namespace Core.Specifications
 {
     public class ProductsWithTypesAndBrandsSpecification : BaseSpecification<Product>
     {
-        public ProductsWithTypesAndBrandsSpecification(ProductSpecParams productParams) 
-            : base(x => 
-                (string.IsNullOrEmpty(productParams.Search) || x.Name.ToLower().Contains(productParams.Search)) &&
-                (!productParams.BrandId.HasValue || x.ProductBrandId == productParams.BrandId) &&
-                (!productParams.TypeId.HasValue || x.ProductTypeId == productParams.TypeId)
-            )
+        public ProductsWithTypesAndBrandsSpecification(ProductSpecParams productParams)
         {
-            AddInclude(x => x.ProductType);
-            AddInclude(x => x.ProductBrand);
-            AddOrderBy(x => x.Name);
-            ApplyPaging(productParams.PageSize * (productParams.PageIndex - 1), productParams.PageSize);
+            Query
+                .Where(x =>
+                    (string.IsNullOrEmpty(productParams.Search) || x.Name.ToLower().Contains(productParams.Search)) &&
+                    (!productParams.BrandId.HasValue || x.ProductBrandId == productParams.BrandId) &&
+                    (!productParams.TypeId.HasValue || x.ProductTypeId == productParams.TypeId))
+                .Include(x => x.ProductType)
+                .Include(x => x.ProductBrand);
 
             if (!string.IsNullOrEmpty(productParams.Sort))
             {
                 switch (productParams.Sort)
                 {
                     case "priceAsc":
-                        AddOrderBy(p => p.Price);
+                        Query.OrderBy(p => p.Price);
                         break;
                     case "priceDesc":
-                        AddOrderByDescending(p => p.Price);
+                        Query.OrderByDescending(p => p.Price);
                         break;
                     default:
-                        AddOrderBy(n => n.Name);
+                        Query.OrderBy(n => n.Name);
                         break;
                 }
             }
+            else
+            {
+                Query.OrderBy(n => n.Name);
+            }
+
+            Query.Paginate(productParams);
         }
 
-        public ProductsWithTypesAndBrandsSpecification(int id) 
-            : base(x => x.Id == id)
+        public ProductsWithTypesAndBrandsSpecification(int id)
         {
-            AddInclude(x => x.ProductType);
-            AddInclude(x => x.ProductBrand);
+            Query
+                .Where(x => x.Id == id)
+                .Include(x => x.ProductType)
+                .Include(x => x.ProductBrand);
         }
     }
 }

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Core.Entities;
-using Core.Specifications;
+using Core.Specifications.Base;
 
 namespace Core.Interfaces
 {
