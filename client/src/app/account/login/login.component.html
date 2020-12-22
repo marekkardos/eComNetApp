@@ -7,6 +7,12 @@
   
         <app-text-input formControlName="email" [label]="'Email Address'"></app-text-input>
         <app-text-input formControlName="password" [label]="'Password'" [type]="'password'"></app-text-input>
+
+        <ul class="text-danger list-unstyled" *ngIf="isLoginError">
+          <li>
+              Login or Password is not correct. 
+          </li>
+        </ul>
        
         <button [disabled]="loginForm.invalid" class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
       </form>

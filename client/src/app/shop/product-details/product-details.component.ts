@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Location as locationService } from '@angular/common';
 import { IProduct } from 'src/app/shared/models/product';
 import { ShopService } from '../shop.service';
 import { ActivatedRoute } from '@angular/router';
@@ -15,7 +16,8 @@ export class ProductDetailsComponent implements OnInit {
   quantity = 1;
 
   constructor(private shopService: ShopService,
-              private activateRoute: ActivatedRoute,
+              private location: locationService,
+              private activatedRoute: ActivatedRoute,
               private bcService: BreadcrumbService,
               private basketService: BasketService) {
     this.bcService.set('@productDetails', '');
@@ -40,12 +42,16 @@ export class ProductDetailsComponent implements OnInit {
   }
 
   loadProduct() {
-    this.shopService.getProduct(+this.activateRoute.snapshot.paramMap.get('id')).subscribe(product => {
+    this.shopService.getProduct(+this.activatedRoute.snapshot.paramMap.get('id')).subscribe(product => {
       this.product = product;
       this.bcService.set('@productDetails', product.name);
     }, error => {
       console.log(error);
     });
+  }
+
+  navigateBack() {
+    this.location.back();
   }
 
 }

@@ -11,6 +11,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   returnUrl: string;
+  isLoginError: boolean;
 
   constructor(private accountService: AccountService, private router: Router, private activatedRoute: ActivatedRoute) { }
 
@@ -32,6 +33,7 @@ export class LoginComponent implements OnInit {
       this.router.navigateByUrl(this.returnUrl);
     }, error => {
       console.log(error);
+      this.isLoginError = true;
     });
   }
 
