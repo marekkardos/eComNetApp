@@ -45,8 +45,27 @@ namespace Api.StartupConfigurations
                 {
                     Title = "Api",
                     Version = "v1",
-                    Description = "description"
+                    Description = "description",
+                    
                 });
+
+                var securitySchema = new OpenApiSecurityScheme
+                {
+                    Description = "JWT Auth Bearer Scheme",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                };
+
+                c.AddSecurityDefinition("Bearer", securitySchema);
+                var securityRequirement = new OpenApiSecurityRequirement { { securitySchema, new[] { "Bearer" } } };
+                c.AddSecurityRequirement(securityRequirement);
 
 
                 c.IncludeXmlComments(

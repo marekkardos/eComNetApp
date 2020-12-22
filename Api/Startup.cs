@@ -91,11 +91,6 @@ namespace Api
             app.UseMiddleware<ExceptionMiddleware>();
             app.UseStatusCodePagesWithReExecute("/errors/{0}");
 
-            //if (env.IsDevelopment())
-            //{
-            //    //app.UseDeveloperExceptionPage();
-            //}
-
             app.UseHttpsRedirection();
             
             app.UseStaticFiles(new StaticFileOptions
@@ -125,7 +120,6 @@ namespace Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                //endpoints.MapFallbackToController("Index", "Fallback");
             });
         }
     }
