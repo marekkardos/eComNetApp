@@ -17,7 +17,8 @@ namespace Core.Specifications
 
         public OrdersWithItemsAndOrderingSpecification(int id, string email)
         {
-            Query.Where(o => o.Id == id && o.BuyerEmail == email)
+            Query
+                .Where(o => o.Id == id && o.BuyerEmail == email)
                 .Include(o => o.OrderItems)
                 .Include(o => o.DeliveryMethod);
         }

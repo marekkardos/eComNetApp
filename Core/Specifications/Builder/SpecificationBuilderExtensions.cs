@@ -48,7 +48,7 @@ namespace Core.Specifications.Builder
             specificationBuilder.Skip(pagingParams.PageSize * (pagingParams.PageIndex - 1));
             specificationBuilder.Take(pagingParams.PageSize);
 
-            specificationBuilder.Specification.IsPagingEnabled = true;
+            //specificationBuilder.Specification.IsPagingEnabled = true;
 
             return specificationBuilder;
         }
@@ -63,7 +63,7 @@ namespace Core.Specifications.Builder
             }
 
             specificationBuilder.Specification.Take = take;
-            specificationBuilder.Specification.IsPagingEnabled = true;
+            //specificationBuilder.Specification.IsPagingEnabled = true;
             return specificationBuilder;
         }
 
@@ -77,7 +77,7 @@ namespace Core.Specifications.Builder
             }
 
             specificationBuilder.Specification.Skip = skip;
-            specificationBuilder.Specification.IsPagingEnabled = true;
+            //specificationBuilder.Specification.IsPagingEnabled = true;
             return specificationBuilder;
         }
     }

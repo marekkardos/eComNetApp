@@ -12,6 +12,7 @@ namespace Core.Specifications.Base
         public BaseSpecification()
         {
             this.Query = new SpecificationBuilder<T>(this);
+            this.QueryIsTracked = false;
         }
 
         public IList<Expression<Func<T, bool>>> Criteria { get; } = 
@@ -28,26 +29,12 @@ namespace Core.Specifications.Base
 
         public int? Skip { get; internal set; }
 
-        public bool IsPagingEnabled { get; internal set; }
+        public bool QueryIsTracked { get; private set; }
 
-        protected void AddWhere(Expression<Func<T, bool>> whereExpression)
+        public ISpecification<T> AsTacking()
         {
-            Criteria.Add(whereExpression);
-        }
-
-        protected void AddInclude(Expression<Func<T, object>> includeExpression)
-        {
-            Includes.Add(includeExpression);
-        }
-
-        protected void AddOrderBy(Expression<Func<T, object>> orderByExpression)
-        {
-            OrderBy = orderByExpression;
-        }
-
-        protected void AddOrderByDescending(Expression<Func<T, object>> orderByDescExpression)
-        {
-            OrderByDescending = orderByDescExpression;
+            this.QueryIsTracked = true;
+            return this;
         }
     }
 }

@@ -18,6 +18,8 @@ namespace Core.Specifications.Base
 
          int? Skip {get;}
 
-         bool IsPagingEnabled {get;}
-    }
+         bool QueryIsTracked { get; }
+
+         //bool IsPagingEnabled {get;}
+        }
 }
