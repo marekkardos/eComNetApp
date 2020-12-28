@@ -3,6 +3,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <UserSecretsId>56ee6ee3-b7d8-4759-ab17-87297accef46</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DocumentationFile>Api.xml</DocumentationFile>
@@ -11,44 +12,60 @@
     <NoWarn>1701;1702;1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="Content\images\products\boot-ang1.png" />
-    <None Remove="Content\images\products\boot-ang2.png" />
-    <None Remove="Content\images\products\boot-core1.png" />
-    <None Remove="Content\images\products\boot-core2.png" />
-    <None Remove="Content\images\products\boot-redis1.png" />
-    <None Remove="Content\images\products\glove-code1.png" />
-    <None Remove="Content\images\products\glove-code2.png" />
-    <None Remove="Content\images\products\glove-react1.png" />
-    <None Remove="Content\images\products\glove-react2.png" />
-    <None Remove="Content\images\products\hat-core1.png" />
-    <None Remove="Content\images\products\hat-react1.png" />
-    <None Remove="Content\images\products\hat-react2.png" />
-    <None Remove="Content\images\products\sb-ang1.png" />
-    <None Remove="Content\images\products\sb-ang2.png" />
-    <None Remove="Content\images\products\sb-core1.png" />
-    <None Remove="Content\images\products\sb-core2.png" />
-    <None Remove="Content\images\products\sb-react1.png" />
-    <None Remove="Content\images\products\sb-ts1.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Content\images\products\boot-ang1.png" />
-    <Content Include="Content\images\products\boot-ang2.png" />
-    <Content Include="Content\images\products\boot-core1.png" />
-    <Content Include="Content\images\products\boot-core2.png" />
-    <Content Include="Content\images\products\boot-redis1.png" />
-    <Content Include="Content\images\products\glove-code1.png" />
-    <Content Include="Content\images\products\glove-code2.png" />
-    <Content Include="Content\images\products\glove-react1.png" />
-    <Content Include="Content\images\products\glove-react2.png" />
-    <Content Include="Content\images\products\hat-core1.png" />
-    <Content Include="Content\images\products\hat-react1.png" />
-    <Content Include="Content\images\products\hat-react2.png" />
-    <Content Include="Content\images\products\sb-ang1.png" />
-    <Content Include="Content\images\products\sb-ang2.png" />
-    <Content Include="Content\images\products\sb-core1.png" />
-    <Content Include="Content\images\products\sb-core2.png" />
-    <Content Include="Content\images\products\sb-react1.png" />
-    <Content Include="Content\images\products\sb-ts1.png" />
+    <Content Include="Content\images\products\boot-ang1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\boot-ang2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\boot-core1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\boot-core2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\boot-redis1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\glove-code1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\glove-code2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\glove-react1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\glove-react2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\hat-core1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\hat-react1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\hat-react2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\sb-ang1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\sb-ang2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\sb-core1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\sb-core2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\sb-react1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\images\products\sb-ts1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.0" />
@@ -72,6 +89,5 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Identity\" />
-    <Folder Include="Id\" />
   </ItemGroup>
 </Project>

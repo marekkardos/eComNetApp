@@ -11,11 +11,13 @@ namespace Data
         public static void AddCustomDataServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<StoreContext>(x =>
-                x.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
+                // x.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
+                x.UseSqlServer("name=ConnectionStrings:DefaultConnectionMssql"));
 
             services.AddDbContext<AppIdentityDbContext>(x =>
             {
-                x.UseSqlite(configuration.GetConnectionString("IdentityConnection"));
+                // x.UseSqlite(configuration.GetConnectionString("IdentityConnection"));
+                x.UseSqlServer("name=ConnectionStrings:IdentityConnectionMssql");
             });
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();

@@ -61,7 +61,7 @@ namespace Data
                 SqlLiteSpecificMapping(modelBuilder); ;
             }
 
-            //StoreContextSeedForMigration.Seed(modelBuilder, _logFactory);
+            // StoreContextSeedForMigration.Seed(modelBuilder, _logFactory);
         }
 
         private static void SqlLiteSpecificMapping(ModelBuilder modelBuilder)

@@ -1,0 +1,41 @@
+version: '3.4'
+
+services:
+  api:
+    image: ${DOCKER_REGISTRY-}api
+    build:
+      context: .
+      dockerfile: Api/Dockerfile
+    environment:
+     - ASPNETCORE_ENVIRONMENT=Development
+    #  - ASPNETCORE_URLS=http://+:80
+    ports:
+        - "44369:80"
+    depends_on:
+      - dbserver
+      - redis
+    networks:
+      - api-network
+
+  dbserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    ports:
+        - "1433:1433"
+    environment:
+      SA_PASSWORD: "Strong!Passw0rd"
+      ACCEPT_EULA: "Y" 
+    volumes: 
+        - C:\work\eComNetApp-MSSQL-DATA:/var/opt/mssql/data
+    networks:
+      - api-network
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - api-network
+
+networks:
+  api-network:
+    driver: bridge

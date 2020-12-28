@@ -3,6 +3,7 @@ using System;
 using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Data.Migrations
@@ -14,25 +15,28 @@ namespace Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .UseIdentityColumns()
+                .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("ProductVersion", "5.0.0");
 
             modelBuilder.Entity("Core.Entities.OrderAggregate.DeliveryMethod", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int")
+                        .UseIdentityColumn();
 
                     b.Property<string>("DeliveryTime")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Price")
+                    b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("ShortName")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -44,7 +48,7 @@ namespace Data.Migrations
                             Id = 1,
                             DeliveryTime = "1-2 Days",
                             Description = "Fastest delivery time",
-                            Price = 10.0,
+                            Price = 10m,
                             ShortName = "UPS1"
                         },
                         new
@@ -52,7 +56,7 @@ namespace Data.Migrations
                             Id = 2,
                             DeliveryTime = "2-5 Days",
                             Description = "Get it within 5 days",
-                            Price = 5.0,
+                            Price = 5m,
                             ShortName = "UPS2"
                         },
                         new
@@ -60,7 +64,7 @@ namespace Data.Migrations
                             Id = 3,
                             DeliveryTime = "5-10 Days",
                             Description = "Slower but cheap",
-                            Price = 2.0,
+                            Price = 2m,
                             ShortName = "UPS3"
                         },
                         new
@@ -68,7 +72,7 @@ namespace Data.Migrations
                             Id = 4,
                             DeliveryTime = "1-2 Weeks",
                             Description = "Free! You get what you pay for",
-                            Price = 0.0,
+                            Price = 0m,
                             ShortName = "FREE"
                         });
                 });
@@ -77,26 +81,27 @@ namespace Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int")
+                        .UseIdentityColumn();
 
                     b.Property<string>("BuyerEmail")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("DeliveryMethodId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
-                    b.Property<long>("OrderDate")
-                        .HasColumnType("INTEGER");
+                    b.Property<DateTimeOffset>("OrderDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("PaymentIntentId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Subtotal")
-                        .HasColumnType("REAL");
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -109,16 +114,17 @@ namespace Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int")
+                        .UseIdentityColumn();
 
                     b.Property<int?>("OrderId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
-                    b.Property<double>("Price")
+                    b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Quantity")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -131,29 +137,30 @@ namespace Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int")
+                        .UseIdentityColumn();
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("PictureUrl")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Price")
+                    b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductBrandId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("ProductTypeId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -170,7 +177,7 @@ namespace Data.Migrations
                             Description = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna.",
                             Name = "Angular Speedster Board 2000",
                             PictureUrl = "images/products/sb-ang1.png",
-                            Price = 200.0,
+                            Price = 200m,
                             ProductBrandId = 1,
                             ProductTypeId = 1
                         },
@@ -180,7 +187,7 @@ namespace Data.Migrations
                             Description = "Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus.",
                             Name = "Green Angular Board 3000",
                             PictureUrl = "images/products/sb-ang2.png",
-                            Price = 150.0,
+                            Price = 150m,
                             ProductBrandId = 1,
                             ProductTypeId = 1
                         },
@@ -190,7 +197,7 @@ namespace Data.Migrations
                             Description = "Suspendisse dui purus, scelerisque at, vulputate vitae, pretium mattis, nunc. Mauris eget neque at sem venenatis eleifend. Ut nonummy.",
                             Name = "Core Board Speed Rush 3",
                             PictureUrl = "images/products/sb-core1.png",
-                            Price = 180.0,
+                            Price = 180m,
                             ProductBrandId = 2,
                             ProductTypeId = 1
                         },
@@ -200,7 +207,7 @@ namespace Data.Migrations
                             Description = "Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci.",
                             Name = "Net Core Super Board",
                             PictureUrl = "images/products/sb-core2.png",
-                            Price = 300.0,
+                            Price = 300m,
                             ProductBrandId = 2,
                             ProductTypeId = 1
                         },
@@ -210,7 +217,7 @@ namespace Data.Migrations
                             Description = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna.",
                             Name = "React Board Super Whizzy Fast",
                             PictureUrl = "images/products/sb-react1.png",
-                            Price = 250.0,
+                            Price = 250m,
                             ProductBrandId = 4,
                             ProductTypeId = 1
                         },
@@ -220,7 +227,7 @@ namespace Data.Migrations
                             Description = "Aenean nec lorem. In porttitor. Donec laoreet nonummy augue.",
                             Name = "Typescript Entry Board",
                             PictureUrl = "images/products/sb-ts1.png",
-                            Price = 120.0,
+                            Price = 120m,
                             ProductBrandId = 5,
                             ProductTypeId = 1
                         },
@@ -230,7 +237,7 @@ namespace Data.Migrations
                             Description = "Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna.",
                             Name = "Core Blue Hat",
                             PictureUrl = "images/products/hat-core1.png",
-                            Price = 10.0,
+                            Price = 10m,
                             ProductBrandId = 2,
                             ProductTypeId = 2
                         },
@@ -240,7 +247,7 @@ namespace Data.Migrations
                             Description = "Suspendisse dui purus, scelerisque at, vulputate vitae, pretium mattis, nunc. Mauris eget neque at sem venenatis eleifend. Ut nonummy.",
                             Name = "Green React Woolen Hat",
                             PictureUrl = "images/products/hat-react1.png",
-                            Price = 8.0,
+                            Price = 8m,
                             ProductBrandId = 4,
                             ProductTypeId = 2
                         },
@@ -250,7 +257,7 @@ namespace Data.Migrations
                             Description = "Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna.",
                             Name = "Purple React Woolen Hat",
                             PictureUrl = "images/products/hat-react2.png",
-                            Price = 15.0,
+                            Price = 15m,
                             ProductBrandId = 4,
                             ProductTypeId = 2
                         },
@@ -260,7 +267,7 @@ namespace Data.Migrations
                             Description = "Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus.",
                             Name = "Blue Code Gloves",
                             PictureUrl = "images/products/glove-code1.png",
-                            Price = 18.0,
+                            Price = 18m,
                             ProductBrandId = 3,
                             ProductTypeId = 4
                         },
@@ -270,7 +277,7 @@ namespace Data.Migrations
                             Description = "Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci.",
                             Name = "Green Code Gloves",
                             PictureUrl = "images/products/glove-code2.png",
-                            Price = 15.0,
+                            Price = 15m,
                             ProductBrandId = 3,
                             ProductTypeId = 4
                         },
@@ -280,7 +287,7 @@ namespace Data.Migrations
                             Description = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa.",
                             Name = "Purple React Gloves",
                             PictureUrl = "images/products/glove-react1.png",
-                            Price = 16.0,
+                            Price = 16m,
                             ProductBrandId = 4,
                             ProductTypeId = 4
                         },
@@ -290,7 +297,7 @@ namespace Data.Migrations
                             Description = "Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci.",
                             Name = "Green React Gloves",
                             PictureUrl = "images/products/glove-react2.png",
-                            Price = 14.0,
+                            Price = 14m,
                             ProductBrandId = 4,
                             ProductTypeId = 4
                         },
@@ -300,7 +307,7 @@ namespace Data.Migrations
                             Description = "Suspendisse dui purus, scelerisque at, vulputate vitae, pretium mattis, nunc. Mauris eget neque at sem venenatis eleifend. Ut nonummy.",
                             Name = "Redis Red Boots",
                             PictureUrl = "images/products/boot-redis1.png",
-                            Price = 250.0,
+                            Price = 250m,
                             ProductBrandId = 6,
                             ProductTypeId = 3
                         },
@@ -310,7 +317,7 @@ namespace Data.Migrations
                             Description = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna.",
                             Name = "Core Red Boots",
                             PictureUrl = "images/products/boot-core2.png",
-                            Price = 189.99000000000001,
+                            Price = 189.99m,
                             ProductBrandId = 2,
                             ProductTypeId = 3
                         },
@@ -320,7 +327,7 @@ namespace Data.Migrations
                             Description = "Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci.",
                             Name = "Core Purple Boots",
                             PictureUrl = "images/products/boot-core1.png",
-                            Price = 199.99000000000001,
+                            Price = 199.99m,
                             ProductBrandId = 2,
                             ProductTypeId = 3
                         },
@@ -330,7 +337,7 @@ namespace Data.Migrations
                             Description = "Aenean nec lorem. In porttitor. Donec laoreet nonummy augue.",
                             Name = "Angular Purple Boots",
                             PictureUrl = "images/products/boot-ang2.png",
-                            Price = 150.0,
+                            Price = 150m,
                             ProductBrandId = 1,
                             ProductTypeId = 3
                         },
@@ -340,7 +347,7 @@ namespace Data.Migrations
                             Description = "Suspendisse dui purus, scelerisque at, vulputate vitae, pretium mattis, nunc. Mauris eget neque at sem venenatis eleifend. Ut nonummy.",
                             Name = "Angular Blue Boots",
                             PictureUrl = "images/products/boot-ang1.png",
-                            Price = 180.0,
+                            Price = 180m,
                             ProductBrandId = 1,
                             ProductTypeId = 3
                         });
@@ -350,10 +357,11 @@ namespace Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int")
+                        .UseIdentityColumn();
 
                     b.Property<string>("Name")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -396,10 +404,11 @@ namespace Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int")
+                        .UseIdentityColumn();
 
                     b.Property<string>("Name")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -437,25 +446,27 @@ namespace Data.Migrations
                     b.OwnsOne("Core.Entities.OrderAggregate.Address", "ShipToAddress", b1 =>
                         {
                             b1.Property<int>("OrderId")
-                                .HasColumnType("INTEGER");
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("int")
+                                .UseIdentityColumn();
 
                             b1.Property<string>("City")
-                                .HasColumnType("TEXT");
+                                .HasColumnType("nvarchar(max)");
 
                             b1.Property<string>("FirstName")
-                                .HasColumnType("TEXT");
+                                .HasColumnType("nvarchar(max)");
 
                             b1.Property<string>("LastName")
-                                .HasColumnType("TEXT");
+                                .HasColumnType("nvarchar(max)");
 
                             b1.Property<string>("State")
-                                .HasColumnType("TEXT");
+                                .HasColumnType("nvarchar(max)");
 
                             b1.Property<string>("Street")
-                                .HasColumnType("TEXT");
+                                .HasColumnType("nvarchar(max)");
 
                             b1.Property<string>("Zipcode")
-                                .HasColumnType("TEXT");
+                                .HasColumnType("nvarchar(max)");
 
                             b1.HasKey("OrderId");
 
@@ -480,16 +491,18 @@ namespace Data.Migrations
                     b.OwnsOne("Core.Entities.OrderAggregate.ProductItemOrdered", "ItemOrdered", b1 =>
                         {
                             b1.Property<int>("OrderItemId")
-                                .HasColumnType("INTEGER");
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("int")
+                                .UseIdentityColumn();
 
                             b1.Property<string>("PictureUrl")
-                                .HasColumnType("TEXT");
+                                .HasColumnType("nvarchar(max)");
 
                             b1.Property<int>("ProductItemId")
-                                .HasColumnType("INTEGER");
+                                .HasColumnType("int");
 
                             b1.Property<string>("ProductName")
-                                .HasColumnType("TEXT");
+                                .HasColumnType("nvarchar(max)");
 
                             b1.HasKey("OrderItemId");
 
