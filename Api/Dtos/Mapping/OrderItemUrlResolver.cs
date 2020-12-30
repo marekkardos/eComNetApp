@@ -1,26 +1,27 @@
+using Api.Helpers;
 using AutoMapper;
 using Core.Entities.OrderAggregate;
-using Microsoft.Extensions.Configuration;
 
 namespace Api.Dtos.Mapping
 {
     public class OrderItemUrlResolver : IValueResolver<OrderItem, OrderItemDto, string>
     {
-        private readonly IConfiguration _config;
+        private readonly IPictureUrlResolver _urlResolver;
 
-        public OrderItemUrlResolver(IConfiguration config)
+
+        public OrderItemUrlResolver(IPictureUrlResolver urlResolver)
         {
-            _config = config;
+            _urlResolver = urlResolver;
         }
 
         public string Resolve(OrderItem source, OrderItemDto destination, string destMember, ResolutionContext context)
         {
-            if (!string.IsNullOrEmpty(source.ItemOrdered.PictureUrl))
+            if (string.IsNullOrEmpty(source.ItemOrdered.PictureUrl))
             {
-                return _config["ApiUrlContent"] + source.ItemOrdered.PictureUrl;
+                return null;
             }
 
-            return null;
+            return _urlResolver.GetAbsolutePath(source.ItemOrdered.PictureUrl);
         }
     }
 }

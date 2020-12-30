@@ -6,6 +6,9 @@ services:
     build:
       context: .
       dockerfile: Api/Dockerfile
+    volumes:
+      - diagnostics:/tmp
+      - data:/data
     environment:
      - ASPNETCORE_ENVIRONMENT=Development
     #  - ASPNETCORE_URLS=http://+:80
@@ -16,6 +19,7 @@ services:
       - redis
     networks:
       - api-network
+
 
   dbserver:
     image: mcr.microsoft.com/mssql/server:2019-latest
@@ -29,6 +33,7 @@ services:
     networks:
       - api-network
 
+      
   redis:
     image: redis
     ports:
@@ -39,3 +44,7 @@ services:
 networks:
   api-network:
     driver: bridge
+
+volumes:
+    diagnostics:
+    data:

@@ -87,7 +87,14 @@ namespace Core.CommandHandlers
             // save to db
             var result = await _unitOfWork.Complete();
 
-            return result <= 0 ? null : order;
+            if (result <= 0)
+            {
+                return null;
+            }
+
+            await _basketRepo.DeleteBasketAsync(req.BasketId);
+
+            return order;
         }
     }
 }

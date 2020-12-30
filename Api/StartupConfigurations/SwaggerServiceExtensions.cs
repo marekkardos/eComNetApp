@@ -75,10 +75,10 @@ namespace Api.StartupConfigurations
                 var securityRequirement = new OpenApiSecurityRequirement { { securitySchema, new[] { "Bearer" } } };
                 c.AddSecurityRequirement(securityRequirement);
 
+                var xmlFilePath = Path.Combine(AppContext.BaseDirectory,
+                        $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
 
-                c.IncludeXmlComments(
-                    Path.Combine(AppContext.BaseDirectory,
-                        $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"));
+                c.IncludeXmlComments(xmlFilePath);
             });
         }
 

@@ -1,26 +1,28 @@
+using Api.Helpers;
 using AutoMapper;
 using Core.Entities;
-using Microsoft.Extensions.Configuration;
 
 namespace Api.Dtos.Mapping
 
 {
     public class ProductUrlResolver : IValueResolver<Product, ProductToReturnDto, string>
     {
-        private readonly IConfiguration _config;
-        public ProductUrlResolver(IConfiguration config)
+        private readonly IPictureUrlResolver _urlResolver;
+
+        public ProductUrlResolver(IPictureUrlResolver urlResolver)
         {
-            _config = config;
+            _urlResolver = urlResolver;
         }
 
-        public string Resolve(Product source, ProductToReturnDto destination, string destMember, ResolutionContext context)
+        public string Resolve(Product source, ProductToReturnDto destination, string destMember,
+            ResolutionContext context)
         {
-            if(!string.IsNullOrEmpty(source.PictureUrl))
+            if (string.IsNullOrEmpty(source.PictureUrl))
             {
-                return _config["ApiUrlContent"] + source.PictureUrl;
+                return null;
             }
 
-            return null;
+            return _urlResolver.GetAbsolutePath(source.PictureUrl);
         }
     }
 }

@@ -15,3 +15,17 @@ dotnet ef database update -p Data -s Api --context AppIdentityDbContext
 
  docker run --name dbserver -e 'ACCEPT_EULA=Y' -e 'MSSQL_SA_PASSWORD=Strong!Passw0rd' -e 'MSSQL_PID=Express'  
  -p 1433:1433 -v mssqlvolume:/var/opt/mssql -d mcr.microsoft.com/mssql/server:2019-latest
+
+   # tools:
+  #     image: diagnostictools:5.0
+  #     build:
+  #       context: .
+  #       dockerfile: Tools/Diagnostics.Dockerfile
+  #     volumes:
+  #        - diagnostics:/tmp
+  #        - data:/datacls
+  #     tty: true  # Keep the container alive
+  #     networks:
+  #       - api-network
+
+ docker run --rm -it --pid=container:ecomnetapp_api_1 --net=container:ecomnetapp_api_1 -v diagnostics:/tmp --cap-add ALL --privileged my-diagnostics-tools:5.0

@@ -31,7 +31,7 @@ namespace Core.Specifications.Base
 
         public bool QueryIsTracked { get; private set; }
 
-        public ISpecification<T> AsTacking()
+        public ISpecification<T> AsTracking()
         {
             this.QueryIsTracked = true;
             return this;

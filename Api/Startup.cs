@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
 using Api.Dtos.Mapping;
+using Api.Helpers;
 using Api.Identity;
 using API.Middleware;
 using Core.Entities;
@@ -82,6 +83,7 @@ namespace Api
             services.AddCustomIdentityServices(Configuration);
             services.AddCustomSwaggerServices();
             services.AddCustomApiVersioning();
+            services.AddScoped<IPictureUrlResolver, PictureUrlResolver>();
 
             services.AddScoped<ITokenService, TokenService>();
         }
