@@ -15,6 +15,7 @@ export class CheckoutAddressComponent implements OnInit {
   constructor(private accountService: AccountService, private toastr: ToastrService) { }
 
   ngOnInit() {
+    this.checkoutForm.get('addressForm').get('state').patchValue("Slovakia");
   }
 
   saveUserAddress() {

@@ -1,10 +1,9 @@
-import { Component, OnInit, Input, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
+import { Component, Input, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { BasketService } from 'src/app/basket/basket.service';
 import { CheckoutService } from '../checkout.service';
 import { ToastrService } from 'ngx-toastr';
 import { IBasket } from 'src/app/shared/models/basket';
-import { IOrder } from 'src/app/shared/models/order';
 import { Router, NavigationExtras } from '@angular/router';
 
 declare var Stripe;
@@ -37,7 +36,7 @@ export class CheckoutPaymentComponent implements AfterViewInit, OnDestroy {
     private router: Router) { }
 
   ngAfterViewInit() {
-    this.stripe = Stripe('pk_test_2PZ84pFKu2MddUgGDG521v9m00SlLWySIR');
+    this.stripe = Stripe('pk_test_51I5A6QL9LzbX0TGfv5CuYr7xuET3rORDb3jbHIFD2QfSYK2le5EyhhMavjVvJx3DM12eg2b1RR8DjmfM4nw6Mcyl00jRYJIO8a');
     const elements = this.stripe.elements();
 
     this.cardNumber = elements.create('cardNumber');
@@ -94,8 +93,10 @@ export class CheckoutPaymentComponent implements AfterViewInit, OnDestroy {
       }
       this.loading = false;
     } catch (error) {
-      console.log(error);
       this.loading = false;
+
+      console.log(error);
+      // this.toastr.error('Payment error.');
     }
   }
 
