@@ -8,7 +8,7 @@ namespace Data
 {
     public static class DaoConfigureDi
     {
-        public static void AddCustomDataServices(this IServiceCollection services, IConfiguration configuration)
+        public static void AddDataPersistenceServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<StoreContext>(x =>
                 // x.UseSqlite(configuration.GetConnectionString("DefaultConnection")));

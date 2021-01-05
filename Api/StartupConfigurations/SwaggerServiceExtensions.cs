@@ -57,6 +57,14 @@ namespace Api.StartupConfigurations
 
                 });
 
+                c.SwaggerDoc("Payments", new OpenApiInfo
+                {
+                    Title = "Api",
+                    Version = "v1",
+                    Description = "description",
+
+                });
+
                 var securitySchema = new OpenApiSecurityScheme
                 {
                     Description = "JWT Auth Bearer Scheme",
@@ -99,6 +107,8 @@ namespace Api.StartupConfigurations
                 c.SwaggerEndpoint("/swagger/Account/swagger.json", "Account Api");
 
                 c.SwaggerEndpoint("/swagger/Orders/swagger.json", "Orders Api");
+
+                c.SwaggerEndpoint("/swagger/Payments/swagger.json", "Payments Api");
 
                 //c.RoutePrefix = "";
             });

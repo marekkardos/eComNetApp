@@ -17,6 +17,7 @@ using API.Middleware;
 using Core.Entities;
 using MediatR;
 using Microsoft.Extensions.FileProviders;
+using Services;
 using StackExchange.Redis;
 
 namespace Api
@@ -79,13 +80,14 @@ namespace Api
             services.AddMediatR(typeof(BaseEntity));
             services.AddAutoMapper(typeof(MappingProfiles));
 
-            services.AddCustomDataServices(Configuration);
+            services.AddDataPersistenceServices(Configuration);
             services.AddCustomIdentityServices(Configuration);
             services.AddCustomSwaggerServices();
             services.AddCustomApiVersioning();
             services.AddScoped<IPictureUrlResolver, PictureUrlResolver>();
 
             services.AddScoped<ITokenService, TokenService>();
+            services.AddApplicationServices(Configuration);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
