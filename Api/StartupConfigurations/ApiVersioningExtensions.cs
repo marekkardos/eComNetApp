@@ -14,6 +14,7 @@ namespace Api.StartupConfigurations
                 options.AssumeDefaultVersionWhenUnspecified = true;
                 options.ReportApiVersions = true;
                 options.ApiVersionReader = new UrlSegmentApiVersionReader();
+                options.UseApiBehavior = true;
             });
         }
     }

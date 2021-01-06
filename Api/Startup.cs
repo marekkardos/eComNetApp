@@ -97,6 +97,8 @@ namespace Api
 
             //app.UseHttpsRedirection();
 
+            // allow wwwroot
+            //app.UseStaticFiles();
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(
@@ -104,7 +106,7 @@ namespace Api
                 ),
                 RequestPath = "/content"
             });
-
+            
             app.UseRouting();
 
             // CORS headers are only sent on cross domain requests and the
@@ -124,6 +126,7 @@ namespace Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                //endpoints.MapFallbackToController("Index", "Fallback");
             });
         }
     }
