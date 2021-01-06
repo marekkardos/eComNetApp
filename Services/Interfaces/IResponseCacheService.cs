@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Core.Interfaces
+namespace Services.Interfaces
 {
     public interface IResponseCacheService
     {

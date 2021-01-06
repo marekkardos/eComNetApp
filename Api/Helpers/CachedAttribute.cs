@@ -2,18 +2,22 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Core.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
+using Services.Interfaces;
 
 namespace Api.Helpers
 {
+    /// <summary>
+    ///  Caching Response in seconds.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class CachedAttribute : Attribute, IAsyncActionFilter
     {
         private readonly int _timeToLiveSeconds;
+
         public CachedAttribute(int timeToLiveSeconds)
         {
             _timeToLiveSeconds = timeToLiveSeconds;
@@ -22,29 +26,31 @@ namespace Api.Helpers
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             var cacheService = context.HttpContext.RequestServices.GetRequiredService<IResponseCacheService>();
-
             var cacheKey = GenerateCacheKeyFromRequest(context.HttpContext.Request);
+            
             var cachedResponse = await cacheService.GetCachedResponseAsync(cacheKey);
 
-            if (!string.IsNullOrEmpty(cachedResponse))
+            if (string.IsNullOrEmpty(cachedResponse))
             {
-                var contentResult = new ContentResult
+                var executedContext = await next(); // move to controller
+
+                if (executedContext.Result is OkObjectResult okObjectResult)
                 {
-                    Content = cachedResponse,
-                    ContentType = "application/json",
-                    StatusCode = 200
-                };
-                context.Result = contentResult;
+                    await cacheService.CacheResponseAsync(cacheKey, okObjectResult.Value,
+                        TimeSpan.FromSeconds(_timeToLiveSeconds));
+                }
 
                 return;
             }
 
-            var executedContext = await next(); // move to controller
-
-            if (executedContext.Result is OkObjectResult okObjectResult)
+            var contentResult = new ContentResult
             {
-                await cacheService.CacheResponseAsync(cacheKey, okObjectResult.Value, TimeSpan.FromSeconds(_timeToLiveSeconds));
-            }
+                Content = cachedResponse,
+                ContentType = "application/json",
+                StatusCode = 200
+            };
+
+            context.Result = contentResult;
         }
 
         private static string GenerateCacheKeyFromRequest(HttpRequest request)

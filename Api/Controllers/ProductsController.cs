@@ -39,7 +39,7 @@ namespace API.Controllers
             _mediator = mediator;
         }
 
-        //[Cached(600)]
+        [Cached(60)]
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<Pagination<ProductToReturnDto>>> GetProducts(
@@ -53,7 +53,7 @@ namespace API.Controllers
                 data));
         }
 
-        //[Cached(600)]
+        [Cached(60)]
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
@@ -71,6 +71,7 @@ namespace API.Controllers
             return _mapper.Map<Product, ProductToReturnDto>(product);
         }
 
+        [Cached(300)]
         [HttpGet("brands")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IReadOnlyList<ProductBrand>>> GetProductBrands()
@@ -78,7 +79,7 @@ namespace API.Controllers
             return Ok(await _productBrandRepo.ListAllAsync());
         }
 
-        //[Cached(1000)]
+        [Cached(300)]
         [HttpGet("types")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IReadOnlyList<ProductType>>> GetProductTypes()

@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Data
 {
-    public static class DaoConfigureDi
+    public static class ConfigureDependencies
     {
         public static void AddDataPersistenceServices(this IServiceCollection services, IConfiguration configuration)
         {

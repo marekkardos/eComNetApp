@@ -61,7 +61,7 @@ namespace Services
                 }
             }
 
-            var service = new PaymentIntentService();
+            var paymentIntentService = new PaymentIntentService();
 
             if (string.IsNullOrEmpty(basket.PaymentIntentId))
             {
@@ -72,10 +72,10 @@ namespace Services
                     PaymentMethodTypes = new List<string> {"card"}
                 };
 
-                var intent = await service.CreateAsync(options);
+                var paymentIntent = await paymentIntentService.CreateAsync(options);
 
-                basket.PaymentIntentId = intent.Id;
-                basket.ClientSecret = intent.ClientSecret;
+                basket.PaymentIntentId = paymentIntent.Id;
+                basket.ClientSecret = paymentIntent.ClientSecret;
             }
             else
             {
@@ -84,7 +84,7 @@ namespace Services
                     Amount = (long) basket.Items.Sum(i => i.Quantity * (i.Price * 100)) + (long) shippingPrice * 100
                 };
 
-                await service.UpdateAsync(basket.PaymentIntentId, options);
+                await paymentIntentService.UpdateAsync(basket.PaymentIntentId, options);
             }
 
             await _basketRepository.UpdateBasketAsync(basket);

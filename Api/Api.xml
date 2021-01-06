@@ -10,6 +10,11 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="T:Api.Helpers.CachedAttribute">
+            <summary>
+             Caching Response in seconds.
+            </summary>
+        </member>
         <member name="T:Api.WeatherForecast">
             <summary>
             Weather Forecast class.
