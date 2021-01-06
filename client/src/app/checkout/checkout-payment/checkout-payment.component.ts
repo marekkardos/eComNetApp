@@ -5,6 +5,7 @@ import { CheckoutService } from '../checkout.service';
 import { ToastrService } from 'ngx-toastr';
 import { IBasket } from 'src/app/shared/models/basket';
 import { Router, NavigationExtras } from '@angular/router';
+import { environment } from 'src/environments/environment';
 
 declare var Stripe;
 
@@ -18,6 +19,7 @@ export class CheckoutPaymentComponent implements AfterViewInit, OnDestroy {
   @ViewChild('cardNumber', {static: true}) cardNumberElement: ElementRef;
   @ViewChild('cardExpiry', {static: true}) cardExpiryElement: ElementRef;
   @ViewChild('cardCvc', {static: true}) cardCvcElement: ElementRef;
+  stripeSettings = environment.stripeSettings;
   stripe: any;
   cardNumber: any;
   cardExpiry: any;
@@ -36,7 +38,8 @@ export class CheckoutPaymentComponent implements AfterViewInit, OnDestroy {
     private router: Router) { }
 
   ngAfterViewInit() {
-    this.stripe = Stripe('pk_test_51I5A6QL9LzbX0TGfv5CuYr7xuET3rORDb3jbHIFD2QfSYK2le5EyhhMavjVvJx3DM12eg2b1RR8DjmfM4nw6Mcyl00jRYJIO8a');
+    // https://support.stripe.com/questions/supported-languages-for-stripe-checkout
+    this.stripe = Stripe(this.stripeSettings.PublishableKey, {locale: 'en'});
     const elements = this.stripe.elements();
 
     this.cardNumber = elements.create('cardNumber');
