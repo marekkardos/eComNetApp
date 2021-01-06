@@ -3,16 +3,17 @@
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
-#trigger:
-#- main
-trigger:
-  branches:
-    include:
-    - master
-  paths:
-    include:
-    - client/*
-  batch: True
+# trigger:
+# - main
+
+# trigger:
+#   branches:
+#     include:
+#     - master
+#   paths:
+#     include:
+#     - client/*
+#   batch: True
 
 pool:
   vmImage: 'ubuntu-latest'
