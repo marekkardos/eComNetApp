@@ -25,16 +25,16 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
-    ls
     cd client
     npm install -g @angular/cli@9.0.2
     npm install
     ng build --prod
+    ls -l -a
   displayName: 'npm install and build'
 
 - task: CopyFiles@2
   inputs:
-    Contents: 'dist/SkiShop/**'
+    Contents: 'client/dist/SkiShop/**'
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
 - task: PublishBuildArtifacts@1
