@@ -5,6 +5,14 @@
 
 #trigger:
 #- main
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - client/*
+  batch: True
 
 pool:
   vmImage: 'ubuntu-latest'
