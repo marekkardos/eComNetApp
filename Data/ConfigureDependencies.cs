@@ -1,4 +1,5 @@
-﻿using Core.Interfaces;
+﻿using System;
+using Core.Interfaces;
 using Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -11,13 +12,31 @@ namespace Data
         public static void AddDataPersistenceServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<StoreContext>(x =>
-                // x.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
-                x.UseSqlServer("name=ConnectionStrings:DefaultConnectionMssql"));
+                {
+                    // x.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
+                    x.UseSqlServer(
+                        "name=ConnectionStrings:DefaultConnectionMssql",
+                        sqlOptions =>
+                        {
+                            sqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(30),
+                            errorNumbersToAdd: null);
+                        });
+                });
 
             services.AddDbContext<AppIdentityDbContext>(x =>
             {
                 // x.UseSqlite(configuration.GetConnectionString("IdentityConnection"));
-                x.UseSqlServer("name=ConnectionStrings:IdentityConnectionMssql");
+                x.UseSqlServer(
+                    "name=ConnectionStrings:IdentityConnectionMssql",
+                    sqlOptions =>
+                            {
+                                sqlOptions.EnableRetryOnFailure(
+                                maxRetryCount: 5,
+                                maxRetryDelay: TimeSpan.FromSeconds(30),
+                                errorNumbersToAdd: null);
+                            });
             });
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();

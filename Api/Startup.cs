@@ -19,6 +19,8 @@ using MediatR;
 using Microsoft.Extensions.FileProviders;
 using Services;
 using StackExchange.Redis;
+using Microsoft.ApplicationInsights.Extensibility.Implementation;
+using Microsoft.ApplicationInsights.Extensibility;
 
 namespace Api
 {
@@ -33,8 +35,10 @@ namespace Api
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddApplicationInsightsTelemetry();
+
             services.AddControllers();
-            
+
             services.AddCors(opt =>
             {
                 opt.AddPolicy("CustomCorsPolicy", policy =>
@@ -47,7 +51,8 @@ namespace Api
                 });
             });
 
-            services.AddSingleton<IConnectionMultiplexer>(c => {
+            services.AddSingleton<IConnectionMultiplexer>(c =>
+            {
                 var configuration = ConfigurationOptions.Parse(Configuration
                     .GetConnectionString("Redis"), true);
                 return ConnectionMultiplexer.Connect(configuration);
@@ -106,7 +111,7 @@ namespace Api
                 ),
                 RequestPath = "/content"
             });
-            
+
             app.UseRouting();
 
             // CORS headers are only sent on cross domain requests and the
@@ -118,9 +123,12 @@ namespace Api
             app.UseAuthentication();
             app.UseAuthorization();
 
+            SwaggerServiceExtensions.ConfigurePipeline(app);
+
             if (env.IsDevelopment())
             {
-                SwaggerServiceExtensions.ConfigurePipeline(app);
+                TelemetryConfiguration.Active.DisableTelemetry = true;
+                TelemetryDebugWriter.IsTracingDisabled = true;
             }
 
             app.UseEndpoints(endpoints =>
