@@ -5,6 +5,7 @@ using Api.ApiResponses;
 using Api.Controllers;
 using Api.Dtos;
 using Api.Extensions;
+using Api.Helpers;
 using AutoMapper;
 using Core.CommandHandlers;
 using Core.Entities.OrderAggregate;
@@ -82,7 +83,8 @@ namespace API.Controllers
         }
 
         [HttpGet("deliveryMethods")]
-        //[Cached(60000)]
+        [Cached(300)]
+        [AllowAnonymous]
         public async Task<ActionResult<IReadOnlyList<DeliveryMethod>>> GetDeliveryMethods()
         {
             return Ok(await _repoResolver.Repository<DeliveryMethod>().ListAllAsync());
