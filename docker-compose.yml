@@ -1,24 +1,24 @@
 version: '3.4'
 
 services:
-  api:
-    image: ${DOCKER_REGISTRY-}api
-    build:
-      context: .
-      dockerfile: Api/Dockerfile
-    volumes:
-      - diagnostics:/tmp
-      - data:/data
-    environment:
-     - ASPNETCORE_ENVIRONMENT=Development
-    #  - ASPNETCORE_URLS=http://+:80
-    ports:
-        - "44369:80"
-    depends_on:
-      - dbserver
-      - redis
-    networks:
-      - api-network
+  # api:
+    # image: ${DOCKER_REGISTRY-}api
+    # build:
+      # context: .
+      # dockerfile: Api/Dockerfile
+    # volumes:
+      # - diagnostics:/tmp
+      # - data:/data
+    # environment:
+     # - ASPNETCORE_ENVIRONMENT=Development
+    # #  - ASPNETCORE_URLS=http://+:80
+    # ports:
+        # - "44369:80"
+    # depends_on:
+      # - dbserver
+      # - redis
+    # networks:
+      # - api-network
 
 
   dbserver:
@@ -29,7 +29,7 @@ services:
       SA_PASSWORD: "Strong!Passw0rd"
       ACCEPT_EULA: "Y" 
     volumes: 
-        - C:\work\eComNetApp-MSSQL-DATA:/var/opt/mssql/data
+        - .data/MSSQL2019-DATA:/var/opt/mssql/data
     networks:
       - api-network
 

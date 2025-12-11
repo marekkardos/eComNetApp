@@ -1,15 +1,14 @@
-using System.Linq;
-using System.Threading.Tasks;
 using Core.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Identity
+namespace SeedData
 {
-    public class AppIdentityDbContextSeed
+    public static class AppIdentityDbContextSeed
     {
         public static async Task SeedUsersAsync(UserManager<AppUser> userManager)
         {
-            if (!userManager.Users.Any())
+            if (! await userManager.Users.AnyAsync())
             {
                 var user = new AppUser
                 {

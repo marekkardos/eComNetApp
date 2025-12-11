@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using Core.Entities;
 using Core.Entities.OrderAggregate;
+using Infrastructure.Data.Config;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -54,35 +55,7 @@ namespace Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-
-            if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
-            {
-                SqlLiteSpecificMapping(modelBuilder); ;
-            }
-
-            // StoreContextSeedForMigration.Seed(modelBuilder, _logFactory);
-        }
-
-        private static void SqlLiteSpecificMapping(ModelBuilder modelBuilder)
-        {
-            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-            {
-                var properties = entityType.ClrType.GetProperties().Where(p => p.PropertyType == typeof(decimal));
-                var dateTimeProperties = entityType.ClrType.GetProperties()
-                    .Where(p => p.PropertyType == typeof(DateTimeOffset));
-
-                foreach (var property in properties)
-                {
-                    modelBuilder.Entity(entityType.Name).Property(property.Name).HasConversion<double>();
-                }
-
-                foreach (var property in dateTimeProperties)
-                {
-                    modelBuilder.Entity(entityType.Name).Property(property.Name)
-                        .HasConversion(new DateTimeOffsetToBinaryConverter());
-                }
-            }
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(ProductConfiguration).Assembly);
         }
     }
 }
