@@ -63,7 +63,7 @@ namespace Api
                     // e.g application/xml
                     m.ReturnHttpNotAcceptable = true;
                 })
-                .SetCompatibilityVersion(CompatibilityVersion.Latest)
+                //.SetCompatibilityVersion(CompatibilityVersion.Latest)
                 .ConfigureApiBehaviorOptions(options =>
                 {
                     options.InvalidModelStateResponseFactory = actionContext =>
@@ -103,7 +103,6 @@ namespace Api
             //app.UseHttpsRedirection();
 
             // allow wwwroot
-            //app.UseStaticFiles();
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(
@@ -125,11 +124,11 @@ namespace Api
 
             SwaggerServiceExtensions.ConfigurePipeline(app);
 
-            if (env.IsDevelopment())
-            {
-                TelemetryConfiguration.Active.DisableTelemetry = true;
-                TelemetryDebugWriter.IsTracingDisabled = true;
-            }
+            //if (env.IsDevelopment())
+            //{
+            //    TelemetryConfiguration.Active.DisableTelemetry = true;
+            //    TelemetryDebugWriter.IsTracingDisabled = true;
+            //}
 
             app.UseEndpoints(endpoints =>
             {
