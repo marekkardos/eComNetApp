@@ -37,7 +37,7 @@ namespace Services
 
             if (basket == null)
             {
-                _logger.LogWarning($"basket == null for basketId:{basketId}");
+                _logger.LogWarning("basket == null for basketId:{BasketId}", basketId);
 
                 return null;
             }
@@ -47,14 +47,16 @@ namespace Services
             if (basket.DeliveryMethodId.HasValue)
             {
                 var deliveryMethod = await _unitOfWork.Repository<DeliveryMethod>()
-                    .GetByIdAsync((int) basket.DeliveryMethodId);
+                                                      .GetByIdAsync((int)basket.DeliveryMethodId);
 
                 shippingPrice = deliveryMethod.Price;
             }
 
             foreach (var item in basket.Items)
             {
-                var productItem = await _unitOfWork.Repository<Product>().GetByIdAsync(item.Id);
+                var productItem = await _unitOfWork.Repository<Product>()
+                                                   .GetByIdAsync(item.Id);
+
                 if (item.Price != productItem.Price)
                 {
                     item.Price = productItem.Price;
@@ -67,9 +69,9 @@ namespace Services
             {
                 var options = new PaymentIntentCreateOptions
                 {
-                    Amount = (long) basket.Items.Sum(i => i.Quantity * (i.Price * 100)) + (long) shippingPrice * 100,
+                    Amount = (long)basket.Items.Sum(i => i.Quantity * (i.Price * 100)) + (long)shippingPrice * 100,
                     Currency = "eur",
-                    PaymentMethodTypes = new List<string> {"card"}
+                    PaymentMethodTypes = new List<string> { "card" }
                 };
 
                 var paymentIntent = await paymentIntentService.CreateAsync(options);
@@ -81,7 +83,7 @@ namespace Services
             {
                 var options = new PaymentIntentUpdateOptions
                 {
-                    Amount = (long) basket.Items.Sum(i => i.Quantity * (i.Price * 100)) + (long) shippingPrice * 100
+                    Amount = (long)basket.Items.Sum(i => i.Quantity * (i.Price * 100)) + (long)shippingPrice * 100
                 };
 
                 await paymentIntentService.UpdateAsync(basket.PaymentIntentId, options);
@@ -99,7 +101,7 @@ namespace Services
 
             if (order == null)
             {
-                _logger.LogWarning($"UpdateOrderPaymentSucceeded: order == null for paymentIntentId:{paymentIntentId}");
+                _logger.LogWarning("UpdateOrderPaymentSucceeded: order == null for paymentIntentId:{PaymentIntentId}", paymentIntentId);
                 return null;
             }
 
@@ -118,7 +120,7 @@ namespace Services
 
             if (order == null)
             {
-                _logger.LogWarning($"UpdateOrderPaymentFailed: order == null for paymentIntentId:{paymentIntentId}");
+                _logger.LogWarning("UpdateOrderPaymentFailed: order == null for paymentIntentId:{PaymentIntentId}", paymentIntentId);
                 return null;
             }
 

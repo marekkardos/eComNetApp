@@ -106,10 +106,12 @@ namespace API.Controllers
                 return Unauthorized(new ApiResponse(HttpStatusCode.Unauthorized));
             }
 
+            var token = _tokenService.CreateToken(user);
+
             return new UserDto
             {
                 Email = user.Email,
-                Token = _tokenService.CreateToken(user),
+                Token = token,
                 DisplayName = user.DisplayName
             };
         }
