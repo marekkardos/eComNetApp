@@ -1,15 +1,6 @@
-using System.IO;
-using Api.ApiResponses;
 using Api.StartupConfigurations;
 using AutoMapper;
 using Data;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System.Linq;
 using Api.Dtos.Mapping;
 using Api.Helpers;
 using Api.Identity;
@@ -19,23 +10,17 @@ using MediatR;
 using Microsoft.Extensions.FileProviders;
 using Services;
 using StackExchange.Redis;
-using Microsoft.ApplicationInsights.Extensibility.Implementation;
-using Microsoft.ApplicationInsights.Extensibility;
+using Serilog;
 
 namespace Api
 {
-    public class Startup
+    public static class Startup
     {
-        public Startup(IConfiguration configuration)
+        public static void ConfigureServices(IServiceCollection services, IConfiguration conf, IWebHostEnvironment environment)
         {
-            Configuration = configuration;
-        }
+            services.AddLogging(conf, environment);
 
-        public IConfiguration Configuration { get; }
-
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddApplicationInsightsTelemetry();
+            var redisConnection = conf.GetConnectionString("Redis") ?? throw new InvalidOperationException("Redis connection string is missing");
 
             services.AddControllers();
 
@@ -53,50 +38,54 @@ namespace Api
 
             services.AddSingleton<IConnectionMultiplexer>(c =>
             {
-                var configuration = ConfigurationOptions.Parse(Configuration
-                    .GetConnectionString("Redis"), true);
+                var configuration = ConfigurationOptions.Parse(redisConnection, true);
                 return ConnectionMultiplexer.Connect(configuration);
             });
 
-            services.AddMvc(m =>
-                {
-                    // e.g application/xml
-                    m.ReturnHttpNotAcceptable = true;
-                })
-                //.SetCompatibilityVersion(CompatibilityVersion.Latest)
-                .ConfigureApiBehaviorOptions(options =>
-                {
-                    options.InvalidModelStateResponseFactory = actionContext =>
-                    {
-                        var errors = actionContext.ModelState
-                            .Where(e => e.Value.Errors.Count > 0)
-                            .SelectMany(x => x.Value.Errors)
-                            .Select(x => x.ErrorMessage).ToArray();
+            //services.AddMvc(m =>
+            //    {
+            //        // e.g application/xml
+            //        m.ReturnHttpNotAcceptable = true;
+            //    })
+            //    //.SetCompatibilityVersion(CompatibilityVersion.Latest)
+            //    .ConfigureApiBehaviorOptions(options =>
+            //    {
+            //        options.InvalidModelStateResponseFactory = actionContext =>
+            //        {
+            //            var errors = actionContext.ModelState
+            //                .Where(e => e.Value.Errors.Count > 0)
+            //                .SelectMany(x => x.Value.Errors)
+            //                .Select(x => x.ErrorMessage).ToArray();
 
-                        var errorResponse = new ApiValidationErrorResponse
-                        {
-                            Errors = errors
-                        };
+            //            var errorResponse = new ApiValidationErrorResponse
+            //            {
+            //                Errors = errors
+            //            };
 
-                        return new BadRequestObjectResult(errorResponse);
-                    };
-                });
+            //            return new BadRequestObjectResult(errorResponse);
+            //        };
+            //    });
 
             services.AddMediatR(typeof(BaseEntity));
             services.AddAutoMapper(typeof(MappingProfiles));
 
-            services.AddDataPersistenceServices(Configuration);
-            services.AddCustomIdentityServices(Configuration);
+            services.AddDataPersistenceServices(conf);
+            services.AddCustomIdentityServices(conf);
+
+            services.AddEndpointsApiExplorer();
             services.AddCustomSwaggerServices();
+
             services.AddCustomApiVersioning();
             services.AddScoped<IPictureUrlResolver, PictureUrlResolver>();
 
             services.AddScoped<ITokenService, TokenService>();
-            services.AddApplicationServices(Configuration);
+            services.AddApplicationServices(conf);
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public static void ConfigureApp(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseSerilogRequestLogging();
+
             app.UseMiddleware<ExceptionMiddleware>();
             app.UseStatusCodePagesWithReExecute("/errors/{0}");
 

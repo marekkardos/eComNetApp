@@ -1,49 +1,39 @@
-using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using NLog.Web;
+using Api.StartupConfigurations;
+using Serilog;
 
 namespace Api
 {
-    public class Program
+    public static class Program
     {
-        public static async Task Main(string[] args) // async Task 
+        public static async Task Main(string[] args)
         {
-            var logger = NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
-
             try
             {
-                logger.Debug("init main");
+                Log.Debug("init main");
 
-                var host = CreateHostBuilder(args).Build();
+                var builder = WebApplication.CreateBuilder(args);
 
-                await host.RunAsync();
+                builder.Host.UseSerilog();
+
+                builder.AddOpenTelemetry("eComNetAPI");
+
+                Startup.ConfigureServices(builder.Services, builder.Configuration, builder.Environment);
+
+                var app = builder.Build();
+
+                Startup.ConfigureApp(app, builder.Environment);
+
+                await app.RunAsync();
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                //NLog: catch setup errors
-                logger.Error(exception, "Stopped program because of exception");
-                throw;
+                Log.Error(ex, "Stopped program because of exception");
+                //throw;
             }
             finally
             {
-                // Ensure to flush and stop internal timers/threads before application-exit (Avoid segmentation fault on Linux)
-                NLog.LogManager.Shutdown();
+                await Log.CloseAndFlushAsync();
             }
         }
-
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-        // .ConfigureLogging(logging =>
-        // {
-        //     logging.ClearProviders();
-        //     logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
-        // })
-        // .UseNLog();
     }
 }

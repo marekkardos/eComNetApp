@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
-using System;
-using System.IO;
+﻿using Microsoft.OpenApi.Models;
 using System.Reflection;
 
 namespace Api.StartupConfigurations
@@ -13,13 +9,6 @@ namespace Api.StartupConfigurations
         {
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("WeatherForecast", new OpenApiInfo
-                {
-                    Title = "Api",
-                    Version = "v1",
-                    Description = "description"
-                });
-
                 c.SwaggerDoc("Products", new OpenApiInfo
                 {
                     Title = "Api",
@@ -100,8 +89,6 @@ namespace Api.StartupConfigurations
 
                 c.SwaggerEndpoint("/swagger/Basket/swagger.json", "Basket Api");
 
-                c.SwaggerEndpoint("/swagger/WeatherForecast/swagger.json", "WeatherForecast Api");
-
                 c.SwaggerEndpoint("/swagger/Buggy/swagger.json", "Buggy Api");
 
                 c.SwaggerEndpoint("/swagger/Account/swagger.json", "Account Api");
@@ -109,8 +96,6 @@ namespace Api.StartupConfigurations
                 c.SwaggerEndpoint("/swagger/Orders/swagger.json", "Orders Api");
 
                 c.SwaggerEndpoint("/swagger/Payments/swagger.json", "Payments Api");
-
-                //c.RoutePrefix = "";
             });
         }
     }

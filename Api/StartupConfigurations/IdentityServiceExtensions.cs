@@ -1,11 +1,8 @@
-using System;
 using System.Text;
 using Core.Entities.Identity;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Api.StartupConfigurations
@@ -14,6 +11,9 @@ namespace Api.StartupConfigurations
     {
         public static void AddCustomIdentityServices(this IServiceCollection services, IConfiguration config)
         {
+            var key = config["Token:Key"] ?? throw new InvalidOperationException("Token Key is missing");
+            var keyBytes = Encoding.UTF8.GetBytes(key);
+
             var builder = services.AddIdentityCore<AppUser>();
 
             builder = new IdentityBuilder(builder.UserType, builder.Services);
@@ -47,7 +47,7 @@ namespace Api.StartupConfigurations
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Token:Key"])),
+                        IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
                         ValidIssuer = config["Token:Issuer"],
                         ValidateIssuer = true,
                         ValidateAudience = false // true todo:  ValidAudience = configuration["Token:Audience"]
