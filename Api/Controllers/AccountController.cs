@@ -122,6 +122,12 @@ namespace API.Controllers
         {
             var user = await _userManager.FindByEmailFromClaimsPrinciple(HttpContext.User);
 
+            if (user == null)
+            {
+                // email claim from token doesn't exist in the db.
+                return null;
+            }
+
             return new UserDto
             {
                 Email = user.Email,
