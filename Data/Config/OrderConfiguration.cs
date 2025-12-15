@@ -14,6 +14,8 @@ namespace Infrastructure.Data.Config
                 a.WithOwner();
             });
 
+            builder.Navigation(o => o.ShipToAddress).IsRequired();
+
             builder.Property(s => s.Status)
                 .HasConversion(
                     o => o.ToString(),

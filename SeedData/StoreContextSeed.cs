@@ -13,6 +13,7 @@ namespace SeedData
         public static async Task SeedAsync(StoreContext context, ILoggerFactory loggerFactory)
         {
             var strategy = context.Database.CreateExecutionStrategy();
+            var logger = loggerFactory.CreateLogger(nameof(StoreContextSeed));
 
             try
             {
@@ -40,6 +41,12 @@ namespace SeedData
                             await transaction.CommitAsync();
                         }
                     });
+
+                    logger.LogInformation("Seeded ProductBrands.");
+                }
+                else
+                {
+                    logger.LogInformation("ProductBrands already exist - skipping seeding.");
                 }
 
                 if (!await context.ProductTypes.AnyAsync())
@@ -64,6 +71,12 @@ namespace SeedData
                             await transaction.CommitAsync();
                         }
                     });
+
+                    logger.LogInformation("Seeded ProductTypes.");
+                }
+                else
+                {
+                    logger.LogInformation("ProductTypes already exist - skipping seeding.");
                 }
 
                 if (!await context.Products.AnyAsync())
@@ -77,6 +90,12 @@ namespace SeedData
                     await context.Products.AddRangeAsync(products);
 
                     await context.SaveChangesAsync();
+
+                    logger.LogInformation("Seeded Products.");
+                }
+                else
+                {
+                    logger.LogInformation("Products already exist - skipping seeding.");
                 }
 
                 if (!await context.DeliveryMethods.AnyAsync())
@@ -100,11 +119,16 @@ namespace SeedData
                             await transaction.CommitAsync();
                         }
                     });
+
+                    logger.LogInformation("Seeded DeliveryMethods.");
+                }
+                else
+                {
+                    logger.LogInformation("DeliveryMethods already exist - skipping seeding.");
                 }
             }
             catch (Exception ex)
             {
-                var logger = loggerFactory.CreateLogger(nameof(StoreContextSeed));
                 logger.LogError(ex, "StoreContextSeed error.");
             }
         }
