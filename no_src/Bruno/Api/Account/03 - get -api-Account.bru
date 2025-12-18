@@ -1,0 +1,50 @@
+meta {
+  name: 03 - get /api/Account
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/Account
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("Status is 200", function() {
+    expect([200]).to.include(res.status);
+  });
+}
+
+example {
+  name: 200 Response
+  description: Success
+  
+  request: {
+    url: {{baseUrl}}/api/Account
+    method: GET
+    mode: none
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 200
+      text: OK
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "email": "",
+          "displayName": "",
+          "token": ""
+        }
+      '''
+    }
+  }
+}

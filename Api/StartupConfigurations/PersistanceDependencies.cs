@@ -4,7 +4,6 @@ using Data;
 using Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-//using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Api.StartupConfigurations
 {
@@ -56,6 +55,17 @@ namespace Api.StartupConfigurations
                 x.LogTo(Serilog.Log.Information,
                         [DbLoggerCategory.Database.Command.Name],
                         LogLevel.Information);
+
+                if (environment.IsDevelopment())
+                {
+                    x.AddInterceptors(new InlineSqlWithTimingInterceptor(
+                        services.BuildServiceProvider()
+                                .GetRequiredService<ILogger<InlineSqlWithTimingInterceptor>>()));
+
+                    x.ConfigureWarnings(w => w.Ignore(RelationalEventId.CommandExecuting)
+                                              .Ignore(RelationalEventId.CommandExecuted)
+                                              .Ignore(RelationalEventId.CommandError));
+                }
             });
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -63,14 +73,6 @@ namespace Api.StartupConfigurations
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IBasketRepository, BasketRepository>();
-
-            AddHealthChecks(services);
-        }
-
-        private static void AddHealthChecks(IServiceCollection services)
-        {
-            //services.AddHealthChecks()
-            //            .AddCheck<DbContextHealthCheck<StoreContext>>("StoreContextCheck");
         }
     }
 }

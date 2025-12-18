@@ -1,0 +1,147 @@
+meta {
+  name: 05 - put /api/Account/address
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/Account/address
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {"firstName":"Bob","lastName":"Bobbity","street":"10 The Street","city":"New York","state":"NY","zipcode":"90210"}
+}
+
+tests {
+  test("Status is 200", function() {
+    expect([200]).to.include(res.status);
+  });
+}
+
+example {
+  name: 200 Response
+  description: Success
+  
+  request: {
+    url: {{baseUrl}}/api/Account/address
+    method: PUT
+    mode: json
+    body:json: {
+      {
+        "firstName": "",
+        "lastName": "",
+        "street": "",
+        "city": "",
+        "zipcode": ""
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 200
+      text: OK
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "firstName": "",
+          "lastName": "",
+          "street": "",
+          "city": "",
+          "zipcode": ""
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 201 Response
+  description: Success
+  
+  request: {
+    url: {{baseUrl}}/api/Account/address
+    method: PUT
+    mode: json
+    body:json: {
+      {
+        "firstName": "",
+        "lastName": "",
+        "street": "",
+        "city": "",
+        "zipcode": ""
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 201
+      text: Created
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "firstName": "",
+          "lastName": "",
+          "street": "",
+          "city": "",
+          "zipcode": ""
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 400 Response
+  description: Bad Request
+  
+  request: {
+    url: {{baseUrl}}/api/Account/address
+    method: PUT
+    mode: json
+    body:json: {
+      {
+        "firstName": "",
+        "lastName": "",
+        "street": "",
+        "city": "",
+        "zipcode": ""
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 400
+      text: Bad Request
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {}
+      '''
+    }
+  }
+}

@@ -1,0 +1,101 @@
+meta {
+  name: 06 - post /api/Account/register Invallid
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/Account/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "displayName": "",
+    "email": "",
+    "password": ""
+  }
+}
+
+tests {
+  test("Status is 400", function() {
+    expect([400]).to.include(res.status);
+  });
+}
+
+example {
+  name: 201 Response
+  description: Success
+  
+  request: {
+    url: {{baseUrl}}/api/Account/register
+    method: POST
+    mode: json
+    body:json: {
+      {
+        "displayName": "",
+        "email": "",
+        "password": ""
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 201
+      text: Created
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "email": "",
+          "displayName": "",
+          "token": ""
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 400 Response
+  description: Bad Request
+  
+  request: {
+    url: {{baseUrl}}/api/Account/register
+    method: POST
+    mode: json
+    body:json: {
+      {
+        "displayName": "",
+        "email": "",
+        "password": ""
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 400
+      text: Bad Request
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {}
+      '''
+    }
+  }
+}

@@ -78,6 +78,8 @@ public static class Startup
 
         services.AddScoped<ITokenService, TokenService>();
         services.AddApplicationServices(conf);
+
+        services.AddHealthChecksExt(conf);
     }
 
     public static void ConfigureApp(WebApplication app, IWebHostEnvironment env)
@@ -90,6 +92,8 @@ public static class Startup
         {
             app.UseHsts();
         }
+
+        app.UseHealthChecksExt();
 
         app.UseCustomLogging();
 

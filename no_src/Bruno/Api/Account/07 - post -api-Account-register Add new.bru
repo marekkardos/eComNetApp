@@ -1,0 +1,107 @@
+meta {
+  name: 07 - post /api/Account/register Add new
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/Account/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "displayName": "Test User",
+    "email": "{{newRegisteredEmail}}",
+    "password": "YouAre789"
+  }
+}
+
+script:pre-request {
+  const timestamp = Date.now();
+  const randomEmail = `test.user.${timestamp}@example.com`;
+  bru.setVar("newRegisteredEmail", randomEmail);
+}
+
+tests {
+  test("Status is 200", function() {
+    expect([201]).to.include(res.status);
+  });
+}
+
+example {
+  name: 201 Response
+  description: Success
+  
+  request: {
+    url: {{baseUrl}}/api/Account/register
+    method: POST
+    mode: json
+    body:json: {
+      {
+        "displayName": "",
+        "email": "",
+        "password": ""
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 201
+      text: Created
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "email": "",
+          "displayName": "",
+          "token": ""
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 400 Response
+  description: Bad Request
+  
+  request: {
+    url: {{baseUrl}}/api/Account/register
+    method: POST
+    mode: json
+    body:json: {
+      {
+        "displayName": "",
+        "email": "",
+        "password": ""
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 400
+      text: Bad Request
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {}
+      '''
+    }
+  }
+}
