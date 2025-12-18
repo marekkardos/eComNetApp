@@ -58,7 +58,7 @@ namespace API.Controllers
             if (dbUser != null)
             {
                 return new BadRequestObjectResult(new ApiValidationErrorResponse
-                    {Errors = new[] {"Email address already exists."}});
+                    {Errors = ["Email address already exists."]});
             }
 
             var user = new AppUser
@@ -80,7 +80,8 @@ namespace API.Controllers
                 });
             }
 
-            _logger.LogWarning($"Problem creating the user: _userManager.CreateAsync failed:{result}");
+            _logger.LogWarning("Problem creating the user: _userManager.CreateAsync failed:{IdentityResult}", result);
+
             return new BadRequestObjectResult(new ApiValidationErrorResponse
                 {Errors = result.Errors.Select(x => x.Description)});
         }

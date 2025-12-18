@@ -27,10 +27,16 @@ namespace API.Controllers
             return NotFound(new ApiResponse(HttpStatusCode.NotFound));
         }
 
+        [HttpGet("notfound2")]
+        public ActionResult GetNotFoundEmpty()
+        {
+            return NotFound();
+        }
+
         [HttpGet("servererror")]
         public ActionResult GetServerError()
         {
-            throw new Exception("simulate server error.");
+            throw new InvalidOperationException("simulate server error.");
         }
 
         [HttpGet("badrequest")]
@@ -42,7 +48,7 @@ namespace API.Controllers
         [HttpGet("badrequest/{id}")]
         public ActionResult GetNotFoundRequest(int id)
         {
-            return Ok();
+            return BadRequest(new ApiResponse(HttpStatusCode.BadRequest));
         }
     }
 }

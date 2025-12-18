@@ -39,5 +39,28 @@ namespace Api.StartupConfigurations
                 }
             });
         }
+
+        public static void UseCustomLogging(this IApplicationBuilder app)
+        {
+            //app.UseHttpLogging();
+
+            app.UseSerilogRequestLogging(o =>
+            {
+                o.GetLevel = (httpContext, elapsed, ex) =>
+                {
+                    if (ex != null || httpContext.Response.StatusCode >= 500)
+                    {
+                        return LogEventLevel.Error;
+                    }
+
+                    if (httpContext.Response.StatusCode >= 400)
+                    {
+                        return LogEventLevel.Warning;
+                    }
+
+                    return LogEventLevel.Information;
+                };
+            });
+        }
     }
 }

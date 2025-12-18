@@ -1,31 +1,45 @@
-﻿using Core.Interfaces;
+﻿using Api.Helpers;
+using Core.Interfaces;
 using Data;
 using Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 //using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Api.StartupConfigurations
 {
     public static class PersistanceDependencies
     {
-        public static void AddDataPersistenceServices(this IServiceCollection services, IConfiguration configuration)
+        public static void AddDataPersistenceServices(this IServiceCollection services,
+                                                      IConfiguration configuration, IWebHostEnvironment environment)
         {
             services.AddDbContext<StoreContext>(x =>
-                {
-                    x.UseSqlServer(
-                        "name=ConnectionStrings:DefaultConnectionMssql",
-                        sqlOptions =>
-                        {
-                            sqlOptions.EnableRetryOnFailure(
-                            maxRetryCount: 5,
-                            maxRetryDelay: TimeSpan.FromSeconds(30),
-                            errorNumbersToAdd: null);
-                        });
+            {
+                x.UseSqlServer(
+                    "name=ConnectionStrings:DefaultConnectionMssql",
+                    sqlOptions =>
+                    {
+                        sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(30),
+                        errorNumbersToAdd: null);
+                    });
 
-                    x.LogTo(Serilog.Log.Information,
-                       [DbLoggerCategory.Database.Command.Name],
-                       LogLevel.Information);
-                });
+                x.LogTo(Serilog.Log.Information,
+                    [DbLoggerCategory.Database.Command.Name],
+                    LogLevel.Information);
+
+                if (environment.IsDevelopment())
+                {
+                    x.AddInterceptors(new InlineSqlWithTimingInterceptor(
+                        services.BuildServiceProvider()
+                                .GetRequiredService<ILogger<InlineSqlWithTimingInterceptor>>()));
+
+                    x.ConfigureWarnings(w => w.Ignore(RelationalEventId.CommandExecuting)
+                                              .Ignore(RelationalEventId.CommandExecuted)
+                                              .Ignore(RelationalEventId.CommandError));
+                }
+            });
 
             services.AddDbContext<AppIdentityDbContext>(x =>
             {

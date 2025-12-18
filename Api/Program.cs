@@ -1,39 +1,30 @@
+using Api;
 using Api.StartupConfigurations;
 using Serilog;
 
-namespace Api
+try
 {
-    public static class Program
-    {
-        public static async Task Main(string[] args)
-        {
-            try
-            {
-                Log.Debug("init main");
+    Log.Debug("init main");
 
-                var builder = WebApplication.CreateBuilder(args);
+    var builder = WebApplication.CreateBuilder(args);
 
-                builder.Host.UseSerilog();
+    builder.Host.UseSerilog();
 
-                builder.AddOpenTelemetry("eComNetAPI");
+    Startup.ConfigureServices(builder.Services, builder.Configuration, builder.Environment);
 
-                Startup.ConfigureServices(builder.Services, builder.Configuration, builder.Environment);
+    builder.AddOpenTelemetry("eComNetAPI");
 
-                var app = builder.Build();
+    var app = builder.Build();
 
-                Startup.ConfigureApp(app, builder.Environment);
+    Startup.ConfigureApp(app, builder.Environment);
 
-                await app.RunAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Stopped program because of exception");
-                //throw;
-            }
-            finally
-            {
-                await Log.CloseAndFlushAsync();
-            }
-        }
-    }
+    await app.RunAsync();
+}
+catch (Exception ex)
+{
+    Log.Error(ex, "Stopped program because of exception");
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
 }

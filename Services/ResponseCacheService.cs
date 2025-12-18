@@ -5,52 +5,51 @@ using Microsoft.Extensions.Logging;
 using Services.Interfaces;
 using StackExchange.Redis;
 
-namespace Services
+namespace Services;
+
+public class ResponseCacheService : IResponseCacheService
 {
-    public class ResponseCacheService : IResponseCacheService
+    private readonly ILogger<ResponseCacheService> _logger;
+    private readonly IDatabase _database;
+
+    public ResponseCacheService(IConnectionMultiplexer redis, ILogger<ResponseCacheService> logger)
     {
-        private readonly ILogger<ResponseCacheService> _logger;
-        private readonly IDatabase _database;
+        _logger = logger;
+        _database = redis.GetDatabase();
+    }
 
-        public ResponseCacheService(IConnectionMultiplexer redis, ILogger<ResponseCacheService> logger)
+    public Task CacheResponseAsync(string cacheKey, object response, TimeSpan timeToLive)
+    {
+        if (response == null)
         {
-            _logger = logger;
-            _database = redis.GetDatabase();
+            _logger.LogWarning("CacheResponseAsync response is null.");
+            return Task.CompletedTask;
         }
 
-        public Task CacheResponseAsync(string cacheKey, object response, TimeSpan timeToLive)
+        _logger.LogDebug("CacheResponseAsync cacheKey:'{CacheKey}' , timeToLive:{TimeToLive} ms", cacheKey, timeToLive.TotalMilliseconds);
+
+        var options = new JsonSerializerOptions
         {
-            if (response == null)
-            {
-                _logger.LogWarning("CacheResponseAsync response is null.");
-                return null;
-            }
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
 
-            _logger.LogDebug($"CacheResponseAsync cacheKey:'{cacheKey}' , timeToLive:{timeToLive.TotalMilliseconds} ms");
+        var serializedResponse = JsonSerializer.Serialize(response, options);
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
+        return _database.StringSetAsync(cacheKey, serializedResponse, timeToLive);
+    }
 
-            var serializedResponse = JsonSerializer.Serialize(response, options);
+    public async Task<string> GetCachedResponseAsync(string cacheKey)
+    {
+        var cachedResponse = await _database.StringGetAsync(cacheKey);
 
-            return _database.StringSetAsync(cacheKey, serializedResponse, timeToLive);
+        _logger.LogDebug("GetCachedResponseAsync cacheKey:'{CacheKey}'", cacheKey);
+
+        if (cachedResponse.IsNullOrEmpty)
+        {
+            _logger.LogDebug("GetCachedResponseAsync cachedResponse is null.");
+            return null;
         }
 
-        public async Task<string> GetCachedResponseAsync(string cacheKey)
-        {
-            var cachedResponse = await _database.StringGetAsync(cacheKey);
-
-            _logger.LogDebug($"GetCachedResponseAsync cacheKey:'{cacheKey}'");
-
-            if (cachedResponse.IsNullOrEmpty)
-            {
-                _logger.LogDebug("GetCachedResponseAsync cachedResponse is null.");
-                return null;
-            }
-
-            return cachedResponse;
-        }
+        return cachedResponse;
     }
 }
