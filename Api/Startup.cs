@@ -27,12 +27,16 @@ public static class Startup
 
         services.AddCors(opt =>
         {
-            opt.AddPolicy("CustomCorsPolicy", policy =>
+            opt.AddDefaultPolicy(policy =>
             {
-                policy
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowAnyOrigin();
+                var allowedOrigins = conf.GetValue<string>("AllowedOrigins")?
+                                         .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                         ?? ["http://localhost:4200"];
+
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyMethod()
+                      .AllowAnyHeader()
+                      .AllowCredentials();
             });
         });
 
@@ -117,7 +121,7 @@ public static class Startup
         // ASP.NET CORS module is smart enough to detect whether a same domain request
         // is firing and if it is, doesn't send the headers. 
         // test with: testCORS.html in Api folder
-        app.UseCors("CustomCorsPolicy");
+        app.UseCors();
 
         app.UseAuthentication();
         app.UseAuthorization();

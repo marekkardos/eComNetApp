@@ -1,38 +1,58 @@
 version: '3.4'
 
 services:
-  # api:
-    # image: ${DOCKER_REGISTRY-}api
-    # build:
-      # context: .
-      # dockerfile: Api/Dockerfile
-    # volumes:
-      # - diagnostics:/tmp
-      # - data:/data
-    # environment:
-     # - ASPNETCORE_ENVIRONMENT=Development
-    # #  - ASPNETCORE_URLS=http://+:80
-    # ports:
-        # - "44369:80"
-    # depends_on:
-      # - dbserver
-      # - redis
-    # networks:
-      # - api-network
+  api:
+    image: ${DOCKER_REGISTRY-}api
+    build:
+      context: .
+      dockerfile: Api/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnectionMssql=Server=dbserver,1433;Database=eCommNetDb;User Id=sa;Password=Strong!Passw0rd;TrustServerCertificate=True
+      - ConnectionStrings__IdentityConnectionMssql=Server=dbserver,1433;Database=eCommNet_IdentityDb;User Id=sa;Password=Strong!Passw0rd;TrustServerCertificate=True
+      - ConnectionStrings__Redis=redis:6379
+      - AllowedOrigins=http://localhost:4200,http://angular:4200
+    ports:
+      - "44369:80"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+    depends_on:
+      - dbserver
+      - redis
+    networks:
+      - api-network
 
+  angular:
+    profiles: ["backend-dev", "full-stack-containers"]
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "4200:4200"
+    volumes:
+      # Mount source for hot reload
+      - ./client:/app
+      # Preserve container's node_modules
+      - /app/node_modules
+    depends_on:
+      - api
+    networks:
+      - api-network
 
   dbserver:
     image: mcr.microsoft.com/mssql/server:2019-latest
     ports:
-        - "1433:1433"
+      - "1433:1433"
     environment:
       SA_PASSWORD: "Strong!Passw0rd"
       ACCEPT_EULA: "Y" 
     volumes: 
-        - .data/MSSQL2019-DATA:/var/opt/mssql/data
+      - .data/MSSQL2019-DATA:/var/opt/mssql/data
     networks:
       - api-network
-
       
   redis:
     image: redis
@@ -44,7 +64,3 @@ services:
 networks:
   api-network:
     driver: bridge
-
-volumes:
-    diagnostics:
-    data:

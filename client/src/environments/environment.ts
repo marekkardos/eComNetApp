@@ -2,9 +2,11 @@
 // `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
+// Frontend Developer Scenario
+// Angular on host, API in Docker container
 export const  environment = {
   production: false,
-  apiUrl: 'https://localhost:5001/api/',
+  apiUrl: 'http://localhost:44369/api/',
   stripeSettings: {
     PublishableKey: 'REPLACE_WITH_YOUR_KEY'
   }

@@ -1,4 +1,16 @@
 # Client
+nvm install 12.22.12
+
+nvm use 12.22.12
+
+npm install
+
+npm install -g @angular/cli@9.1.15
+or Use the local CLI with npx>
+npx ng serve
+npx ng build
+npx ng generate component my-component
+
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.3.23.
 
