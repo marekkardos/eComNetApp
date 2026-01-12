@@ -39,11 +39,11 @@ public class PaymentsController : BaseApiController
     }
 
     [HttpPost("webhook")]
-    public async Task<ActionResult> StripeWebhook()
+    public async Task<ActionResult> StripeWebhook([FromHeader(Name = "Stripe-Signature")] string stripeSignature)
     {
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
 
-        var stripeEvent = EventUtility.ConstructEvent(json, Request.Headers["Stripe-Signature"], _whSecret);
+        var stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, _whSecret);
 
         PaymentIntent intent;
         Order order;
