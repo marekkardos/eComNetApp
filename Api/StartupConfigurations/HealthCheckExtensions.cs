@@ -1,6 +1,7 @@
 ﻿using Data;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Services;
 using System.Text.Json;
 
 namespace Api.StartupConfigurations;
@@ -12,7 +13,8 @@ public static class HealthCheckExtensions
         services.AddHealthChecks()
                 .AddDbContextCheck<StoreContext>(name: "StoreDbContext")
                 .AddDbContextCheck<AppIdentityDbContext>(name: "AppIdentityDbContext")
-                .AddRedis(configuration["ConnectionStrings:Redis"], name: "redis cache");
+                .AddRedis(configuration["ConnectionStrings:Redis"], name: "redis cache")
+                .AddCheck<StripeHealthCheck>(name: "Stripe");
     }
 
     public static void UseHealthChecksExt(this WebApplication app)

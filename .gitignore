@@ -449,3 +449,5 @@ appsettings.json
 /.tye
 /Api/wwwroot
 /.data/*
+/client/src/environments/environment.container.ts
+/client/src/environments/environment.local.ts

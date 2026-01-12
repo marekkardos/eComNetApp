@@ -24,7 +24,7 @@ services:
       - api-network
 
   angular:
-    profiles: ["backend-dev", "full-stack-containers"]
+    profiles: ["backend-dev"]
     build:
       context: ./client
       dockerfile: Dockerfile

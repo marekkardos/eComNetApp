@@ -40,7 +40,7 @@ Different developer roles need different setups. Docker Compose profiles allow e
 | Docker Desktop | Latest | Ensure it's running before starting |
 | .NET SDK | 8 or 9 | For local API development |
 | Node.js | 12.22.12 | Angular 9 requires Node 12.x |
-| Visual Studio | 2022 | For API development and debugging |
+| Visual Studio | 2026 | For API development and debugging |
 
 ### Install Node Version Manager (nvm)
 
@@ -88,19 +88,22 @@ The API uses User Secrets for sensitive data like Stripe keys. These are NOT sto
 cd Api
 dotnet user-secrets init
 dotnet user-secrets set "Stripe:SecretKey" "sk_test_YOUR_SECRET_KEY"
-dotnet user-secrets set "Stripe:PublishableKey" "pk_test_YOUR_PUBLISHABLE_KEY"
+dotnet user-secrets set "Stripe:WebHookSecret" "whsec__WebHookSecret"
 cd ..
 ```
 
 **Where to get keys:**
 - Stripe: https://dashboard.stripe.com/test/apikeys
 
+**For complete Stripe local development setup (webhooks, testing, troubleshooting):**
+- See [STRIPE_DEVELOPMENT.md](STRIPE_DEVELOPMENT.md) for detailed guide
+
 ### 3. Set Up Node.js for Angular
 
 **Note:** Backend Developers can skip this step - Node.js is already installed in the Angular container.
 
 ```bash
-cd Angular
+cd client
 
 # Install and use Node 12
 nvm install 12.22.12
@@ -152,7 +155,7 @@ docker-compose up api dbserver redis
 # Wait for "Application started" message
 
 # Terminal 2: Start Angular with hot reload
-cd Angular
+cd client
 nvm use 12.22.12  # Switches to Node 12
 ng serve
 
@@ -239,27 +242,24 @@ docker-compose down
 
 **When to use:** Need to debug API code, set breakpoints, step through code
 
-```bash
-# Terminal: Start Angular and infrastructure
-docker-compose up angular dbserver redis
-
-# Wait for all services to start
-```
-
 **In Visual Studio:**
 1. Set **docker-compose** as startup project
    - Right-click `docker-compose` in Solution Explorer
    - Select "Set as Startup Project"
 2. Press **F5** to start debugging
-3. VS will build API image, start container, attach debugger
-4. Browser opens to Swagger
+3. VS automatically uses the `backend-dev` profile and starts all services:
+   - API (with debugging attached)
+   - Angular (without debugging)
+   - Database (without debugging)
+   - Redis (without debugging)
+4. Browser opens to Swagger at http://localhost:44369/swagger
 
 **What you get:**
-- ✅ Full stack running
+- ✅ Full stack running (all services started automatically by VS)
 - ✅ Set breakpoints in API code
 - ✅ Step through code, inspect variables
-- ✅ API changes require rebuild (see below)
-- ✅ Angular available for testing
+- ✅ Angular available at http://localhost:4200 for testing
+- ✅ No need to manually run docker-compose commands
 
 ### Making API Changes
 
@@ -269,21 +269,15 @@ When you modify API code:
 2. Rebuild: Right-click docker-compose project → Rebuild
 3. Press F5 again
 
-Or use command line:
-```bash
-docker-compose build api
-docker-compose up angular dbserver redis
-# Then F5 in VS
-```
+Visual Studio will rebuild the API image and restart all services automatically.
 
 ### Making Angular Changes
 
 If you need to modify Angular:
 
-1. Stop the Angular container
-2. Edit Angular files
-3. Rebuild: `docker-compose build angular`
-4. Restart: `docker-compose up angular dbserver redis`
+1. Edit Angular files in the `client` directory
+2. Angular hot reload will detect changes automatically (may take a few seconds)
+3. If you need to rebuild the image: Stop debugging (Shift+F5), rebuild docker-compose project, press F5 again
 
 **Note:** Angular hot reload works in container but is slower than running locally. For heavy Angular work, switch to Frontend Developer workflow.
 
@@ -331,7 +325,7 @@ docker-compose up dbserver redis
 
 ```bash
 # Terminal 2: Start Angular
-cd Angular
+cd client
 nvm use 12.22.12
 npm start
 
@@ -445,7 +439,6 @@ Profiles control which services start:
 |---------|------------------|---------|
 | (none) | api, dbserver, redis | `docker-compose up` |
 | `backend-dev` | api, angular, dbserver, redis | `docker-compose --profile backend-dev up` |
-| `full-stack-containers` | api, angular, dbserver, redis | `docker-compose --profile full-stack-containers up` |
 
 ---
 
@@ -562,20 +555,20 @@ docker-compose up
 ```bash
 # First time setup
 cd Api && dotnet user-secrets init && cd ..
-cd Angular && nvm use 12.22.12 && npm install && cd ..
+cd client && nvm use 12.22.12 && npm install && cd ..
 
 # Frontend Developer
 docker-compose up api dbserver redis
-cd Angular && ng serve
+cd client && ng serve
 
 # Backend Developer (with debugging)
 docker-compose up angular dbserver redis
 # Then: F5 in Visual Studio (docker-compose project)
 
-# Full-Stack Developer  
+# Full-Stack Developer
 docker-compose up dbserver redis
 # Then: F5 in VS (Local Development profile)
-cd Angular && npm start
+cd client && npm start
 
 # Stop everything
 docker-compose down
