@@ -118,6 +118,27 @@ npm install
 cd ..
 ```
 
+### 4. Set Up Angular Environment Files
+
+Angular uses environment-specific configuration files. Template files are provided - copy them and add your Stripe publishable key:
+
+```bash
+cd client/src/environments
+
+# For full-stack local development
+cp environment.local.template.ts environment.local.ts
+
+# For backend dev (containerized Angular)
+cp environment.container.template.ts environment.container.ts
+
+cd ../../..
+```
+
+Edit each file and replace `REPLACE_WITH_YOUR_KEY` with your Stripe publishable key:
+- Get your key from: https://dashboard.stripe.com/test/apikeys (use the **Publishable key**, starts with `pk_test_`)
+
+**Note:** The `.ts` files are gitignored to prevent committing secrets. Only the `.template.ts` files are tracked.
+
 You're ready to start development! Choose your workflow below.
 
 ---
@@ -419,6 +440,10 @@ Angular uses different environment files for different scenarios:
 | `environment.local.ts` | Full-stack local (npm start) | `https://localhost:5001/api/` |
 | `environment.container.ts` | Backend dev (containerized) | `http://localhost:44369/api/` |
 
+**Template Pattern:** Files containing secrets use a template pattern:
+- `*.template.ts` - Tracked in git, contains placeholder `REPLACE_WITH_YOUR_KEY`
+- `*.ts` - Gitignored, created locally by copying template and adding real keys
+
 The correct file is loaded based on Angular configuration:
 - `ng serve` → uses `environment.ts`
 - `npm start` → uses `environment.local.ts` (via `--configuration=local`)
@@ -556,6 +581,8 @@ docker-compose up
 # First time setup
 cd Api && dotnet user-secrets init && cd ..
 cd client && nvm use 12.22.12 && npm install && cd ..
+cd client/src/environments && cp environment.local.template.ts environment.local.ts && cp environment.container.template.ts environment.container.ts && cd ../../..
+# Edit the .ts files and add your Stripe publishable key
 
 # Frontend Developer
 docker-compose up api dbserver redis
