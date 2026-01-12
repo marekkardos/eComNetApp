@@ -11,24 +11,15 @@ using Order = Core.Entities.OrderAggregate.Order;
 namespace Api.Controllers;
 
 [ApiExplorerSettings(GroupName = "Payments")]
-public class PaymentsController : BaseApiController
+public class PaymentsController(IPaymentService paymentService, ILogger<PaymentsController> logger, IConfiguration config) : BaseApiController
 {
-    private readonly IPaymentService _paymentService;
-    private readonly string _whSecret;
-    private readonly ILogger<PaymentsController> _logger;
-
-    public PaymentsController(IPaymentService paymentService, ILogger<PaymentsController> logger, IConfiguration config)
-    {
-        _logger = logger;
-        _paymentService = paymentService;
-        _whSecret = config.GetSection("StripeSettings:WebHookSecret").Value;
-    }
+    private readonly string _whSecret = config.GetSection("StripeSettings:WebHookSecret").Value;
 
     [Authorize]
     [HttpPost("{basketId}")]
     public async Task<ActionResult<CustomerBasket>> CreateOrUpdatePaymentIntent([Required] string basketId)
     {
-        var basket = await _paymentService.CreateOrUpdatePaymentIntent(basketId);
+        var basket = await paymentService.CreateOrUpdatePaymentIntent(basketId);
 
         if (basket == null)
         {
@@ -52,32 +43,34 @@ public class PaymentsController : BaseApiController
         {
             case "payment_intent.succeeded":
                 intent = (PaymentIntent)stripeEvent.Data.Object;
-                _logger.LogInformation("Payment Succeeded: {PaymentIntentId}", intent.Id);
+                logger.LogInformation("Payment Succeeded: {PaymentIntentId}", intent.Id);
 
-                order = await _paymentService.UpdateOrderPaymentSucceeded(intent.Id);
+                order = await paymentService.UpdateOrderPaymentSucceeded(intent.Id);
 
                 if (order != null)
                 {
-                    _logger.LogInformation("Order updated to payment received: {OrderId}", order.Id);
+                    logger.LogInformation("Order updated to payment received: {OrderId}", order.Id);
                 }
                 else
                 {
-                    _logger.LogInformation("Payment succeeded, order not found for PaymentIntentId: {PaymentIntentId}", intent.Id);
+                    logger.LogInformation("Payment succeeded, order not found for PaymentIntentId: {PaymentIntentId}", intent.Id);
                 }
                 break;
             case "payment_intent.payment_failed":
                 intent = (PaymentIntent)stripeEvent.Data.Object;
-                _logger.LogInformation("Payment Failed: {PaymentIntentId}}", intent.Id);
 
-                order = await _paymentService.UpdateOrderPaymentFailed(intent.Id);
+                logger.LogInformation("Payment Failed: {PaymentIntentId}, {LastPaymentError}", 
+                                       intent.Id, intent.LastPaymentError?.Message);
+
+                order = await paymentService.UpdateOrderPaymentFailed(intent.Id);
 
                 if (order != null)
                 {
-                    _logger.LogInformation("Payment Failed: {OrderId}", order.Id);
+                    logger.LogInformation("Payment Failed: {OrderId}", order.Id);
                 }
                 else
                 {
-                    _logger.LogInformation("Payment Failed, order not found for PaymentIntentId: {PaymentIntentId}", intent.Id);
+                    logger.LogInformation("Payment Failed, order not found for PaymentIntentId: {PaymentIntentId}", intent.Id);
                 }
                 break;
         }
