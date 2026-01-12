@@ -37,6 +37,16 @@ namespace Api.StartupConfigurations
                         };
                     });
                 }
+
+                if (environment.IsDevelopment())
+                {
+                    string seqEndpoint = configuration["SEQ:ENDPOINT"] ?? string.Empty;
+
+                    if (!string.IsNullOrWhiteSpace(seqEndpoint))
+                    {
+                        log.WriteTo.Seq(seqEndpoint, restrictedToMinimumLevel: LogEventLevel.Debug);
+                    }
+                }
             });
         }
 

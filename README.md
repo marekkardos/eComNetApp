@@ -26,6 +26,8 @@ Our local development environment uses Docker Compose to orchestrate multiple se
 - **Angular** (v9) - Frontend application
 - **SQL Server** - Database
 - **Redis** - Caching
+- **Aspire Dashboard** - OpenTelemetry observability (traces, logs, metrics)
+- **Seq** (optional) - Structured log viewer for local development
 
 Different developer roles need different setups. Docker Compose profiles allow each developer to run only what they need.
 
@@ -189,6 +191,7 @@ ng serve
 - ✅ Hot reload - save file, browser refreshes automatically
 - ✅ Chrome DevTools for debugging
 - ✅ API available at http://localhost:44369/swagger
+- ✅ Aspire Dashboard at http://localhost:18888 (traces, logs, metrics)
 - ✅ All API calls work
 
 ### Making Changes
@@ -251,6 +254,7 @@ docker-compose --profile backend-dev up
 - ✅ Full stack running
 - ✅ Can test Angular → API integration
 - ✅ Angular has hot reload (slower than local)
+- ✅ Aspire Dashboard at http://localhost:18888
 - ❌ Can't debug API with breakpoints
 
 **Stopping:**
@@ -280,6 +284,7 @@ docker-compose down
 - ✅ Set breakpoints in API code
 - ✅ Step through code, inspect variables
 - ✅ Angular available at http://localhost:4200 for testing
+- ✅ Aspire Dashboard at http://localhost:18888
 - ✅ No need to manually run docker-compose commands
 
 ### Making API Changes
@@ -335,6 +340,9 @@ Angular uses `environment.local.ts` which points to:
 # Terminal 1: Start infrastructure only
 docker-compose up dbserver redis
 
+# Or include Aspire Dashboard for observability
+docker-compose up dbserver redis aspire-dashboard
+
 # Wait for services to start
 ```
 
@@ -359,6 +367,7 @@ npm start
 - ✅ Angular at http://localhost:4200 with instant hot reload
 - ✅ Set breakpoints in API → they hit when Angular calls endpoints
 - ✅ Chrome DevTools for Angular debugging
+- ✅ Aspire Dashboard at http://localhost:18888 (run `docker-compose up aspire-dashboard` separately)
 - ✅ Maximum development speed
 
 ### Making Changes
@@ -412,9 +421,10 @@ All containers run on the same Docker network: `api-network`
 ```
 api-network (bridge)
 ├── api container (hostname: "api")
-├── angular container (hostname: "angular")  
+├── angular container (hostname: "angular")
 ├── dbserver container (hostname: "dbserver")
-└── redis container (hostname: "redis")
+├── redis container (hostname: "redis")
+└── aspire-dashboard container (hostname: "aspire-dashboard")
 ```
 
 **Inside containers:** Services can reach each other by name (e.g., `http://api:80`)
@@ -429,6 +439,8 @@ api-network (bridge)
 | Angular | 4200 | 4200 | http://localhost:4200 |
 | SQL Server | 1433 | 1433 | localhost,1433 |
 | Redis | 6379 | 6379 | localhost:6379 |
+| Aspire Dashboard | 18888 | 18888 | http://localhost:18888 |
+| Seq (optional) | 80 | 8081 | http://localhost:8081 |
 
 ### Environment Files
 
@@ -462,8 +474,81 @@ Profiles control which services start:
 
 | Profile | Services Started | Command |
 |---------|------------------|---------|
-| (none) | api, dbserver, redis | `docker-compose up` |
-| `backend-dev` | api, angular, dbserver, redis | `docker-compose --profile backend-dev up` |
+| (none) | api, dbserver, redis, aspire-dashboard | `docker-compose up` |
+| `backend-dev` | api, angular, dbserver, redis, aspire-dashboard | `docker-compose --profile backend-dev up` |
+
+### Observability with Aspire Dashboard
+
+The Aspire Dashboard provides a unified view of telemetry data from the API:
+
+- **Traces**: View distributed traces for API requests
+- **Logs**: Structured logs from the application
+- **Metrics**: Runtime, process, and ASP.NET Core metrics
+
+**Access the dashboard:** http://localhost:18888
+
+The API automatically sends OpenTelemetry data to the Aspire Dashboard via OTLP (gRPC) on port 18889. No additional configuration is needed when running with Docker Compose.
+
+**For local development (Full-Stack workflow):** When running the API locally in Visual Studio, ensure `OPEN_TELEMETRY:ENDPOINT` is set to `http://localhost:18889` in `appsettings.Development.json` and start the Aspire Dashboard container:
+
+```bash
+docker-compose up aspire-dashboard
+```
+
+### Local Logging with Seq (Optional)
+
+[Seq](https://datalust.co/seq) provides a powerful structured log viewer for local development. It's configured via `docker-compose.override.yml`.
+
+**Setup:**
+
+Create a `docker-compose.override.yml` file in the repository root with the following content:
+
+```yaml
+version: '3.4'
+
+services:
+  api:
+    environment:
+      - SEQ__ENDPOINT=http://seq:5341
+
+  seq:
+    image: datalust/seq:latest
+    ports:
+      - "5341:5341"  # Ingestion API
+      - "8081:80"    # Web UI
+    environment:
+      - ACCEPT_EULA=Y
+    volumes:
+      - .data/seq-data:/data
+    networks:
+      - api-network
+```
+
+**Access Seq:** http://localhost:8081
+
+**How it works:**
+- Seq is automatically started when you run `docker-compose up` (override file is merged automatically)
+- The API sends Serilog logs to Seq when `SEQ:ENDPOINT` is configured
+- Only enabled in Development environment for safety
+- Log data is persisted in `.data/seq-data/`
+
+**For local development (Full-Stack workflow):** When running the API locally in Visual Studio, add to `appsettings.Development.json`:
+
+```json
+{
+  "SEQ": {
+    "ENDPOINT": "http://localhost:5341"
+  }
+}
+```
+
+Then start the Seq container:
+
+```bash
+docker-compose up seq
+```
+
+**Note:** `docker-compose.override.yml` is gitignored, so this setup remains personal and won't affect other developers.
 
 ---
 
@@ -478,8 +563,8 @@ docker-compose up api dbserver redis
 # Backend dev: Everything
 docker-compose --profile backend-dev up
 
-# Full-stack local: Infrastructure only
-docker-compose up dbserver redis
+# Full-stack local: Infrastructure + observability
+docker-compose up dbserver redis aspire-dashboard
 
 # Start in background (detached)
 docker-compose up -d dbserver redis
@@ -522,6 +607,7 @@ docker-compose logs
 docker-compose logs api
 docker-compose logs angular
 docker-compose logs dbserver
+docker-compose logs aspire-dashboard
 
 # Follow logs (real-time)
 docker-compose logs -f api
@@ -593,9 +679,12 @@ docker-compose up angular dbserver redis
 # Then: F5 in Visual Studio (docker-compose project)
 
 # Full-Stack Developer
-docker-compose up dbserver redis
+docker-compose up dbserver redis aspire-dashboard
 # Then: F5 in VS (Local Development profile)
 cd client && npm start
+
+# View traces/logs/metrics
+# Open http://localhost:18888
 
 # Stop everything
 docker-compose down

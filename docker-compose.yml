@@ -13,6 +13,7 @@ services:
       - ConnectionStrings__IdentityConnectionMssql=Server=dbserver,1433;Database=eCommNet_IdentityDb;User Id=sa;Password=Strong!Passw0rd;TrustServerCertificate=True
       - ConnectionStrings__Redis=redis:6379
       - AllowedOrigins=http://localhost:4200,http://angular:4200
+      - OPEN_TELEMETRY__ENDPOINT=http://aspire-dashboard:18889
     ports:
       - "44369:80"
     volumes:
@@ -20,6 +21,7 @@ services:
     depends_on:
       - dbserver
       - redis
+      - aspire-dashboard
     networks:
       - api-network
 
@@ -58,6 +60,16 @@ services:
     image: redis
     ports:
       - "6379:6379"
+    networks:
+      - api-network
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    ports:
+      - "18888:18888"  # Dashboard UI
+      - "18889:18889"  # OTLP gRPC endpoint
+    environment:
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
     networks:
       - api-network
 
