@@ -1,0 +1,349 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+eComNetApp is an e-commerce application built with a .NET 8 backend API and Angular 9 frontend. The solution follows Clean Architecture principles with clear separation between domain logic, data access, and presentation layers.
+
+**For local development setup and workflows, see [README.md](README.md)** - it contains comprehensive Docker Compose orchestration guides for Frontend, Backend, and Full-Stack developer roles.
+
+## Architecture
+
+### Backend (.NET 8)
+
+The backend is organized into distinct projects with specific responsibilities:
+
+- **Api** - ASP.NET Core Web API (entry point)
+  - Controllers in `Api/Controllers/`
+  - Startup configuration in `Api/Startup.cs` and `Api/StartupConfigurations/`
+  - DTOs in `Api/Dtos/`
+  - API responses in `Api/ApiResponses/`
+  - Static files served from `Api/Content/`
+
+- **Core** - Domain layer (.NET Standard 2.0)
+  - Entities in `Core/Entities/` (domain models)
+  - Interfaces in `Core/Interfaces/` (repository and service contracts)
+  - Specifications pattern in `Core/Specifications/`
+  - MediatR command handlers in `Core/CommandHandlers/`
+  - MediatR query handlers in `Core/QueryHandlers/`
+
+- **Data** - Infrastructure/persistence layer (.NET 8)
+  - `StoreContext` - Main EF Core DbContext for products, orders, delivery methods (database: `eCommNetDb`)
+  - Identity context - Separate DbContext for user authentication (database: `eCommNet_IdentityDb`)
+  - Repository implementations in `Data/Repositories/`
+  - Entity configurations in `Data/Config/`
+  - EF Core migrations in `Data/Migrations/`
+  - Unit of Work pattern in `Data/UnitOfWork.cs`
+
+- **Services** - Application services (.NET 8)
+  - `StripePaymentService` - Payment processing
+  - `ResponseCacheService` - Redis caching
+  - Service interfaces in `Services/Interfaces/`
+  - Dependency registration in `Services/ConfigureDependencies.cs`
+
+- **SeedData** - Console app for seeding database
+  - `StoreContextSeed.cs` - Seeds products, brands, types, delivery methods
+  - `AppIdentityDbContextSeed.cs` - Seeds identity data
+
+- **Api.IntegrationTests** - NUnit integration tests
+
+### Frontend (Angular 9)
+
+Located in `client/` directory with feature-based module structure:
+
+- `client/src/app/account/` - User authentication and account management
+- `client/src/app/basket/` - Shopping basket/cart
+- `client/src/app/checkout/` - Checkout flow
+- `client/src/app/orders/` - Order history and details
+- `client/src/app/shop/` - Product catalog and browsing
+- `client/src/app/core/` - Singleton services, guards, interceptors, nav components
+- `client/src/app/shared/` - Reusable components and utilities
+
+### Key Patterns
+
+- **CQRS with MediatR**: Command and query handlers are separated in Core project
+- **Repository Pattern**: Data access abstracted through IGenericRepository and specific repositories
+- **Specification Pattern**: Query logic encapsulated in reusable specifications
+- **Unit of Work**: Transaction management across multiple repositories
+
+### Technology Stack
+
+- **Backend**: ASP.NET Core 8, Entity Framework Core 8, MediatR, AutoMapper
+- **Database**: SQL Server 2019 (via EF Core migrations)
+- **Caching**: Redis (StackExchange.Redis)
+- **Authentication**: JWT tokens (custom implementation in `Api/Identity/`)
+- **Payments**: Stripe.net
+- **Observability**: OpenTelemetry, Serilog (with Seq and console sinks)
+- **API Documentation**: Swagger/Swashbuckle
+- **Health Checks**: AspNetCore.HealthChecks (SQL Server, Redis)
+- **Frontend**: Angular 9, Bootstrap 4, ngx-bootstrap, ngx-toastr
+
+## Common Commands
+
+### Backend Development
+
+Build the solution:
+```bash
+dotnet build
+```
+
+Build specific project:
+```bash
+dotnet build Api/Api.csproj
+```
+
+Run the API locally (uses appsettings.Development.json):
+```bash
+dotnet run --project Api/Api.csproj
+```
+
+Watch mode for development:
+```bash
+dotnet watch --project Api/Api.csproj
+```
+
+Run integration tests:
+```bash
+dotnet test Api.IntegrationTests/Api.IntegrationTests.csproj
+```
+
+### Database Migrations
+
+Add a new migration:
+```bash
+dotnet ef migrations add <MigrationName> --project Data/Data.csproj --startup-project Api/Api.csproj
+```
+
+Update database:
+```bash
+dotnet ef database update --project Data/Data.csproj --startup-project Api/Api.csproj
+```
+
+Seed database (run SeedData console app):
+```bash
+dotnet run --project SeedData/SeedData.csproj
+```
+
+### Frontend Development
+
+Install dependencies:
+```bash
+cd client
+npm install
+```
+
+Run Angular dev server (local configuration):
+```bash
+cd client
+npm start
+# or: ng serve --configuration=local
+```
+
+Run in container mode:
+```bash
+cd client
+npm run start:container
+```
+
+Build for production:
+```bash
+cd client
+npm run build:prod
+```
+
+Build for test environment:
+```bash
+cd client
+npm run build:test
+```
+
+Run tests:
+```bash
+cd client
+npm test
+```
+
+Lint:
+```bash
+cd client
+npm run lint
+```
+
+### Docker Development
+
+The project uses Docker Compose for local development with profiles for different developer roles. See [README.md](README.md) for detailed workflows.
+
+Quick start:
+```bash
+# Frontend developer: API + infrastructure
+docker-compose up api dbserver redis
+
+# Backend developer: Everything in containers
+docker-compose --profile backend-dev up
+
+# Full-stack developer: Infrastructure only (run API/Angular locally)
+docker-compose up dbserver redis
+```
+
+The API is accessible at `http://localhost:44369` when running in containers.
+
+## Environment Configuration
+
+### Backend
+
+- Main config: `Api/appsettings.Development.json`
+- User secrets available via `UserSecretsId: 56ee6ee3-b7d8-4759-ab17-87297accef46`
+- Connection strings: `ConnectionStrings__DefaultConnectionMssql` and `ConnectionStrings__IdentityConnectionMssql` (separate databases for store and identity)
+- Redis: `ConnectionStrings__Redis`
+- OpenTelemetry endpoint required: `OPEN_TELEMETRY:ENDPOINT` configuration key
+
+### Frontend
+
+Multiple environment configurations in `client/src/environments/` for different development scenarios:
+- `environment.ts` - Default (API at http://localhost:44369)
+- `environment.local.ts` - Local full-stack development (API at https://localhost:5001)
+- `environment.container.ts` - Running in Docker container
+- `environment.stage.ts` - Staging environment (used for production builds)
+
+See [README.md](README.md) for detailed setup and usage of each environment.
+
+## Important Implementation Details
+
+### C# Language Version
+
+The solution uses C# 12 features. When adding new functionality or refactoring existing code, prefer modern C# 12 syntax:
+- Primary constructors for classes
+- Collection expressions
+- Using directives for aliases
+- Raw string literals
+
+### Central Package Management
+
+The solution uses Central Package Management (CPM) with `Directory.Packages.props` at the root. Package versions are centrally managed, and individual projects reference packages without version attributes.
+
+### Logging and Observability
+
+- Serilog configured in `Api/Program.cs` with `UseSerilog()`
+- OpenTelemetry setup in `Api/StartupConfigurations/OpenTelemetryExtensions.cs`
+- Tracing: ASP.NET Core, HTTP client, EF Core instrumentation
+- Metrics: Runtime, process, ASP.NET Core metrics
+- Log sinks: Console, Seq, OpenTelemetry
+
+### Authentication Flow
+
+The application uses a secure refresh token pattern with HttpOnly cookies to protect against XSS attacks:
+
+**Flow:**
+1. User logs in → server sets a refresh token in HttpOnly cookie
+2. Server returns a short-lived access token in the response body
+3. Angular stores the access token in memory only (not localStorage)
+4. When access token expires → Angular calls `/api/account/refresh` → cookie is sent automatically → server returns a new access token
+
+**Key Components:**
+- `TokenService.cs` (`Api/Identity/`) - JWT access token generation with JTI claim
+- `RefreshTokenService.cs` (`Api/Identity/`) - Refresh token generation, validation, rotation, and revocation
+- `TokenSettings` configuration in appsettings - Configurable token lifetimes (AccessTokenExpirationMinutes, RefreshTokenExpirationDays)
+- `CookieExtensions.cs` (`Api/Extensions/`) - Secure cookie helpers (HttpOnly, Secure, SameSite=Strict)
+- `AccountController.cs` - `/login`, `/register`, `/refresh`, `/logout` endpoints
+- `account.service.ts` (Angular) - In-memory token storage with automatic refresh on app startup
+- `jwt.interceptor.ts` (Angular) - Automatic token refresh on 401 errors with request retry
+
+**Security Features:**
+- Short-lived access tokens with configurable expiration (reduced attack window)
+- Refresh tokens stored in HttpOnly cookies (protected from JavaScript access)
+- Server-side token revocation and rotation on each refresh
+- Stolen token detection: if a revoked refresh token is reused, all user's refresh tokens are automatically revoked (forces re-login)
+- Account lockout after 5 failed login attempts (15 minute duration)
+- Separate identity context from main StoreContext
+
+**Database:**
+- `RefreshToken` entity in `Core/Entities/Identity/` with SHA256 hashing
+- Stored in `eCommNet_IdentityDb` database via `AppIdentityDbContext`
+
+See [docs/AUTH_REFACTORING_PLAN.md](docs/AUTH_REFACTORING_PLAN.md) for complete implementation details.
+
+### Stripe Payment Integration
+
+Payment processing uses Stripe Payment Intents with webhook-based order status updates.
+
+**Key Components:**
+- `StripePaymentService.cs` (Services) - Payment Intent creation and order status updates
+- `PaymentsController.cs` (Api/Controllers) - Payment endpoints and webhook handler
+- Webhook endpoint: `POST /api/payments/webhook`
+
+**Payment Flow:**
+1. Client calls `POST /api/payments/{basketId}` to create/update Payment Intent
+2. API validates basket, creates Stripe Payment Intent, returns `ClientSecret`
+3. Angular frontend completes payment using Stripe.js
+4. Stripe sends webhook to API with payment result
+5. API updates order status: `PaymentReceived` or `PaymentFailed`
+
+**Configuration:**
+- `StripeSettings:SecretKey` - Stripe API secret key (backend only)
+- `StripeSettings:WebHookSecret` - Webhook signature verification secret
+- Frontend publishable key configured in Angular environment files
+
+**Important:**
+- Order status updates happen via webhooks, not client-side confirmation
+- Webhook signature verification ensures requests come from Stripe (PaymentsController.cs:46)
+- PaymentIntentId is the critical link: baskets (Redis) store it, orders (SQL) must copy it during creation, webhooks (Stripe) use it to find and update the correct order. If an order lacks the PaymentIntentId, webhook updates will silently fail
+
+**Local Development:**
+- Requires Stripe CLI for webhook forwarding: `stripe listen --forward-to http://localhost:44369/api/payments/webhook`
+- See [STRIPE_DEVELOPMENT.md](STRIPE_DEVELOPMENT.md) for complete setup guide
+
+### CORS Configuration
+
+CORS origins configured via `AllowedOrigins` environment variable (comma-separated):
+```
+AllowedOrigins=http://localhost:4200,http://angular:4200
+```
+
+### API Versioning
+
+API versioning configured in `Startup.cs` with `AddCustomApiVersioning()` extension.
+
+### Health Checks
+
+Health checks are exposed at `/healthz` endpoint with security-aware access control:
+
+**Registered Checks:**
+- `StoreDbContext` - Main EF Core database (eCommNetDb)
+- `AppIdentityDbContext` - Identity database (eCommNet_IdentityDb)
+- `redis cache` - Redis connectivity and availability
+- `Stripe` - Stripe API connectivity and key validation (uses Balance API)
+
+**Security Model:**
+- **Local access** (127.0.0.1, ::1, localhost): No authentication required
+- **Remote access**: Requires `X-Health-Check-Key` header matching `HealthCheckApiKey` configuration
+- Unauthorized requests are logged with IP address
+
+### Static Files
+
+Static files served from `Api/Content/` directory, accessible at `/content` URL path.
+
+## Development Workflow Notes
+
+**See [README.md](README.md) for comprehensive development workflows including Frontend, Backend, and Full-Stack developer setups.**
+
+### Port Mappings
+
+| Service | Port | URL |
+|---------|------|-----|
+| API (Docker) | 44369 | http://localhost:44369 |
+| API (Local VS) | 5001 | https://localhost:5001 |
+| Angular | 4200 | http://localhost:4200 |
+| SQL Server | 1433 | localhost,1433 |
+| Redis | 6379 | localhost:6379 |
+
+### Important Notes
+
+- The solution uses **separate databases**: `eCommNetDb` (store context) and `eCommNet_IdentityDb` (identity context)
+- AutoMapper configuration is validated in Development environment (see `Startup.ConfigureApp()`)
+- Error handling uses custom error pages: `/error` for exceptions, `/errors/{code}` for status codes
+- Angular 9 requires Node.js 12.x - use nvm to manage versions
+
+## Git Commit Preferences
+
+- Do NOT include `Co-Authored-By` lines in commit messages
