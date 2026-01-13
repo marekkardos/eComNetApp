@@ -1,9 +1,8 @@
 using Core.Entities.Identity;
 
-namespace Api.Identity
+namespace Api.Identity;
+
+public interface ITokenService
 {
-    public interface ITokenService
-    {
-         string CreateToken(AppUser user);
-    }
+    (string Token, string JwtId) CreateToken(AppUser user);
 }

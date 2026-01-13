@@ -80,7 +80,9 @@ public static class Startup
         services.AddCustomApiVersioning();
         services.AddScoped<IPictureUrlResolver, PictureUrlResolver>();
 
+        services.Configure<TokenSettings>(conf.GetSection("TokenSettings"));
         services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddApplicationServices(conf);
 
         services.AddHealthChecksExt(conf);

@@ -10,8 +10,8 @@ export class ErrorInterceptor implements HttpInterceptor {
     constructor(private router: Router, private toastr: ToastrService) {}
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-
         const isLogin = req.url.includes('/login');
+        const isRefresh = req.url.includes('/refresh');
 
         return next.handle(req).pipe(
             catchError(error => {
@@ -23,8 +23,9 @@ export class ErrorInterceptor implements HttpInterceptor {
                             this.toastr.error(error.error.message, error.error.statusCode);
                         }
                     }
-                    if (error.status === 401 && !isLogin) {
-                        this.toastr.error(error.error.message, error.error.statusCode);
+                    // Don't show toast for 401 on refresh (handled by interceptor)
+                    if (error.status === 401 && !isLogin && !isRefresh) {
+                        this.toastr.error(error.error?.message || 'Unauthorized', error.error?.statusCode || '401');
                     }
                     if (error.status === 404) {
                         this.router.navigateByUrl('/not-found');
@@ -34,9 +35,8 @@ export class ErrorInterceptor implements HttpInterceptor {
                         this.router.navigateByUrl('/server-error', navigationExtras);
                     }
                 }
-                return throwError(error);
+                return throwError(() => error);
             })
         );
     }
-
 }

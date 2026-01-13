@@ -1,10 +1,11 @@
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 
-namespace Core.Entities.Identity
+namespace Core.Entities.Identity;
+
+public class AppUser : IdentityUser
 {
-    public class AppUser : IdentityUser
-    {
-        public string DisplayName { get; set; }
-        public Address Address { get; set; }
-    }
+    public string DisplayName { get; set; }
+    public Address Address { get; set; }
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
 }
