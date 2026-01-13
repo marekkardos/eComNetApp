@@ -1,7 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 using Api.ApiResponses;
 using Api.Controllers;
 using Api.Dtos;
@@ -10,32 +8,17 @@ using Api.Identity;
 using AutoMapper;
 using Core.Entities.Identity;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace API.Controllers
 {
     [Authorize]
     [ApiExplorerSettings(GroupName = "Account")]
-    public class AccountController : BaseApiController
+    public class AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager,
+        ITokenService tokenService, IMapper mapper, ILoggerFactory loggerFactory) : BaseApiController
     {
-        private readonly UserManager<AppUser> _userManager;
-        private readonly SignInManager<AppUser> _signInManager;
-        private readonly ITokenService _tokenService;
-        private readonly IMapper _mapper;
-        private readonly ILogger<AccountController> _logger;
-
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager,
-            ITokenService tokenService, IMapper mapper, ILoggerFactory loggerFactory)
-        {
-            _mapper = mapper;
-            _logger = loggerFactory.CreateLogger<AccountController>();
-            _tokenService = tokenService;
-            _signInManager = signInManager;
-            _userManager = userManager;
-        }
+        private readonly ILogger<AccountController> _logger = loggerFactory.CreateLogger<AccountController>();
 
         [HttpGet("emailexists")]
         [AllowAnonymous]
@@ -44,7 +27,7 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<bool>> CheckEmailExistsAsync([FromQuery] [Required] [EmailAddress] string email)
         {
-            return await _userManager.FindByEmailAsync(email) != null;
+            return await userManager.FindByEmailAsync(email) != null;
         }
 
         [HttpPost("register")]
@@ -53,7 +36,7 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
         {
-            var dbUser = await _userManager.FindByEmailAsync(registerDto.Email);
+            var dbUser = await userManager.FindByEmailAsync(registerDto.Email);
 
             if (dbUser != null)
             {
@@ -68,14 +51,14 @@ namespace API.Controllers
                 UserName = registerDto.Email
             };
 
-            var result = await _userManager.CreateAsync(user, registerDto.Password);
+            var result = await userManager.CreateAsync(user, registerDto.Password);
 
             if (result.Succeeded)
             {
                 return Created("account", new UserDto
                 {
                     DisplayName = user.DisplayName,
-                    Token = _tokenService.CreateToken(user),
+                    Token = tokenService.CreateToken(user),
                     Email = user.Email
                 });
             }
@@ -93,21 +76,21 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
         {
-            var user = await _userManager.FindByEmailAsync(loginDto.Email);
+            var user = await userManager.FindByEmailAsync(loginDto.Email);
 
             if (user == null)
             {
                 return Unauthorized(new ApiResponse(HttpStatusCode.Unauthorized));
             }
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
+            var result = await signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
 
             if (!result.Succeeded)
             {
                 return Unauthorized(new ApiResponse(HttpStatusCode.Unauthorized));
             }
 
-            var token = _tokenService.CreateToken(user);
+            var token = tokenService.CreateToken(user);
 
             return new UserDto
             {
@@ -121,7 +104,7 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<UserDto>> GetCurrentUser()
         {
-            var user = await _userManager.FindByEmailFromClaimsPrinciple(HttpContext.User);
+            var user = await userManager.FindByEmailFromClaimsPrinciple(HttpContext.User);
 
             if (user == null)
             {
@@ -132,7 +115,7 @@ namespace API.Controllers
             return new UserDto
             {
                 Email = user.Email,
-                Token = _tokenService.CreateToken(user),
+                Token = tokenService.CreateToken(user),
                 DisplayName = user.DisplayName
             };
         }
@@ -141,9 +124,9 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<AddressDto>> GetUserAddress()
         {
-            var user = await _userManager.FindByUserByClaimsPrincipleWithAddressAsync(HttpContext.User);
+            var user = await userManager.FindByUserByClaimsPrincipleWithAddressAsync(HttpContext.User);
 
-            return _mapper.Map<Address, AddressDto>(user.Address);
+            return mapper.Map<Address, AddressDto>(user.Address);
         }
 
         [HttpPut("address")]
@@ -152,20 +135,20 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<AddressDto>> UpdateUserAddress(AddressDto address)
         {
-            var user = await _userManager.FindByUserByClaimsPrincipleWithAddressAsync(HttpContext.User);
+            var user = await userManager.FindByUserByClaimsPrincipleWithAddressAsync(HttpContext.User);
 
             var isInsert = user.Address == null;
 
-            user.Address = _mapper.Map<AddressDto, Address>(address);
+            user.Address = mapper.Map<AddressDto, Address>(address);
 
-            var result = await _userManager.UpdateAsync(user);
+            var result = await userManager.UpdateAsync(user);
 
             if (result.Succeeded)
             {
                 return isInsert ? (ActionResult<AddressDto>) Created("address", address) : Ok();
             }
 
-            _logger.LogWarning($"_userManager.UpdateAsync failed:{result}");
+            _logger.LogWarning("_userManager.UpdateAsync failed:{IdentityResult}", result);
             return BadRequest(new ApiResponse(HttpStatusCode.BadRequest, "Problem updating the user"));
         }
     }

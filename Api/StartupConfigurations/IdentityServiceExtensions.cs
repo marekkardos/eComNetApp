@@ -50,7 +50,7 @@ public static class IdentityServiceExtensions
                     IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
                     ValidIssuer = config["Token:Issuer"],
                     ValidateIssuer = true,
-                    ValidateAudience = false // true todo:  ValidAudience = configuration["Token:Audience"]
+                    ValidateAudience = false
                 };
             });
     }
