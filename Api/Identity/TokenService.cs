@@ -10,7 +10,7 @@ namespace Api.Identity;
 public class TokenService(IConfiguration config, IOptions<TokenSettings> tokenSettings) : ITokenService
 {
     private readonly SymmetricSecurityKey _key = new(Encoding.UTF8.GetBytes(
-        config["Token:Key"] ?? throw new InvalidOperationException("Token:Key is missing")));
+        config["Token:Key"] ?? throw new InvalidOperationException("Token:Key configuration is missing")));
     private readonly TokenSettings _tokenSettings = tokenSettings.Value;
 
     public (string Token, string JwtId) CreateToken(AppUser user)

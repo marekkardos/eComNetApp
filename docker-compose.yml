@@ -14,6 +14,7 @@ services:
       - ConnectionStrings__Redis=redis:6379
       - AllowedOrigins=http://localhost:4200,http://angular:4200
       - OPEN_TELEMETRY__ENDPOINT=http://aspire-dashboard:18889
+      - Seq__ServerUrl=http://seq:5341
     ports:
       - "44369:80"
     volumes:
@@ -22,6 +23,7 @@ services:
       - dbserver
       - redis
       - aspire-dashboard
+      - seq
     networks:
       - api-network
 
@@ -70,6 +72,18 @@ services:
       - "18889:18889"  # OTLP gRPC endpoint
     environment:
       - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+    networks:
+      - api-network
+
+  seq:
+    image: datalust/seq:latest
+    ports:
+      - "5341:5341"  # Ingestion API
+      - "8081:80"    # Web UI
+    environment:
+      - ACCEPT_EULA=Y
+    volumes:
+      - .data/seq-data:/data
     networks:
       - api-network
 

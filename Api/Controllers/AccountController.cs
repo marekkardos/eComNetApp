@@ -24,10 +24,13 @@ public class AccountController(
     IOptions<TokenSettings> tokenSettings,
     IMapper mapper,
     ILoggerFactory loggerFactory,
-    IWebHostEnvironment environment) : BaseApiController
+    IWebHostEnvironment environment,
+    IAuthEventsLog authEventsLog,
+    IOptions<LockoutSettings> lockoutSettings) : BaseApiController
 {
     private readonly ILogger<AccountController> _logger = loggerFactory.CreateLogger<AccountController>();
     private readonly TokenSettings _tokenSettings = tokenSettings.Value;
+    private readonly LockoutSettings _lockoutSettings = lockoutSettings.Value;
 
     [HttpGet("emailexists")]
     [AllowAnonymous]
@@ -64,6 +67,9 @@ public class AccountController(
 
         if (result.Succeeded)
         {
+            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            authEventsLog.Monitor_UserRegistration(user.Id, user.Email, clientIp);
+
             var response = await GenerateAuthResponseAsync(user);
             return Created("account", response.Value);
         }
@@ -82,9 +88,11 @@ public class AccountController(
     public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
     {
         var user = await userManager.FindByEmailAsync(loginDto.Email);
+        var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
         if (user == null)
         {
+            authEventsLog.Monitor_LoginAttemptNonExistent(loginDto.Email, clientIp);
             return Unauthorized(new ApiResponse(HttpStatusCode.Unauthorized));
         }
 
@@ -92,15 +100,28 @@ public class AccountController(
 
         if (result.IsLockedOut)
         {
+            authEventsLog.AccountLockout(user.Id, user.Email, clientIp);
             return Unauthorized(new ApiResponse(HttpStatusCode.Unauthorized,
                 "Account locked due to multiple failed attempts. Try again later."));
         }
 
         if (!result.Succeeded)
         {
+            var failedCount = await userManager.GetAccessFailedCountAsync(user);
+
+            if (failedCount >= _lockoutSettings.MaxFailedAccessAttempts-1)
+            {
+                authEventsLog.FailedLoginThreshold(user.Id, user.Email, clientIp, failedCount);
+            }
+            else
+            {
+                authEventsLog.Monitor_LoginAttemptFailed(user.Id, user.Email, clientIp, failedCount);
+            }
+
             return Unauthorized(new ApiResponse(HttpStatusCode.Unauthorized));
         }
 
+        authEventsLog.Monitor_SuccessfulLogin(user.Id, user.Email, clientIp);
         return await GenerateAuthResponseAsync(user);
     }
 
@@ -131,6 +152,7 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserDto>> RefreshToken()
     {
+        var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
         var refreshTokenValue = Request.Cookies[_tokenSettings.CookieName];
 
         if (string.IsNullOrEmpty(refreshTokenValue))
@@ -152,6 +174,8 @@ public class AccountController(
         var newRefreshToken = await refreshTokenService.RotateRefreshTokenAsync(refreshToken, user, jwtId);
         Response.SetRefreshTokenCookie(newRefreshToken, _tokenSettings, !environment.IsDevelopment());
 
+        authEventsLog.Monitor_TokenRefresh(user.Id, user.Email, clientIp);
+
         return new UserDto
         {
             Email = user.Email,
@@ -165,6 +189,7 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Logout()
     {
+        var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
         var refreshTokenValue = Request.Cookies[_tokenSettings.CookieName];
 
         if (!string.IsNullOrEmpty(refreshTokenValue))
@@ -173,6 +198,7 @@ public class AccountController(
             if (refreshToken != null)
             {
                 await refreshTokenService.RevokeTokenAsync(refreshToken);
+                authEventsLog.Monitor_UserLogout(refreshToken.AppUserId, clientIp);
             }
         }
 

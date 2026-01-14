@@ -83,6 +83,7 @@ public static class Startup
         services.Configure<TokenSettings>(conf.GetSection("TokenSettings"));
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+        services.AddScoped<IAuthEventsLog, AuthEventsLog>();
         services.AddApplicationServices(conf);
 
         services.AddHealthChecksExt(conf);

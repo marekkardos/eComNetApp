@@ -17,6 +17,7 @@ namespace Api.StartupConfigurations
 
                 log.Enrich.WithSpan()
                    .Enrich.FromLogContext()
+                   .Enrich.WithClientIp()
                    .WriteTo.Console();
 
                 string openTelemetryEndpoint = configuration["OPEN_TELEMETRY:ENDPOINT"] ?? string.Empty;
@@ -38,22 +39,21 @@ namespace Api.StartupConfigurations
                     });
                 }
 
-                if (environment.IsDevelopment())
+                // Always sink to Seq for centralized logging and monitoring
+                string seqServerUrl = configuration["Seq:ServerUrl"] ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(seqServerUrl))
                 {
-                    string seqEndpoint = configuration["SEQ:ENDPOINT"] ?? string.Empty;
-
-                    if (!string.IsNullOrWhiteSpace(seqEndpoint))
-                    {
-                        log.WriteTo.Seq(seqEndpoint, restrictedToMinimumLevel: LogEventLevel.Debug);
-                    }
+                    log.WriteTo.Seq(
+                        serverUrl: seqServerUrl,
+                        apiKey: configuration["Seq:ApiKey"],
+                        restrictedToMinimumLevel: environment.IsDevelopment() ? LogEventLevel.Debug : LogEventLevel.Information
+                    );
                 }
             });
         }
 
         public static void UseCustomLogging(this IApplicationBuilder app)
         {
-            //app.UseHttpLogging();
-
             app.UseSerilogRequestLogging(o =>
             {
                 o.GetLevel = (httpContext, elapsed, ex) =>

@@ -10,7 +10,8 @@ namespace Api.Identity;
 public class RefreshTokenService(
     AppIdentityDbContext context,
     IOptions<TokenSettings> tokenSettings,
-    ILogger<RefreshTokenService> logger) : IRefreshTokenService
+    ILogger<RefreshTokenService> logger,
+    IAuthEventsLog authEventsLog) : IRefreshTokenService
 {
     private readonly TokenSettings _tokenSettings = tokenSettings.Value;
 
@@ -53,9 +54,10 @@ public class RefreshTokenService(
 
         if (refreshToken.IsRevoked)
         {
-            // Potential token reuse attack - revoke all tokens for this user
-            logger.LogWarning("Attempted use of revoked token for user {UserId}", refreshToken.AppUserId);
+            // CRITICAL: Token reuse detected - potential security breach!
+            authEventsLog.TokenReuseDetected(refreshToken.AppUserId, refreshToken.Id.ToString(), refreshToken.RevokedAt ?? DateTime.UtcNow);
             await RevokeAllUserTokensAsync(refreshToken.AppUserId);
+            authEventsLog.AllTokensRevoked(refreshToken.AppUserId);
             return null;
         }
 

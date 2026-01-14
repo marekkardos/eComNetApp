@@ -1,8 +1,10 @@
+using Api.Identity;
 using System.Text;
 using Core.Entities.Identity;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Api.StartupConfigurations;
@@ -20,6 +22,12 @@ public static class IdentityServiceExtensions
         builder.AddEntityFrameworkStores<AppIdentityDbContext>();
         builder.AddSignInManager<SignInManager<AppUser>>();
 
+        // Read lockout settings from configuration (uses defaults if section is missing)
+        var lockoutSettings = config.GetSection("LockoutSettings").Get<LockoutSettings>() ?? new LockoutSettings();
+
+        // Register LockoutSettings for DI injection if needed elsewhere
+        services.Configure<LockoutSettings>(config.GetSection("LockoutSettings"));
+
         services.Configure<IdentityOptions>(options =>
         {
             // Password settings.
@@ -31,9 +39,9 @@ public static class IdentityServiceExtensions
             options.Password.RequiredUniqueChars = 1;
 
             // Lockout settings.
-            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
-            options.Lockout.MaxFailedAccessAttempts = 5;
-            options.Lockout.AllowedForNewUsers = true;
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(lockoutSettings.DefaultLockoutTimeSpanMinutes);
+            options.Lockout.MaxFailedAccessAttempts = lockoutSettings.MaxFailedAccessAttempts;
+            options.Lockout.AllowedForNewUsers = lockoutSettings.AllowedForNewUsers;
 
             // User settings.
             options.User.AllowedUserNameCharacters =
@@ -42,7 +50,7 @@ public static class IdentityServiceExtensions
         });
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options => 
+            .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
