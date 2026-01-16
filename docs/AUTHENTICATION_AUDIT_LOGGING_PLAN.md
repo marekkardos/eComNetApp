@@ -8,6 +8,8 @@ Implement comprehensive authentication audit logging using Serilog with a dual a
 
 Both critical and standard events flow to Seq, but critical events use the audit sink which guarantees delivery by throwing exceptions on failure and using synchronous network calls.
 
+All authentication events are tagged with `AuthEvent=true` for easy filtering in Seq, regardless of whether they are critical or standard events.
+
 This follows the principle that certain authentication events (lockouts, token reuse detection, failed logins) are so critical that logging failures must be immediately visible rather than silent.
 
 ---
@@ -18,15 +20,19 @@ This follows the principle that certain authentication events (lockouts, token r
 Authentication Event
     |
     v
-IAuthEventsLog service
+IAuthEventsLog service (adds AuthEvent=true property)
     |
     v
 Is it critical? (lockout, token reuse, brute force)
     |
-    +--Yes--> AuditTo.Seq() [must succeed, throws on failure, synchronous]
+    +--Yes--> AuditTo.Seq() [Program.cs - must succeed, throws on failure, synchronous]
     |
-    +--No --> WriteTo.Seq() [standard logging, batched, async]
+    +--No --> WriteTo.Seq() [LoggingExtensions.cs - standard logging, batched, async]
 ```
+
+**Logging Configuration:**
+- `Program.cs` - Configures audit logger only (`AuditTo.Seq`)
+- `LoggingExtensions.cs` - Configures standard logging (`WriteTo.Seq`, `WriteTo.Console`, OpenTelemetry)
 
 **Critical Events** (use audit logger via `AuditTo.Seq`):
 - Account lockout triggered
@@ -39,7 +45,7 @@ Is it critical? (lockout, token reuse, brute force)
 - Token refresh
 - Registration
 - Failed login attempts (below threshold)
-- General authentication flow
+- Login attempts for non-existent emails
 
 ---
 
@@ -67,7 +73,7 @@ The `Serilog.Sinks.Seq` package supports both `WriteTo.Seq()` and `AuditTo.Seq()
 
 ### 1. Update `Api/Program.cs`
 
-Configure separate audit logger using `AuditTo.Seq()` alongside existing Serilog setup:
+Configure **only** the audit logger in Program.cs. Standard logging is handled by `LoggingExtensions.AddLogging()`.
 
 ```csharp
 // Create dedicated audit logger for critical security events
@@ -77,11 +83,12 @@ Configure separate audit logger using `AuditTo.Seq()` alongside existing Serilog
 // - Should only be used for critical security events due to performance impact
 var auditLogger = new LoggerConfiguration()
     .Enrich.FromLogContext()
-    .Enrich.WithProperty("Application", "eComNetApp")
+    .Enrich.WithProperty("Application", "eComNetApp_API")
     .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
     .Enrich.WithProperty("LogType", "SecurityAudit")
     .AuditTo.Seq(
-        serverUrl: builder.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341",
+        serverUrl: builder.Configuration["Seq:ServerUrl"]
+                    ?? throw new InvalidOperationException("Seq:ServerUrl configuration is missing."),
         apiKey: builder.Configuration["Seq:ApiKey"]
     )
     .CreateLogger();
@@ -89,22 +96,46 @@ var auditLogger = new LoggerConfiguration()
 // Register audit logger in DI container for injection into IAuthEventsLog
 builder.Services.AddSingleton(auditLogger);
 
-// Keep existing Serilog configuration for standard logging
-builder.Host.UseSerilog((ctx, lc) => lc
-    .ReadFrom.Configuration(ctx.Configuration)
-    .Enrich.FromLogContext()
-    .Enrich.WithClientIp()
-    .WriteTo.Console()
-    .WriteTo.Seq(
-        serverUrl: ctx.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341",
-        apiKey: ctx.Configuration["Seq:ApiKey"]
-    )
-);
+// Standard logging is configured in LoggingExtensions.AddLogging()
+Startup.ConfigureServices(builder.Services, builder.Configuration, builder.Environment);
 ```
 
-### 2. Update `Api/appsettings.Development.json`
+### 2. Update `Api/StartupConfigurations/LoggingExtensions.cs`
 
-Add Seq configuration section:
+Standard logging configuration with Seq always enabled:
+
+```csharp
+public static void AddLogging(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
+{
+    services.AddSerilog(log =>
+    {
+        log.Filter.ByExcluding("RequestPath like '%/health%'")
+           .Filter.ByExcluding("RequestPath like '%/swagger%'");
+
+        log.Enrich.WithSpan()
+           .Enrich.FromLogContext()
+           .Enrich.WithClientIp()
+           .WriteTo.Console();
+
+        // OpenTelemetry configuration...
+
+        // Always sink to Seq for centralized logging and monitoring
+        string seqServerUrl = configuration["Seq:ServerUrl"] ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(seqServerUrl))
+        {
+            log.WriteTo.Seq(
+                serverUrl: seqServerUrl,
+                apiKey: configuration["Seq:ApiKey"],
+                restrictedToMinimumLevel: environment.IsDevelopment() ? LogEventLevel.Debug : LogEventLevel.Information
+            );
+        }
+    });
+}
+```
+
+### 3. Update `Api/appsettings.Development.json`
+
+Seq configuration section (required):
 
 ```json
 {
@@ -113,6 +144,31 @@ Add Seq configuration section:
     "ApiKey": null
   }
 }
+```
+
+### 4. Update `docker-compose.yml`
+
+Seq is defined in the main docker-compose.yml (always available):
+
+```yaml
+services:
+  api:
+    environment:
+      - Seq__ServerUrl=http://seq:5341
+    depends_on:
+      - seq
+
+  seq:
+    image: datalust/seq:latest
+    ports:
+      - "5341:5341"  # Ingestion API
+      - "8081:80"    # Web UI
+    environment:
+      - ACCEPT_EULA=Y
+    volumes:
+      - .data/seq-data:/data
+    networks:
+      - api-network
 ```
 
 ---
@@ -126,6 +182,7 @@ The implementation uses a dedicated `IAuthEventsLog` service to separate audit l
 - Easy testability (mock the interface)
 - Centralized logging logic
 - Consistent event formatting
+- `AuthEvent=true` property on all events for easy filtering
 
 ### 1. Interface `Api/Identity/IAuthEventsLog.cs`
 
@@ -150,6 +207,8 @@ public interface IAuthEventsLog
 
 ### 2. Implementation `Api/Identity/AuthEventsLog.cs`
 
+All methods include `AuthEvent=true` property for easy filtering:
+
 ```csharp
 public class AuthEventsLog(
     Serilog.ILogger auditLogger,
@@ -160,6 +219,7 @@ public class AuthEventsLog(
     {
         try
         {
+            using (LogContext.PushProperty("AuthEvent", true))
             using (LogContext.PushProperty("EventType", "AccountLockout"))
             using (LogContext.PushProperty("UserId", userId))
             using (LogContext.PushProperty("Email", email))
@@ -177,11 +237,12 @@ public class AuthEventsLog(
         }
     }
 
-    // ... other critical events follow same pattern ...
+    // ... other critical events follow same pattern with AuthEvent=true ...
 
     // Monitoring events - use standard logger (async, batched)
     public void Monitor_SuccessfulLogin(string userId, string email, string ipAddress)
     {
+        using (LogContext.PushProperty("AuthEvent", true))
         using (LogContext.PushProperty("EventType", "SuccessfulLogin"))
         using (LogContext.PushProperty("UserId", userId))
         using (LogContext.PushProperty("IpAddress", ipAddress))
@@ -190,7 +251,7 @@ public class AuthEventsLog(
         }
     }
 
-    // ... other monitoring events follow same pattern ...
+    // ... other monitoring events follow same pattern with AuthEvent=true ...
 }
 ```
 
@@ -273,40 +334,48 @@ public class RefreshTokenService(
 
 ## Seq Queries for Monitoring
 
-### Query 1: Recent Account Lockouts
+### Query 1: All Authentication Events
 ```
-EventType = "AccountLockout" AND @Timestamp > Now() - 1h
-```
-
-### Query 2: Brute Force Patterns (Multiple Failed Logins)
-```
-EventType = "FailedLoginThreshold"
-| group by IpAddress
-| where count(*) > 5
+AuthEvent = true
 ```
 
-### Query 3: Token Reuse Detection (Critical!)
-```
-EventType = "TokenReuseDetected"
-```
-
-### Query 4: Successful Logins by User
-```
-EventType = "SuccessfulLogin"
-| group by Email
-| where @Timestamp > Now() - 24h
-```
-
-### Query 5: All Security Audit Events
+### Query 2: All Critical Security Audit Events
 ```
 LogType = "SecurityAudit"
 ```
 
-### Query 6: Geographic Anomalies (if IP enrichment added)
+### Query 3: Recent Account Lockouts
 ```
-EventType = "SuccessfulLogin"
-| group by UserId, IpAddress
-| having distinct(Country) > 1
+AuthEvent = true and EventType = "AccountLockout" and @Timestamp > Now() - 1h
+```
+
+### Query 4: Brute Force Patterns (Multiple Failed Logins)
+```
+AuthEvent = true and EventType = "FailedLoginThreshold"
+| group by IpAddress
+| where count(*) > 5
+```
+
+### Query 5: Token Reuse Detection (Critical!)
+```
+AuthEvent = true and EventType = "TokenReuseDetected"
+```
+
+### Query 6: Successful Logins by User
+```
+AuthEvent = true and EventType = "SuccessfulLogin"
+| group by Email
+| where @Timestamp > Now() - 24h
+```
+
+### Query 7: All Failed Login Attempts
+```
+AuthEvent = true and (EventType = "LoginAttemptFailed" or EventType = "FailedLoginThreshold" or EventType = "LoginAttemptNonExistent")
+```
+
+### Query 8: Authentication Events by User
+```
+AuthEvent = true and UserId = "specific-user-id"
 ```
 
 ---
@@ -327,6 +396,13 @@ EventType = "SuccessfulLogin"
 - `EventType: "LoginAttemptFailed"` - Failed login (below threshold)
 - `EventType: "LoginAttemptNonExistent"` - Login attempt for unknown email
 
+### Common Properties (All Events)
+- `AuthEvent: true` - Identifies all authentication-related events
+- `EventType: string` - Specific event type for filtering
+- `UserId: string` - User identifier (when available)
+- `Email: string` - User email (when available)
+- `IpAddress: string` - Client IP address
+
 ---
 
 ## Testing the Implementation
@@ -342,6 +418,7 @@ curl -X POST http://localhost:44369/api/account/login \
 ```
 
 **Expected Result in Seq:**
+- Event with `AuthEvent = true`
 - Event with `EventType = "AccountLockout"`
 - `LogType = "SecurityAudit"`
 - Contains UserId, Email, IpAddress properties
@@ -355,12 +432,18 @@ curl -X POST http://localhost:44369/api/account/login \
 **Expected Result in Seq:**
 - Event with `EventType = "TokenReuseDetected"` (Error level)
 - Event with `EventType = "AllTokensRevoked"` (Warning level)
+- Both have `AuthEvent = true`
 
 ### 3. Test Audit Failure Handling
 
 Stop the Seq server and trigger a lockout event:
 - The API should throw an exception (audit logging must succeed)
 - The exception should be visible in console logs
+- Application will fail to start if `Seq:ServerUrl` is not configured
+
+### 4. Test AuthEvent Filtering
+
+In Seq, run query `AuthEvent = true` to verify all auth events are captured.
 
 ---
 
@@ -368,25 +451,35 @@ Stop the Seq server and trigger a lockout event:
 
 ### Seq Server Requirements
 
-1. **High Availability**: Consider Seq clustering for production
-2. **Retention Policies**: Configure Seq retention for audit events (recommend 90+ days)
-3. **Alerts**: Set up Seq alerts for critical events (TokenReuseDetected, AccountLockout)
-4. **Backup**: Ensure Seq data is included in backup strategy
+1. **Required**: Seq must be running and accessible - application will fail to start without it
+2. **High Availability**: Consider Seq clustering for production
+3. **Retention Policies**: Configure Seq retention for audit events (recommend 90+ days)
+4. **Alerts**: Set up Seq alerts for critical events (TokenReuseDetected, AccountLockout)
+5. **Backup**: Ensure Seq data is included in backup strategy
 
 ### Docker Deployment
 
-Ensure Seq is accessible from the API container:
+Seq is defined in `docker-compose.yml` (always available):
+
 ```yaml
 services:
   api:
     environment:
       - Seq__ServerUrl=http://seq:5341
+    depends_on:
+      - seq
+
   seq:
     image: datalust/seq:latest
     ports:
-      - "5341:80"
+      - "5341:5341"  # Ingestion API
+      - "8081:80"    # Web UI
+    environment:
+      - ACCEPT_EULA=Y
     volumes:
-      - seq-data:/data
+      - .data/seq-data:/data
+    networks:
+      - api-network
 ```
 
 ### Performance Considerations
@@ -405,35 +498,26 @@ Audit logs in Seq provide evidence for:
 
 ---
 
-## Implementation Order
+## Implementation Status
 
-1. **Verify NuGet packages** - Serilog.Sinks.Seq, Serilog.Enrichers.ClientInfo (already present)
-2. **Update appsettings** - Add Seq configuration section
-3. **Update Program.cs** - Configure audit logger with AuditTo.Seq
-4. **Create IAuthEventsLog interface** - Define event methods
-5. **Create AuthEventsLog implementation** - Implement with dual loggers
-6. **Register in DI** - Add IAuthEventsLog to services
-7. **Update AccountController** - Use IAuthEventsLog for all auth events
-8. **Update RefreshTokenService** - Use IAuthEventsLog for token reuse detection
-9. **Create Seq queries** - Set up monitoring dashboards and alerts
-10. **Test locally** - Verify events appear in Seq with correct properties
-11. **Deploy to staging** - Validate Seq connectivity and event flow
-12. **Deploy to production** - With alerting enabled
+### Completed
+- [x] NuGet packages configured (Serilog.Sinks.Seq, Serilog.Enrichers.ClientInfo)
+- [x] Seq configuration in appsettings.Development.json
+- [x] Audit logger configured with AuditTo.Seq in Program.cs
+- [x] Standard logging configured in LoggingExtensions.cs with WriteTo.Seq
+- [x] IAuthEventsLog interface defined
+- [x] AuthEventsLog implementation with AuthEvent=true property
+- [x] IAuthEventsLog registered in DI
+- [x] AccountController using IAuthEventsLog for all auth events
+- [x] RefreshTokenService using IAuthEventsLog for token reuse detection
+- [x] Seq container in docker-compose.yml
+- [x] WithClientIp enricher added
 
----
-
-## Success Criteria
-
-- [ ] Audit logger configured with AuditTo.Seq in Program.cs
-- [ ] IAuthEventsLog service implemented and registered
-- [ ] Account lockout events visible in Seq with LogType="SecurityAudit"
-- [ ] Token reuse detection logged with automatic revocation
-- [ ] Failed login threshold warnings captured as audit events
-- [ ] Audit logging failures throw exceptions (not silent)
-- [ ] Standard authentication events visible in Seq
-- [ ] Seq queries return expected results
-- [ ] No significant performance degradation
-- [ ] Alerting configured for critical events in Seq
+### Pending
+- [ ] Create Seq alerts for critical events
+- [ ] Test locally with Seq running
+- [ ] Deploy to staging
+- [ ] Deploy to production
 
 ---
 

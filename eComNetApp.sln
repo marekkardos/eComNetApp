@@ -23,6 +23,16 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.UnitTests", "Core.UnitTests\Core.UnitTests.csproj", "{2C351C89-DC35-48DE-92D2-CFDA861A47C6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2FA6DD00-0D59-4C23-888F-BD542F6A0AA2}"
+	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
+		CLAUDE.md = CLAUDE.md
+		Directory.Packages.props = Directory.Packages.props
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -138,6 +148,7 @@ Global
 		{5E32322C-9B64-452C-AA47-12639FA2F545} = {40D59E8C-DE75-4AED-89C5-BBEB641F14CD}
 		{4CBAF000-7FCC-C288-7C09-9F5282F47CA9} = {40D59E8C-DE75-4AED-89C5-BBEB641F14CD}
 		{E7C0C5AD-DF97-4DBB-96A8-8A86317AD2F7} = {0DF9452B-7411-4285-A3CA-F914F8BBB09B}
+		{2C351C89-DC35-48DE-92D2-CFDA861A47C6} = {0DF9452B-7411-4285-A3CA-F914F8BBB09B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {10E0C739-6AC1-4313-BF53-68DDCBBCD71B}
