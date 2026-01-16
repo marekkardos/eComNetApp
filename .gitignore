@@ -454,3 +454,4 @@ docker-compose.override.yml
 # Local environment files (copy from .template.ts and add your keys)
 /client/src/environments/environment.local.ts
 /client/src/environments/environment.container.ts
+/.sonarqube

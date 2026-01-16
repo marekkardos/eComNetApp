@@ -9,5 +9,93 @@
              Caching Response in seconds.
             </summary>
         </member>
+        <member name="T:Api.Identity.AuthEventsLog">
+            <summary>
+            Authentication and authorization event logging implementation.
+            Uses audit logger for critical security events and regular logger for monitoring.
+            All events are tagged with AuthEvent=true for easy filtering in Seq.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.AuthEventsLog.#ctor(Serilog.ILogger,Microsoft.Extensions.Logging.ILogger{Api.Identity.AuthEventsLog})">
+            <summary>
+            Authentication and authorization event logging implementation.
+            Uses audit logger for critical security events and regular logger for monitoring.
+            All events are tagged with AuthEvent=true for easy filtering in Seq.
+            </summary>
+        </member>
+        <member name="T:Api.Identity.IAuthEventsLog">
+            <summary>
+            Authentication and authorization event logging service.
+            Separates audit logging concerns from business logic.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.AccountLockout(System.String,System.String,System.String)">
+            <summary>
+            Account has been locked out due to multiple failed login attempts.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.FailedLoginThreshold(System.String,System.String,System.String,System.Int32)">
+            <summary>
+            User is approaching lockout threshold (3+ failed attempts).
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.TokenReuseDetected(System.String,System.String,System.DateTime)">
+            <summary>
+            A revoked refresh token was reused - potential security breach.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.AllTokensRevoked(System.String)">
+            <summary>
+            All refresh tokens have been revoked for a user due to security concerns.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.Monitor_SuccessfulLogin(System.String,System.String,System.String)">
+            <summary>
+            User successfully logged in.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.Monitor_UserRegistration(System.String,System.String,System.String)">
+            <summary>
+            A new user registered.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.Monitor_TokenRefresh(System.String,System.String,System.String)">
+            <summary>
+            Access token was refreshed.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.Monitor_UserLogout(System.String,System.String)">
+            <summary>
+            User logged out.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.Monitor_LoginAttemptNonExistent(System.String,System.String)">
+            <summary>
+            Login attempt for non-existent email.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.Monitor_LoginAttemptFailed(System.String,System.String,System.String,System.Int32)">
+            <summary>
+            Failed login attempt (below threshold).
+            </summary>
+        </member>
+        <member name="P:Api.Identity.LockoutSettings.DefaultLockoutTimeSpanMinutes">
+            <summary>
+            How long a user is locked out after reaching the max failed access attempts.
+            Default: 15 minutes
+            </summary>
+        </member>
+        <member name="P:Api.Identity.LockoutSettings.MaxFailedAccessAttempts">
+            <summary>
+            Number of failed access attempts before a user is locked out.
+            Default: 5 attempts
+            </summary>
+        </member>
+        <member name="P:Api.Identity.LockoutSettings.AllowedForNewUsers">
+            <summary>
+            Whether lockout is enabled for new users.
+            Default: true
+            </summary>
+        </member>
     </members>
 </doc>

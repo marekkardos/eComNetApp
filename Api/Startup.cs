@@ -84,6 +84,7 @@ public static class Startup
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IAuthEventsLog, AuthEventsLog>();
+        services.AddScoped<IAuthenticationServices, AuthenticationServices>();
         services.AddApplicationServices(conf);
 
         services.AddHealthChecksExt(conf);

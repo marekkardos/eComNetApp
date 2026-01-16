@@ -1,33 +1,37 @@
-using System.Threading.Tasks;
 using Core.Entities;
 using Core.Interfaces;
 
-namespace Data
+namespace Data;
+
+public class UnitOfWork(StoreContext context, IGenericRepositoryResolver genericRepoResolver) : IUnitOfWork
 {
-    public class UnitOfWork : IUnitOfWork
+    private bool _disposed;
+
+    public IGenericRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity
     {
-        private readonly StoreContext _context;
-        private readonly IGenericRepositoryResolver _genericRepoResolver;
+        return genericRepoResolver.Repository<TEntity>();
+    }
 
-        public UnitOfWork(StoreContext context, IGenericRepositoryResolver genericRepoResolver)
-        {
-            _context = context;
-            _genericRepoResolver = genericRepoResolver;
-        }
+    public async Task<int> Complete()
+    {
+        return await context.SaveChangesAsync();
+    }
 
-        public async Task<int> Complete()
-        {
-            return await _context.SaveChangesAsync();
-        }
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
 
-        public void Dispose()
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
         {
-            _context.Dispose();
-        }
-
-        public IGenericRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity
-        {
-            return _genericRepoResolver.Repository<TEntity>();
+            if (disposing)
+            {
+                context.Dispose();
+            }
+            _disposed = true;
         }
     }
 }

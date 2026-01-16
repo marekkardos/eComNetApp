@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using System.Net;
-using System.Threading.Tasks;
 using Api.ApiResponses;
 using Api.Controllers;
 using Api.Dtos;
@@ -10,81 +8,79 @@ using Core.Entities;
 using Core.Interfaces;
 using Core.QueryHandlers;
 using Core.Specifications;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
 
-namespace API.Controllers
+namespace API.Controllers;
+
+[ApiExplorerSettings(GroupName = "Products")]
+public class ProductsController : BaseApiController
 {
-    [ApiExplorerSettings(GroupName = "Products")]
-    public class ProductsController : BaseApiController
+    private readonly IGenericRepository<Product> _productsRepo;
+    private readonly IGenericRepository<ProductBrand> _productBrandRepo;
+    private readonly IGenericRepository<ProductType> _productTypeRepo;
+    private readonly IMapper _mapper;
+    private readonly IMediator _mediator;
+
+    public ProductsController(
+        IGenericRepository<Product> productsRepo,
+        IGenericRepository<ProductBrand> productBrandRepo, 
+        IGenericRepository<ProductType> productTypeRepo,
+        IMapper mapper,
+        IMediator mediator)
     {
-        private readonly IGenericRepository<Product> _productsRepo;
-        private readonly IGenericRepository<ProductBrand> _productBrandRepo;
-        private readonly IGenericRepository<ProductType> _productTypeRepo;
-        private readonly IMapper _mapper;
-        private readonly IMediator _mediator;
+        _mapper = mapper;
+        _productTypeRepo = productTypeRepo;
+        _productBrandRepo = productBrandRepo;
+        _productsRepo = productsRepo;
+        _mediator = mediator;
+    }
 
-        public ProductsController(
-            IGenericRepository<Product> productsRepo,
-            IGenericRepository<ProductBrand> productBrandRepo, 
-            IGenericRepository<ProductType> productTypeRepo,
-            IMapper mapper,
-            IMediator mediator)
+    [Cached(60)]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<Pagination<ProductToReturnDto>>> GetProducts(
+        [FromQuery] ProductSpecParams productParams)
+    {
+        var result = await _mediator.Send(new GetProductsQueryRequest {ProductParams = productParams});
+
+        var data = _mapper.Map<IReadOnlyList<Product>, IReadOnlyList<ProductToReturnDto>>(result.Data);
+
+        return Ok(new Pagination<ProductToReturnDto>(productParams.PageIndex, productParams.PageSize, result.TotalItems,
+            data));
+    }
+
+    [Cached(60)]
+    [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ProductToReturnDto>> GetProduct(int id)
+    {
+        var spec = new ProductsWithTypesAndBrandsSpecification(id);
+
+        var product = await _productsRepo.GetEntityWithSpec(spec);
+
+        if (product == null)
         {
-            _mapper = mapper;
-            _productTypeRepo = productTypeRepo;
-            _productBrandRepo = productBrandRepo;
-            _productsRepo = productsRepo;
-            _mediator = mediator;
+            return NotFound(new ApiResponse(HttpStatusCode.NotFound));
         }
 
-        [Cached(60)]
-        [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<Pagination<ProductToReturnDto>>> GetProducts(
-            [FromQuery] ProductSpecParams productParams)
-        {
-            var result = await _mediator.Send(new GetProductsQueryRequest {ProductParams = productParams});
+        return _mapper.Map<Product, ProductToReturnDto>(product);
+    }
 
-            var data = _mapper.Map<IReadOnlyList<Product>, IReadOnlyList<ProductToReturnDto>>(result.Data);
+    [Cached(300)]
+    [HttpGet("brands")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<ProductBrand>>> GetProductBrands()
+    {
+        return Ok(await _productBrandRepo.ListAllAsync());
+    }
 
-            return Ok(new Pagination<ProductToReturnDto>(productParams.PageIndex, productParams.PageSize, result.TotalItems,
-                data));
-        }
-
-        [Cached(60)]
-        [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ProductToReturnDto>> GetProduct(int id)
-        {
-            var spec = new ProductsWithTypesAndBrandsSpecification(id);
-
-            var product = await _productsRepo.GetEntityWithSpec(spec);
-
-            if (product == null)
-            {
-                return NotFound(new ApiResponse(HttpStatusCode.NotFound));
-            }
-
-            return _mapper.Map<Product, ProductToReturnDto>(product);
-        }
-
-        [Cached(300)]
-        [HttpGet("brands")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<IReadOnlyList<ProductBrand>>> GetProductBrands()
-        {
-            return Ok(await _productBrandRepo.ListAllAsync());
-        }
-
-        [Cached(300)]
-        [HttpGet("types")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<IReadOnlyList<ProductType>>> GetProductTypes()
-        {
-            return Ok(await _productTypeRepo.ListAllAsync());
-        }
+    [Cached(300)]
+    [HttpGet("types")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<ProductType>>> GetProductTypes()
+    {
+        return Ok(await _productTypeRepo.ListAllAsync());
     }
 }

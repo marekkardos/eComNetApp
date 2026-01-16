@@ -10,7 +10,6 @@ using Core.Entities.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace API.Controllers;
 
@@ -19,18 +18,17 @@ namespace API.Controllers;
 public class AccountController(
     UserManager<AppUser> userManager,
     SignInManager<AppUser> signInManager,
-    ITokenService tokenService,
-    IRefreshTokenService refreshTokenService,
-    IOptions<TokenSettings> tokenSettings,
+    IAuthenticationServices authServices,
     IMapper mapper,
     ILoggerFactory loggerFactory,
-    IWebHostEnvironment environment,
-    IAuthEventsLog authEventsLog,
-    IOptions<LockoutSettings> lockoutSettings) : BaseApiController
+    IWebHostEnvironment environment) : BaseApiController
 {
     private readonly ILogger<AccountController> _logger = loggerFactory.CreateLogger<AccountController>();
-    private readonly TokenSettings _tokenSettings = tokenSettings.Value;
-    private readonly LockoutSettings _lockoutSettings = lockoutSettings.Value;
+    private readonly TokenSettings _tokenSettings = authServices.TokenSettings;
+    private readonly LockoutSettings _lockoutSettings = authServices.LockoutSettings;
+    private readonly ITokenService tokenService = authServices.TokenService;
+    private readonly IRefreshTokenService refreshTokenService = authServices.RefreshTokenService;
+    private readonly IAuthEventsLog authEventsLog =  authServices.AuthEventsLog;
 
     [HttpGet("emailexists")]
     [AllowAnonymous]
@@ -164,7 +162,7 @@ public class AccountController(
 
         if (refreshToken == null)
         {
-            Response.ClearRefreshTokenCookie(_tokenSettings);
+            Response.ClearRefreshTokenCookie(_tokenSettings, !environment.IsDevelopment());
             return Unauthorized(new ApiResponse(HttpStatusCode.Unauthorized, "Invalid refresh token"));
         }
 
@@ -202,7 +200,7 @@ public class AccountController(
             }
         }
 
-        Response.ClearRefreshTokenCookie(_tokenSettings);
+        Response.ClearRefreshTokenCookie(_tokenSettings, !environment.IsDevelopment());
         return NoContent();
     }
 

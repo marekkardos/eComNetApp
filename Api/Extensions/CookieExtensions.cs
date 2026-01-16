@@ -1,3 +1,4 @@
+#pragma warning disable S2092 // Secure is intentionally false in development to allow HTTP localhost
 using Api.Identity;
 using Core.Entities.Identity;
 
@@ -23,11 +24,15 @@ public static class CookieExtensions
         response.Cookies.Append(tokenSettings.CookieName, refreshToken.Token, cookieOptions);
     }
 
-    public static void ClearRefreshTokenCookie(this HttpResponse response, TokenSettings tokenSettings)
+    public static void ClearRefreshTokenCookie(
+        this HttpResponse response,
+        TokenSettings tokenSettings,
+        bool isProduction)
     {
         response.Cookies.Delete(tokenSettings.CookieName, new CookieOptions
         {
             HttpOnly = true,
+            Secure = isProduction,
             SameSite = SameSiteMode.Strict,
             Path = "/api/account"
         });

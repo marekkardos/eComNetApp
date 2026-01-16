@@ -13,28 +13,28 @@ public static class SwaggerServiceExtensions
             {
                 Title = "Api",
                 Version = "v1",
-                Description = "description"
+                Description = "Products related API."
             });
 
             c.SwaggerDoc("Basket", new OpenApiInfo
             {
                 Title = "Api",
                 Version = "v1",
-                Description = "description"
+                Description = "Basket related API."
             });
 
             c.SwaggerDoc("Buggy", new OpenApiInfo
             {
                 Title = "Api",
                 Version = "v1",
-                Description = "description"
+                Description = "Buggy related API."
             });
 
             c.SwaggerDoc("Account", new OpenApiInfo
             {
                 Title = "Api",
                 Version = "v1",
-                Description = "description",
+                Description = "Account related API.",
 
             });
 
@@ -42,7 +42,7 @@ public static class SwaggerServiceExtensions
             {
                 Title = "Api",
                 Version = "v1",
-                Description = "description",
+                Description = "Orders related API.",
 
             });
 
@@ -50,7 +50,7 @@ public static class SwaggerServiceExtensions
             {
                 Title = "Api",
                 Version = "v1",
-                Description = "description",
+                Description = "Payments related API.",
 
             });
 
