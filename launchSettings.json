@@ -6,10 +6,14 @@
       "composeLaunchAction": "LaunchBrowser",
       "composeLaunchServiceName": "api",
       "composeLaunchUrl": "{Scheme}://localhost:{ServicePort}/swagger",
-      "composeProfile": {
-        "includes": [
-          "backend-dev"
-        ]
+      "serviceActions": {
+        "angular": "StartWithoutDebugging",
+        "api": "StartDebugging",
+        "aspire-dashboard": "StartWithoutDebugging",
+        "dbserver": "StartWithoutDebugging",
+        "redis": "StartWithoutDebugging",
+        "seeddata": "DoNotStart",
+        "seq": "StartWithoutDebugging"
       }
     }
   }
