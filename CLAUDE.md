@@ -192,11 +192,44 @@ The API is accessible at `http://localhost:44369` when running in containers.
 
 ### Backend
 
+**Configuration Files:**
 - Main config: `Api/appsettings.Development.json`
-- User secrets available via `UserSecretsId: 56ee6ee3-b7d8-4759-ab17-87297accef46`
-- Connection strings: `ConnectionStrings__DefaultConnectionMssql` and `ConnectionStrings__IdentityConnectionMssql` (separate databases for store and identity)
-- Redis: `ConnectionStrings__Redis`
-- OpenTelemetry endpoint required: `OPEN_TELEMETRY:ENDPOINT` configuration key
+
+**Connection Strings:**
+| Key | Database | Description |
+|-----|----------|-------------|
+| `ConnectionStrings:DefaultConnectionMssql` | eCommNetDb | Main store database |
+| `ConnectionStrings:IdentityConnectionMssql` | eCommNet_IdentityDb | Identity/auth database |
+| `ConnectionStrings:Redis` | - | Redis cache server |
+
+**Authentication Settings:**
+| Section | Keys | Description |
+|---------|------|-------------|
+| `Token` | `Key`, `Issuer` | JWT signing key and issuer claim |
+| `TokenSettings` | `AccessTokenExpirationMinutes` (15), `RefreshTokenExpirationDays` (7), `CookieName` | Token lifecycle configuration |
+| `LockoutSettings` | `DefaultLockoutTimeSpanMinutes` (15), `MaxFailedAccessAttempts` (5), `AllowedForNewUsers` | Account lockout policy |
+
+**Observability Settings:**
+| Section | Keys | Description |
+|---------|------|-------------|
+| `OPEN_TELEMETRY` | `ENDPOINT` | OpenTelemetry collector endpoint (required) |
+| `Seq` | `ServerUrl`, `ApiKey` | Seq logging server (ServerUrl required for audit logging) |
+
+**Other Settings:**
+| Key | Description |
+|-----|-------------|
+| `StripeSettings:SecretKey` | Stripe API secret (required, use user-secrets) |
+| `StripeSettings:WebHookSecret` | Webhook signature verification (required, use user-secrets) |
+| `HealthCheckApiKey` | Remote health check authentication header value |
+| `ApiUrlContent` | Static files URL path (default: "/Content/") |
+| `AllowedOrigins` | CORS origins, comma-separated (env var) |
+
+**Required Configuration (throws exception if missing):**
+- `Token:Key` - JWT signing
+- `OPEN_TELEMETRY:ENDPOINT` - Telemetry export
+- `Seq:ServerUrl` - Audit logging
+- `StripeSettings:SecretKey` - Payment processing
+- `ConnectionStrings:Redis` - Caching
 
 ### Frontend
 
