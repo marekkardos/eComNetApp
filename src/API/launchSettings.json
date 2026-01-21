@@ -12,7 +12,6 @@
         "aspire-dashboard": "StartWithoutDebugging",
         "dbserver": "StartWithoutDebugging",
         "redis": "StartWithoutDebugging",
-        "seeddata": "DoNotStart",
         "seq": "StartWithoutDebugging"
       }
     }

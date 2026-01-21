@@ -1,15 +1,17 @@
-using System.Net;
 using Api.ApiResponses;
 using Api.Controllers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
 [Route("errors/{code}")]
 [ApiExplorerSettings(IgnoreApi = true)]
+[AllowAnonymous]
 public class ErrorController : BaseApiController
 {
-    public static IActionResult Error(HttpStatusCode code)
+    [HttpGet]
+    public IActionResult Error(int code)
     {
         return new ObjectResult(new ApiResponse(code));
     }

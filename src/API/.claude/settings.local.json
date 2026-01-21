@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(npm run build:*)",
+      "Bash(dotnet clean:*)",
+      "Skill(git_staged_description)"
+    ]
+  }
+}

@@ -4,10 +4,14 @@ namespace Api.ApiResponses;
 
 public class ApiResponse
 {
-    public ApiResponse(HttpStatusCode statusCode, string message = null)
+    public ApiResponse(HttpStatusCode statusCode, string message = null) : this((int)statusCode, message)
     {
-        StatusCode = (int)statusCode;
-        Message = message ?? GetDefaultMessageForStatusCode((int)statusCode);
+    }
+
+    public ApiResponse(int statusCode, string message = null)
+    {
+        StatusCode = statusCode;
+        Message = message ?? GetDefaultMessageForStatusCode(statusCode);
     }
 
     public int StatusCode { get; set; }
@@ -21,7 +25,7 @@ public class ApiResponse
             401 => "Authorized, you are not",
             404 => "Resource found, it was not",
             500 => "Server Error",
-            _ => null
+            _ => "Undefined status code"
         };
     }
 }

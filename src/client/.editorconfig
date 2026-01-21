@@ -3,9 +3,15 @@ root = true
 
 [*]
 charset = utf-8
+
+# Indentation and spacing
+indent_size = 4
 indent_style = space
-indent_size = 2
-insert_final_newline = true
+tab_width = 4
+
+# New line preferences
+end_of_line = crlf
+insert_final_newline = false
 trim_trailing_whitespace = true
 
 [*.md]

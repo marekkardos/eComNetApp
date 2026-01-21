@@ -12,8 +12,7 @@ namespace Api.StartupConfigurations
         {
             services.AddSerilog(log =>
             {
-                log.Filter.ByExcluding("RequestPath like '%/health%'")
-                   .Filter.ByExcluding("RequestPath like '%/swagger%'");
+                log.Filter.ByExcluding("RequestPath like '%/swagger%'");
 
                 log.Enrich.WithSpan()
                    .Enrich.FromLogContext()

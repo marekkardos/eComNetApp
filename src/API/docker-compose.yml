@@ -30,7 +30,7 @@ services:
   angular:
     profiles: ["backend-dev"]
     build:
-      context: ./client
+      context: ../client
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=development
@@ -38,7 +38,7 @@ services:
       - "4200:4200"
     volumes:
       # Mount source for hot reload
-      - ./client:/app
+      - ../client:/app
       # Preserve container's node_modules
       - /app/node_modules
     depends_on:

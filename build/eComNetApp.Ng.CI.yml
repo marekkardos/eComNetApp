@@ -1,0 +1,30 @@
+stages:
+- stage: __default
+  jobs:
+  - job: Job
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '12.x'
+      displayName: 'Install Node.js'
+    - task: CmdLine@2
+      displayName: 'npm install and build'
+      inputs:
+        script: |
+          cd client
+          npm install -g @angular/cli@9.0.2
+          npm install
+          ng build --configuration=test
+          ls -l -a
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: 'client/dist/SkiShop/'
+        Contents: '**'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathtoPublish: $(Build.ArtifactStagingDirectory)
+        ArtifactName: 'www'
+

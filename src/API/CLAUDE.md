@@ -1,12 +1,12 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with the .NET 8 REST API backend.
 
 ## Project Overview
 
-eComNetApp is an e-commerce application built with a .NET 8 backend API and Angular 9 frontend. The solution follows Clean Architecture principles with clear separation between domain logic, data access, and presentation layers.
+This is the .NET 8 REST API backend for eComNetApp, an e-commerce application. The API serves an Angular 9 frontend located in `../client/`. The solution follows Clean Architecture principles with clear separation between domain logic, data access, and presentation layers.
 
-**For local development setup and workflows, see [README.md](README.md)** - it contains comprehensive Docker Compose orchestration guides for Frontend, Backend, and Full-Stack developer roles.
+**For local development setup and workflows, see the main [README.md](../../README.md)** in the project root.
 
 ## Architecture
 
@@ -48,18 +48,6 @@ The backend is organized into distinct projects with specific responsibilities:
 
 - **Api.IntegrationTests** - NUnit integration tests
 
-### Frontend (Angular 9)
-
-Located in `client/` directory with feature-based module structure:
-
-- `client/src/app/account/` - User authentication and account management
-- `client/src/app/basket/` - Shopping basket/cart
-- `client/src/app/checkout/` - Checkout flow
-- `client/src/app/orders/` - Order history and details
-- `client/src/app/shop/` - Product catalog and browsing
-- `client/src/app/core/` - Singleton services, guards, interceptors, nav components
-- `client/src/app/shared/` - Reusable components and utilities
-
 ### Key Patterns
 
 - **CQRS with MediatR**: Command and query handlers are separated in Core project
@@ -69,19 +57,19 @@ Located in `client/` directory with feature-based module structure:
 
 ### Technology Stack
 
-- **Backend**: ASP.NET Core 8, Entity Framework Core 8, MediatR, AutoMapper
+- **Framework**: ASP.NET Core 8, Entity Framework Core 8
 - **Database**: SQL Server 2019 (via EF Core migrations)
 - **Caching**: Redis (StackExchange.Redis)
 - **Authentication**: JWT tokens (custom implementation in `Api/Identity/`)
 - **Payments**: Stripe.net
+- **Patterns**: MediatR, AutoMapper
 - **Observability**: OpenTelemetry, Serilog (with Seq and console sinks)
 - **API Documentation**: Swagger/Swashbuckle
 - **Health Checks**: AspNetCore.HealthChecks (SQL Server, Redis)
-- **Frontend**: Angular 9, Bootstrap 4, ngx-bootstrap, ngx-toastr
 
 ## Common Commands
 
-### Backend Development
+### Development
 
 Build the solution:
 ```bash
@@ -125,97 +113,50 @@ Seed database (run SeedData console app):
 dotnet run --project SeedData/SeedData.csproj
 ```
 
-### Frontend Development
-
-Install dependencies:
-```bash
-cd client
-npm install
-```
-
-Run Angular dev server (local configuration):
-```bash
-cd client
-npm start
-# or: ng serve --configuration=local
-```
-
-Run in container mode:
-```bash
-cd client
-npm run start:container
-```
-
-Build for production:
-```bash
-cd client
-npm run build:prod
-```
-
-Build for test environment:
-```bash
-cd client
-npm run build:test
-```
-
-Run tests:
-```bash
-cd client
-npm test
-```
-
-Lint:
-```bash
-cd client
-npm run lint
-```
-
 ### Docker Development
 
-The project uses Docker Compose for local development with profiles for different developer roles. See [README.md](README.md) for detailed workflows.
+The API can run in Docker containers. See main [README.md](../../README.md) for detailed workflows.
 
 Quick start:
 ```bash
-# Frontend developer: API + infrastructure
+# From project root
+# Run API + infrastructure
 docker-compose up api dbserver redis
-
-# Backend developer: Everything in containers
-docker-compose --profile backend-dev up
-
-# Full-stack developer: Infrastructure only (run API/Angular locally)
-docker-compose up dbserver redis
 ```
 
 The API is accessible at `http://localhost:44369` when running in containers.
 
 ## Environment Configuration
 
-### Backend
+### Configuration Files
 
-**Configuration Files:**
 - Main config: `Api/appsettings.Development.json`
 
-**Connection Strings:**
+### Connection Strings
+
 | Key | Database | Description |
 |-----|----------|-------------|
 | `ConnectionStrings:DefaultConnectionMssql` | eCommNetDb | Main store database |
 | `ConnectionStrings:IdentityConnectionMssql` | eCommNet_IdentityDb | Identity/auth database |
 | `ConnectionStrings:Redis` | - | Redis cache server |
 
-**Authentication Settings:**
+### Authentication Settings
+
 | Section | Keys | Description |
 |---------|------|-------------|
 | `Token` | `Key`, `Issuer` | JWT signing key and issuer claim |
 | `TokenSettings` | `AccessTokenExpirationMinutes` (15), `RefreshTokenExpirationDays` (7), `CookieName` | Token lifecycle configuration |
 | `LockoutSettings` | `DefaultLockoutTimeSpanMinutes` (15), `MaxFailedAccessAttempts` (5), `AllowedForNewUsers` | Account lockout policy |
 
-**Observability Settings:**
+### Observability Settings
+
 | Section | Keys | Description |
 |---------|------|-------------|
 | `OPEN_TELEMETRY` | `ENDPOINT` | OpenTelemetry collector endpoint (required) |
 | `Seq` | `ServerUrl`, `ApiKey` | Seq logging server (ServerUrl required for audit logging) |
 
-**Other Settings:**
+### Other Settings
+
 | Key | Description |
 |-----|-------------|
 | `StripeSettings:SecretKey` | Stripe API secret (required, use user-secrets) |
@@ -224,22 +165,13 @@ The API is accessible at `http://localhost:44369` when running in containers.
 | `ApiUrlContent` | Static files URL path (default: "/Content/") |
 | `AllowedOrigins` | CORS origins, comma-separated (env var) |
 
-**Required Configuration (throws exception if missing):**
+### Required Configuration (throws exception if missing)
+
 - `Token:Key` - JWT signing
 - `OPEN_TELEMETRY:ENDPOINT` - Telemetry export
 - `Seq:ServerUrl` - Audit logging
 - `StripeSettings:SecretKey` - Payment processing
 - `ConnectionStrings:Redis` - Caching
-
-### Frontend
-
-Multiple environment configurations in `client/src/environments/` for different development scenarios:
-- `environment.ts` - Default (API at http://localhost:44369)
-- `environment.local.ts` - Local full-stack development (API at https://localhost:5001)
-- `environment.container.ts` - Running in Docker container
-- `environment.stage.ts` - Staging environment (used for production builds)
-
-See [README.md](README.md) for detailed setup and usage of each environment.
 
 ## Important Implementation Details
 
@@ -263,9 +195,9 @@ The solution uses Central Package Management (CPM) with `Directory.Packages.prop
 - Metrics: Runtime, process, ASP.NET Core metrics
 - Log sinks: Console, Seq, OpenTelemetry
 
-### Authentication Flow
+### Authentication Flow (Server-Side)
 
-The application uses a secure refresh token pattern with HttpOnly cookies to protect against XSS attacks:
+The API uses a secure refresh token pattern with HttpOnly cookies to protect against XSS attacks:
 
 **Flow:**
 1. User logs in → server sets a refresh token in HttpOnly cookie
@@ -279,8 +211,6 @@ The application uses a secure refresh token pattern with HttpOnly cookies to pro
 - `TokenSettings` configuration in appsettings - Configurable token lifetimes (AccessTokenExpirationMinutes, RefreshTokenExpirationDays)
 - `CookieExtensions.cs` (`Api/Extensions/`) - Secure cookie helpers (HttpOnly, Secure, SameSite=Strict)
 - `AccountController.cs` - `/login`, `/register`, `/refresh`, `/logout` endpoints
-- `account.service.ts` (Angular) - In-memory token storage with automatic refresh on app startup
-- `jwt.interceptor.ts` (Angular) - Automatic token refresh on 401 errors with request retry
 
 **Security Features:**
 - Short-lived access tokens with configurable expiration (reduced attack window)
@@ -358,8 +288,6 @@ Static files served from `Api/Content/` directory, accessible at `/content` URL 
 
 ## Development Workflow Notes
 
-**See [README.md](README.md) for comprehensive development workflows including Frontend, Backend, and Full-Stack developer setups.**
-
 ### Port Mappings
 
 | Service | Port | URL |
@@ -375,8 +303,3 @@ Static files served from `Api/Content/` directory, accessible at `/content` URL 
 - The solution uses **separate databases**: `eCommNetDb` (store context) and `eCommNet_IdentityDb` (identity context)
 - AutoMapper configuration is validated in Development environment (see `Startup.ConfigureApp()`)
 - Error handling uses custom error pages: `/error` for exceptions, `/errors/{code}` for status codes
-- Angular 9 requires Node.js 12.x - use nvm to manage versions
-
-## Git Commit Preferences
-
-- Do NOT include `Co-Authored-By` lines in commit messages
