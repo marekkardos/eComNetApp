@@ -18,12 +18,12 @@ namespace SeedData
             try
             {
                 var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty;
-                path = Path.GetFullPath(Path.Combine(path, @"..\..\..\"));
+                path = Path.GetFullPath(Path.Combine(path, "..", "..", ".."));
 
                 if (!await context.ProductBrands.AnyAsync())
                 {
                     var brandsData =
-                        await File.ReadAllTextAsync(path + @"/Data/brands.json");
+                        await File.ReadAllTextAsync(Path.Combine(path, "Data", "brands.json"));
 
                     var brands = JsonSerializer.Deserialize<List<ProductBrand>>(brandsData) 
                                 ?? throw new SeedDataException("Failed to deserialize ProductBrands data.");
@@ -52,7 +52,7 @@ namespace SeedData
                 if (!await context.ProductTypes.AnyAsync())
                 {
                     var typesData =
-                        await File.ReadAllTextAsync(path + @"/Data/types.json");
+                        await File.ReadAllTextAsync(Path.Combine(path, "Data", "types.json"));
 
                     var types = JsonSerializer.Deserialize<List<ProductType>>(typesData)
                         ?? throw new SeedDataException("Failed to deserialize ProductTypes data.");
@@ -82,7 +82,7 @@ namespace SeedData
                 if (!await context.Products.AnyAsync())
                 {
                     var productsData =
-                        await File.ReadAllTextAsync(path + @"/Data/products.json");
+                        await File.ReadAllTextAsync(Path.Combine(path, "Data", "products.json"));
 
                     var products = JsonSerializer.Deserialize<List<Product>>(productsData) 
                         ?? throw new SeedDataException("Failed to deserialize Products data.");
@@ -101,7 +101,7 @@ namespace SeedData
                 if (!await context.DeliveryMethods.AnyAsync())
                 {
                     var dmData =
-                        await File.ReadAllTextAsync(path + @"/Data/delivery.json");
+                        await File.ReadAllTextAsync(Path.Combine(path, "Data", "delivery.json"));
 
                     var methods = JsonSerializer.Deserialize<List<DeliveryMethod>>(dmData)
                         ?? throw new SeedDataException("Failed to deserialize DeliveryMethod data.");
