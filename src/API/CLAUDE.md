@@ -126,6 +126,8 @@ docker-compose up api dbserver redis
 
 The API is accessible at `http://localhost:44369` when running in containers.
 
+**User Secrets in Docker:** Copy `docker-compose.override.example.yml` to `docker-compose.override.yml` and configure for your platform. The UserSecretsId `56ee6ee3-b7d8-4759-ab17-87297accef46` must match in both `Api/Api.csproj` and `docker-compose.dcproj`.
+
 ## Environment Configuration
 
 ### Configuration Files

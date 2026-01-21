@@ -17,8 +17,6 @@ services:
       - Seq__ServerUrl=http://seq:5341
     ports:
       - "44369:80"
-    volumes:
-      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
     depends_on:
       - dbserver
       - redis

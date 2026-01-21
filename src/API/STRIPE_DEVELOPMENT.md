@@ -39,6 +39,10 @@ dotnet user-secrets set "StripeSettings:SecretKey" "sk_test_xxxxx"
 # Or add to appsettings.Development.json
 ```
 
+> **Note:** User secrets are stored at `~/.microsoft/usersecrets/<UserSecretsId>/secrets.json` (macOS/Linux) or `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json` (Windows). The UserSecretsId is `56ee6ee3-b7d8-4759-ab17-87297accef46` (defined in `Api/Api.csproj` and `docker-compose.dcproj`).
+>
+> **For Docker:** Copy `docker-compose.override.example.yml` to `docker-compose.override.yml` and uncomment the path for your platform to mount user secrets into the container.
+
 **Frontend (Angular):**
 
 Configure the publishable key in `client/src/environments/environment.ts` or appropriate environment file:

@@ -1,0 +1,12 @@
+# Docker Compose Override Example
+# Copy this file to docker-compose.override.yml and uncomment the section for your platform.
+# docker-compose.override.yml is gitignored and automatically merged when running docker-compose up.
+
+services:
+  api:
+    volumes:
+      # macOS / Linux:
+      - ${HOME}/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+
+      # Windows:
+      # - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro

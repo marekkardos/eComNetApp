@@ -89,8 +89,8 @@ The API uses User Secrets for sensitive data like Stripe keys. These are NOT sto
 ```bash
 cd Api
 dotnet user-secrets init
-dotnet user-secrets set "Stripe:SecretKey" "sk_test_YOUR_SECRET_KEY"
-dotnet user-secrets set "Stripe:WebHookSecret" "whsec__WebHookSecret"
+dotnet user-secrets set "StripeSettings:SecretKey" "sk_test_YOUR_SECRET_KEY"
+dotnet user-secrets set "StripeSettings:WebHookSecret" "whsec__WebHookSecret"
 cd ..
 ```
 
@@ -464,8 +464,11 @@ The correct file is loaded based on Angular configuration:
 ### User Secrets
 
 Sensitive data (API keys) are stored in .NET User Secrets:
-- **Location:** `%APPDATA%\Microsoft\UserSecrets\` (Windows)
-- **Mounted in containers:** Via volume in docker-compose.yml
+- **Location:**
+  - Windows: `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json`
+  - macOS/Linux: `~/.microsoft/usersecrets/<UserSecretsId>/secrets.json`
+- **UserSecretsId:** `56ee6ee3-b7d8-4759-ab17-87297accef46` (defined in `Api/Api.csproj` and `docker-compose.dcproj`)
+- **Mounted in containers:** Via volume in `docker-compose.override.yml` (copy from `docker-compose.override.example.yml`)
 - **NOT in git:** Never committed to repository
 
 ### Docker Compose Profiles

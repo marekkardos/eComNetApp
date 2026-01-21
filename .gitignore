@@ -8,3 +8,7 @@
 # Local environment files (copy from .template.ts and add your keys)
 /src/client/src/environments/environment.container.ts
 /src/client/src/environments/environment.local.ts
+
+# Docker Compose local overrides (copy from docker-compose.override.example.yml)
+/src/API/docker-compose.override.yml
+.DS_Store
