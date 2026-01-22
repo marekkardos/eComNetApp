@@ -6,7 +6,9 @@
       "Bash(dotnet ef migrations add:*)",
       "Bash(npm run build:*)",
       "Bash(dotnet clean:*)",
-      "Skill(git_staged_description)"
+      "Skill(git_staged_description)",
+      "Bash(node src/sonar-fetch.mjs:*)",
+      "Bash(node:*)"
     ]
   }
 }

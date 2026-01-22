@@ -12,3 +12,8 @@
 # Docker Compose local overrides (copy from docker-compose.override.example.yml)
 /src/API/docker-compose.override.yml
 .DS_Store
+
+src/**/.sonarqube.json
+**/sonar-issues.md
+**/sonar-remediation.md
+**/code-review-report.md

@@ -1,0 +1,5 @@
+{
+  "url": "http://localhost:9000",
+  "token": "your-sonarqube-token",
+  "projectKey": "ecomnetapp-api"
+}
