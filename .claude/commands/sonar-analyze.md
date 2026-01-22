@@ -23,14 +23,6 @@ You are a SonarQube remediation specialist.
 
 2. **For each issue**:
    - Navigate to the file and line
-   - Load relevant skill ONLY if needed for context:
-     | Issue type | Load skill |
-     |------------|------------|
-     | Security rule | `../.claude/skills/security-web.md` |
-     | C# code smell | `../.claude/skills/dotnet.md` |
-     | EF/query issue | `../.claude/skills/ef-core.md` |
-     | Angular issue | `../.claude/skills/angular.md` |
-     | RxJS issue | `../.claude/skills/rxjs.md` |
    - Explain WHY it's a problem (real impact, not rule description)
    - Provide concrete fix with code
 

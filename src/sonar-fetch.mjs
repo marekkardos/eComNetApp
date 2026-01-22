@@ -178,7 +178,7 @@ async function runDotNetAnalysis() {
   }
   
   if (!config.skipBuild) {
-    if (!runCommandInherit('dotnet build', 'Build Project')) {
+    if (!runCommandInherit('dotnet build eComNetApp.sln', 'Build Project')) {
       return { success: false };
     }
   }
