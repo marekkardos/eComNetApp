@@ -15,5 +15,6 @@
 
 src/**/.sonarqube.json
 **/sonar-issues.md
-**/sonar-remediation.md
+**/sonar-remediation*.md
 **/code-review-report.md
+/src/client/.scannerwork

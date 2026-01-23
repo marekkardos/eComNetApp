@@ -166,6 +166,12 @@ public class TokenSettings
 3. Wait 15+ min -> Next API call triggers transparent refresh
 4. Logout -> Cookie cleared, session gone
 5. Navigate to protected route -> Guard waits for auth init
+6. Multiple tabs → Refresh in one tab works for all
+
+### Automated Testing
+- Backend: Integration tests for /refresh, /logout endpoints
+- Backend: Token rotation and reuse detection
+- Frontend: E2E login/logout/refresh flow
 
 ### Database Migration
 ```bash
@@ -185,3 +191,37 @@ dotnet ef database update --project Data/Data.csproj --startup-project Api/Api.c
 | No reuse detection | Detects stolen refresh tokens |
 | Unlimited login attempts | Account locks after 5 failures (15 min) |
 | Unused Token:Audience config | Clean config, Issuer = "eComNetApp" |
+
+
+
+## Security Improvements to Consider
+
+### Fix: Add rate limiting middleware
+  Complexity: Medium
+  Impact: IP-based throttling
+  Tier 2: Hardening
+  
+### Fix: Increase password minimum to 12+ chars
+  Complexity: Low
+  Impact: Stronger passwords
+
+### Fix: Add security headers middleware
+  Complexity: Low
+  Impact: XSS/clickjacking protection
+
+### Fix: Tighten CORS (remove AllowAny*)
+  Complexity: Low
+  Impact: Reduce attack surface
+  Tier 3: Advanced
+
+### Fix: Add failed login monitoring/alerting
+  Complexity: Medium
+  Impact: Detect attacks in progress
+
+### Fix: Implement progressive delays
+  Complexity: Medium
+  Impact: Slow down attackers
+
+### Fix: Add CAPTCHA after N failures
+  Complexity: High
+  Impact: Block automated attacks
