@@ -112,35 +112,6 @@ Benefits of Task-based agents:
 | `api-design.md` | - | Controllers, HTTP methods, status codes |
 | `performance.md` | - | Allocations, caching, N+1 queries |
 
-## Customization
-
-### Add a new skill
-
-Create `.claude/skills/your-skill.md`:
-
-```markdown
-# Your Skill Name
-
-## Check Category 1
-- Item to check
-- Another item
-
-## Check Category 2
-- More items
-```
-
-Then reference it in an agent command.
-
-### Modify project keys
-
-Edit the agent files to use your SonarQube project keys:
-- `.claude/commands/review-client.md` → change `ecomnetapp-client`
-- `.claude/commands/review-api.md` → change `ecomnetapp-api`
-
-### Add technology-specific agent
-
-Copy an existing agent and customize the skills it loads.
-
 ## SonarQube CLI
 
 The script automatically detects project type and runs the appropriate scanner:
@@ -164,6 +135,36 @@ node ../sonar-fetch.mjs --fetch-only
 ```
 
 ### Prerequisites
+
+**DOCKER:**
+
+Create the volumes with the following commands:
+```
+docker volume create --name sonarqube_data
+docker volume create --name sonarqube_logs
+docker volume create --name sonarqube_extensions
+```
+
+Starting the container by using docker run:
+```
+docker run -d --name sonarqube \
+    -p 9000:9000 \
+    -v sonarqube_data:/opt/sonarqube/data \
+    -v sonarqube_extensions:/opt/sonarqube/extensions \
+    -v sonarqube_logs:/opt/sonarqube/logs \
+    sonarqube:latest
+```
+Once your server is installed and running, you can access SonarQube Server UI in your 
+web browser (the default system administrator credentials are admin/admin) and you’re 
+ready to begin Project analysis setup.
+
+**Sonarqube - Project analysis setup:**
+
+Create a local projects 'ecomnetapp-client', 'ecomnetapp-api' and generate project tokens.
+
+src/API/.sonarqube.json
+src/client/.sonarqube.json
+   # Edit with your token and project keys
 
 **.NET projects:**
 ```powershell

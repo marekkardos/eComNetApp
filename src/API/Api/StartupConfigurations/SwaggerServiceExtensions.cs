@@ -5,6 +5,9 @@ namespace Api.StartupConfigurations;
 
 public static class SwaggerServiceExtensions
 {
+    private static readonly string[] _tokenTypes = ["Bearer"];
+
+
     internal static void AddSwaggerServicesExt(this IServiceCollection services)
     {
         services.AddSwaggerGen(c =>
@@ -69,7 +72,7 @@ public static class SwaggerServiceExtensions
             };
 
             c.AddSecurityDefinition("Bearer", securitySchema);
-            var securityRequirement = new OpenApiSecurityRequirement { { securitySchema, new[] { "Bearer" } } };
+            var securityRequirement = new OpenApiSecurityRequirement { { securitySchema, _tokenTypes } };
             c.AddSecurityRequirement(securityRequirement);
 
             var xmlFilePath = Path.Combine(AppContext.BaseDirectory,

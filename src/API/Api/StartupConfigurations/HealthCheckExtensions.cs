@@ -19,7 +19,11 @@ public static class HealthCheckExtensions
 
     public static void UseHealthChecksExt(this WebApplication app)
     {
-        var allowedLocalIPs = new[] { "127.0.0.1", "::1", "localhost" };
+        string[] allowedLocalIPs = ["127.0.0.1", "::1", "localhost"];
+        var jsonOptions = new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                };
 
         app.MapHealthChecks("/healthz", new HealthCheckOptions
         {
@@ -27,7 +31,7 @@ public static class HealthCheckExtensions
             {
                 context.Response.ContentType = "application/json";
 
-                var result = JsonSerializer.Serialize(new
+                string result = JsonSerializer.Serialize(new
                 {
                     status = report.Status.ToString(),
                     totalDuration = report.TotalDuration.ToString(),
@@ -41,10 +45,8 @@ public static class HealthCheckExtensions
                         data = e.Value.Data
                     })
                 },
-                new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
+                jsonOptions
+                );
 
                 await context.Response.WriteAsync(result);
             }
