@@ -211,7 +211,7 @@ async function runNodeAnalysis() {
   const fullCmd = `${scannerCmd} -Dsonar.sources=${sources}`;
   
   // Check for "EXECUTION SUCCESS" in output
-  const success = runCommand(fullCmd, 'SonarScanner', 'EXECUTION SUCCESS');
+  const success = runCommand(fullCmd, 'SonarScanner', 'SonarScanner Engine completed successfully');
   
   if (!success) {
     console.error('\nMake sure sonar-scanner is installed:');
@@ -220,7 +220,7 @@ async function runNodeAnalysis() {
     return { success: false };
   }
   
-  return { success: true, skipWait: false };
+  return { success: true, skipWait: true };
 }
 
 // ============ HTTP Helpers ============
