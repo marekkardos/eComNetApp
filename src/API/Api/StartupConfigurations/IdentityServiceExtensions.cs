@@ -2,6 +2,8 @@ using Api.Identity;
 using System.Text;
 using Core.Entities.Identity;
 using Infrastructure.Identity;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
@@ -60,6 +62,23 @@ public static class IdentityServiceExtensions
                     ValidateIssuer = true,
                     ValidateAudience = false
                 };
+            })
+            .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+            {
+                var googleClientId = config["GoogleAuth:ClientId"];
+                var googleClientSecret = config["GoogleAuth:ClientSecret"];
+
+                // Only configure Google auth if credentials are provided
+                if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
+                {
+                    options.ClientId = googleClientId;
+                    options.ClientSecret = googleClientSecret;
+                    options.SaveTokens = true;
+
+                    // Request additional scopes for profile information
+                    options.Scope.Add("profile");
+                    options.Scope.Add("email");
+                }
             });
     }
 }
