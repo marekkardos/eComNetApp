@@ -18,3 +18,6 @@ src/**/.sonarqube.json
 **/sonar-remediation*.md
 **/code-review-report.md
 /src/client/.scannerwork
+
+# Auto Claude data directory
+.auto-claude/
