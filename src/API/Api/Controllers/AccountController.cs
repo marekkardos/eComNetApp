@@ -377,6 +377,153 @@ public class AccountController(
         }));
     }
 
+    [HttpGet("link-external-login")]
+    [ProducesResponseType(StatusCodes.Status302Found)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> LinkExternalLogin([FromQuery] string provider, [FromQuery] string returnUrl = "/")
+    {
+        if (string.IsNullOrEmpty(provider))
+        {
+            return BadRequest(new ApiResponse(HttpStatusCode.BadRequest, "Provider is required"));
+        }
+
+        // Validate provider
+        if (!provider.Equals("Google", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new ApiResponse(HttpStatusCode.BadRequest, "Invalid provider. Supported providers: Google"));
+        }
+
+        var user = await userManager.FindByEmailFromClaimsPrinciple(HttpContext.User);
+        if (user == null)
+        {
+            return Unauthorized(new ApiResponse(HttpStatusCode.Unauthorized));
+        }
+
+        // Check if this provider is already linked
+        var existingLogins = await userManager.GetLoginsAsync(user);
+        if (existingLogins.Any(l => l.LoginProvider.Equals(provider, StringComparison.OrdinalIgnoreCase)))
+        {
+            return BadRequest(new ApiResponse(HttpStatusCode.BadRequest, $"{provider} is already linked to your account"));
+        }
+
+        var redirectUrl = Url.Action(nameof(LinkExternalLoginCallback), "Account", new { returnUrl });
+        var properties = signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+
+        // Store user ID in authentication properties to retrieve in callback
+        properties.Items["LinkUserId"] = user.Id;
+
+        return Challenge(properties, provider);
+    }
+
+    [HttpGet("link-external-login-callback")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status302Found)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> LinkExternalLoginCallback([FromQuery] string returnUrl = "/", [FromQuery] string remoteError = null)
+    {
+        var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+        if (!string.IsNullOrEmpty(remoteError))
+        {
+            _logger.LogWarning("External login linking failed with remote error: {RemoteError}", remoteError);
+            return Redirect($"{returnUrl}?error=link_failed&message={Uri.EscapeDataString(remoteError)}");
+        }
+
+        var info = await signInManager.GetExternalLoginInfoAsync();
+        if (info == null)
+        {
+            _logger.LogWarning("External login info is null during account linking");
+            return Redirect($"{returnUrl}?error=link_failed&message=Unable to get external login information");
+        }
+
+        // Get the user ID from the authentication properties
+        var userId = info.AuthenticationProperties?.Items.ContainsKey("LinkUserId") == true
+            ? info.AuthenticationProperties.Items["LinkUserId"]
+            : null;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            _logger.LogWarning("LinkUserId not found in authentication properties");
+            return Redirect($"{returnUrl}?error=link_failed&message=Invalid linking request");
+        }
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            _logger.LogWarning("User not found for linking: {UserId}", userId);
+            return Redirect($"{returnUrl}?error=link_failed&message=User not found");
+        }
+
+        // Check if this external account is already linked to another user
+        var existingUser = await userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+        if (existingUser != null)
+        {
+            _logger.LogWarning("External account {Provider} is already linked to another user", info.LoginProvider);
+            return Redirect($"{returnUrl}?error=link_failed&message=This {info.LoginProvider} account is already linked to another user");
+        }
+
+        var result = await userManager.AddLoginAsync(user, info);
+        if (!result.Succeeded)
+        {
+            _logger.LogWarning("Failed to link external login for user {Email}: {Errors}",
+                user.Email, string.Join(", ", result.Errors.Select(e => e.Description)));
+            return Redirect($"{returnUrl}?error=link_failed&message=Failed to link external account");
+        }
+
+        _logger.LogInformation("Successfully linked {Provider} to user {Email}", info.LoginProvider, user.Email);
+        return Redirect($"{returnUrl}?success=true&provider={info.LoginProvider}");
+    }
+
+    [HttpDelete("external-logins/{provider}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UnlinkExternalLogin(string provider)
+    {
+        if (string.IsNullOrEmpty(provider))
+        {
+            return BadRequest(new ApiResponse(HttpStatusCode.BadRequest, "Provider is required"));
+        }
+
+        var user = await userManager.FindByEmailFromClaimsPrinciple(HttpContext.User);
+        if (user == null)
+        {
+            return Unauthorized(new ApiResponse(HttpStatusCode.Unauthorized));
+        }
+
+        var logins = await userManager.GetLoginsAsync(user);
+        var loginToRemove = logins.FirstOrDefault(l => l.LoginProvider.Equals(provider, StringComparison.OrdinalIgnoreCase));
+
+        if (loginToRemove == null)
+        {
+            return NotFound(new ApiResponse(HttpStatusCode.NotFound, $"{provider} is not linked to your account"));
+        }
+
+        // Ensure user has another way to sign in
+        var hasPassword = await userManager.HasPasswordAsync(user);
+        var remainingLoginsCount = logins.Count - 1;
+
+        if (!hasPassword && remainingLoginsCount == 0)
+        {
+            return BadRequest(new ApiResponse(HttpStatusCode.BadRequest,
+                "Cannot unlink the last external login. Please set a password first or link another provider."));
+        }
+
+        var result = await userManager.RemoveLoginAsync(user, loginToRemove.LoginProvider, loginToRemove.ProviderKey);
+
+        if (!result.Succeeded)
+        {
+            _logger.LogWarning("Failed to unlink external login {Provider} for user {Email}: {Errors}",
+                provider, user.Email, string.Join(", ", result.Errors.Select(e => e.Description)));
+            return BadRequest(new ApiResponse(HttpStatusCode.BadRequest, "Failed to unlink external account"));
+        }
+
+        _logger.LogInformation("Successfully unlinked {Provider} from user {Email}", provider, user.Email);
+        return Ok(new { message = $"{provider} has been unlinked from your account" });
+    }
+
     private async Task<IActionResult> GenerateExternalLoginResponseAsync(AppUser user, string returnUrl)
     {
         var (accessToken, jwtId) = tokenService.CreateToken(user);
