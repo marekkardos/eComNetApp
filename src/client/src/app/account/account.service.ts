@@ -6,6 +6,7 @@ import { IUser } from '../shared/models/user';
 import { tap, catchError, shareReplay } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { IAddress } from '../shared/models/address';
+import { IExternalLoginInfo } from '../shared/models/external-login';
 
 @Injectable({
   providedIn: 'root'
@@ -126,6 +127,66 @@ export class AccountService {
 
   updateUserAddress(address: IAddress): Observable<IAddress> {
     return this.http.put<IAddress>(this.baseUrl + 'account/address', address);
+  }
+
+  // External login methods
+
+  /**
+   * Initiates external OAuth login by redirecting to the provider's authentication page.
+   * @param provider The OAuth provider name (e.g., 'Google')
+   * @param returnUrl The URL to redirect to after successful authentication
+   */
+  initiateExternalLogin(provider: string, returnUrl: string = '/'): void {
+    const externalLoginUrl = `${this.baseUrl}account/external-login?provider=${encodeURIComponent(provider)}&returnUrl=${encodeURIComponent(returnUrl)}`;
+    window.location.href = externalLoginUrl;
+  }
+
+  /**
+   * Handles the OAuth callback by processing the token returned in URL parameters.
+   * @param token The JWT access token from the OAuth callback
+   * @param email The user's email from the OAuth callback
+   * @param displayName The user's display name from the OAuth callback
+   */
+  handleExternalLoginCallback(token: string, email: string, displayName: string): void {
+    const user: IUser = {
+      email,
+      displayName,
+      token
+    };
+    this.handleAuthSuccess(user);
+  }
+
+  /**
+   * Gets the list of external login providers linked to the current user's account.
+   * @returns Observable of external login info array
+   */
+  getLinkedLogins(): Observable<IExternalLoginInfo[]> {
+    return this.http.get<IExternalLoginInfo[]>(this.baseUrl + 'account/external-logins', {
+      withCredentials: true
+    });
+  }
+
+  /**
+   * Initiates linking an external OAuth provider to the current user's account.
+   * Requires user to be authenticated.
+   * @param provider The OAuth provider name (e.g., 'Google')
+   * @param returnUrl The URL to redirect to after linking
+   */
+  initiateLinkExternalLogin(provider: string, returnUrl: string = '/'): void {
+    const linkUrl = `${this.baseUrl}account/link-external-login?provider=${encodeURIComponent(provider)}&returnUrl=${encodeURIComponent(returnUrl)}`;
+    window.location.href = linkUrl;
+  }
+
+  /**
+   * Unlinks an external login provider from the current user's account.
+   * @param provider The OAuth provider name to unlink (e.g., 'Google')
+   * @returns Observable that completes when the provider is unlinked
+   */
+  unlinkExternalLogin(provider: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.baseUrl}account/external-logins/${encodeURIComponent(provider)}`,
+      { withCredentials: true }
+    );
   }
 
   private handleAuthSuccess(user: IUser): void {
