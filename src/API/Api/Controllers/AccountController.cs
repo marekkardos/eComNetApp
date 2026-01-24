@@ -239,6 +239,17 @@ public class AccountController(
         return BadRequest(new ApiResponse(HttpStatusCode.BadRequest, "Problem updating the user"));
     }
 
+    /// <summary>
+    /// Initiates external authentication with the specified provider (e.g., Google).
+    /// </summary>
+    /// <param name="provider">The external authentication provider name (e.g., "Google").</param>
+    /// <param name="returnUrl">The URL to redirect to after successful authentication. Defaults to "/".</param>
+    /// <returns>A challenge redirect to the external provider's login page.</returns>
+    /// <remarks>
+    /// This endpoint redirects the user to the external provider's authentication page.
+    /// After successful authentication, the user is redirected to the callback endpoint.
+    /// Currently supported providers: Google.
+    /// </remarks>
     [HttpGet("external-login")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status302Found)]
@@ -262,6 +273,17 @@ public class AccountController(
         return Challenge(properties, provider);
     }
 
+    /// <summary>
+    /// Callback endpoint for external authentication providers.
+    /// </summary>
+    /// <param name="returnUrl">The URL to redirect to after processing. Defaults to "/".</param>
+    /// <param name="remoteError">Error message from the external provider, if any.</param>
+    /// <returns>A redirect to the return URL with authentication tokens or error information.</returns>
+    /// <remarks>
+    /// This endpoint is called by the external provider after authentication.
+    /// On success, it creates or links the user account and redirects with tokens.
+    /// Query parameters on redirect: token, email, displayName (on success) or error, message (on failure).
+    /// </remarks>
     [HttpGet("external-login-callback")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status302Found)]
@@ -356,8 +378,17 @@ public class AccountController(
         return await GenerateExternalLoginResponseAsync(user, returnUrl);
     }
 
+    /// <summary>
+    /// Gets a list of external login providers linked to the current user's account.
+    /// </summary>
+    /// <returns>A list of linked external login providers with their details.</returns>
+    /// <remarks>
+    /// Requires authentication. Returns the login provider name, provider key, and display name
+    /// for each linked external account.
+    /// </remarks>
     [HttpGet("external-logins")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IEnumerable<ExternalLoginInfoDto>>> GetExternalLogins()
     {
         var user = await userManager.FindByEmailFromClaimsPrinciple(HttpContext.User);
@@ -377,6 +408,17 @@ public class AccountController(
         }));
     }
 
+    /// <summary>
+    /// Initiates linking an external login provider to the current user's account.
+    /// </summary>
+    /// <param name="provider">The external authentication provider name (e.g., "Google").</param>
+    /// <param name="returnUrl">The URL to redirect to after linking. Defaults to "/".</param>
+    /// <returns>A challenge redirect to the external provider's login page.</returns>
+    /// <remarks>
+    /// Requires authentication. Redirects to the external provider for authentication,
+    /// then links the external account to the current user. Fails if the provider is
+    /// already linked to this account or to another user.
+    /// </remarks>
     [HttpGet("link-external-login")]
     [ProducesResponseType(StatusCodes.Status302Found)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -416,6 +458,16 @@ public class AccountController(
         return Challenge(properties, provider);
     }
 
+    /// <summary>
+    /// Callback endpoint for linking external login providers.
+    /// </summary>
+    /// <param name="returnUrl">The URL to redirect to after processing. Defaults to "/".</param>
+    /// <param name="remoteError">Error message from the external provider, if any.</param>
+    /// <returns>A redirect to the return URL with success or error information.</returns>
+    /// <remarks>
+    /// This endpoint is called by the external provider after authentication during account linking.
+    /// Query parameters on redirect: success=true, provider (on success) or error, message (on failure).
+    /// </remarks>
     [HttpGet("link-external-login-callback")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status302Found)]
@@ -475,6 +527,15 @@ public class AccountController(
         return Redirect($"{returnUrl}?success=true&provider={info.LoginProvider}");
     }
 
+    /// <summary>
+    /// Unlinks an external login provider from the current user's account.
+    /// </summary>
+    /// <param name="provider">The external authentication provider name to unlink (e.g., "Google").</param>
+    /// <returns>A success message if the provider was unlinked.</returns>
+    /// <remarks>
+    /// Requires authentication. Cannot unlink the last external login if the user has no password set.
+    /// Ensures the user always has at least one authentication method available.
+    /// </remarks>
     [HttpDelete("external-logins/{provider}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
