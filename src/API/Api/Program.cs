@@ -13,17 +13,38 @@ try
     // - Throws exceptions on write failure (guaranteed delivery)
     // - Sends events synchronously (blocking network calls)
     // - Should only be used for critical security events due to performance impact
-    var auditLogger = new LoggerConfiguration()
-        .Enrich.FromLogContext()
-        .Enrich.WithProperty("Application", "eComNetApp_API")
-        .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
-        .Enrich.WithProperty("LogType", "SecurityAudit")
-        .AuditTo.Seq(
-            serverUrl: builder.Configuration["Seq:ServerUrl"] 
-                        ?? throw new InvalidOperationException("Seq:ServerUrl configuration is missing."),
-            apiKey: builder.Configuration["Seq:ApiKey"]
-        )
-        .CreateLogger();
+    var seqServerUrl = builder.Configuration["Seq:ServerUrl"];
+
+    Serilog.Core.Logger auditLogger;
+    if (!string.IsNullOrEmpty(seqServerUrl))
+    {
+        auditLogger = new LoggerConfiguration()
+            .Enrich.FromLogContext()
+            .Enrich.WithProperty("Application", "eComNetApp_API")
+            .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
+            .Enrich.WithProperty("LogType", "SecurityAudit")
+            .AuditTo.Seq(
+                serverUrl: seqServerUrl,
+                apiKey: builder.Configuration["Seq:ApiKey"]
+            )
+            .CreateLogger();
+    }
+    else
+    {
+        // In Testing environment or when Seq is not configured, use a console-based audit logger
+        auditLogger = new LoggerConfiguration()
+            .Enrich.FromLogContext()
+            .Enrich.WithProperty("Application", "eComNetApp_API")
+            .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
+            .Enrich.WithProperty("LogType", "SecurityAudit")
+            .WriteTo.Console()
+            .CreateLogger();
+
+        if (!builder.Environment.EnvironmentName.Equals("Testing", StringComparison.OrdinalIgnoreCase))
+        {
+            Log.Warning("Seq:ServerUrl configuration is missing. Audit logging will use console output.");
+        }
+    }
 
     // Register audit logger in DI container for injection into services
     builder.Services.AddSingleton(auditLogger);
