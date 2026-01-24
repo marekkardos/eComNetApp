@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using System.Security.Claims;
 using Api.ApiResponses;
 using Api.Controllers;
 using Api.Dtos;
@@ -7,6 +8,8 @@ using Api.Extensions;
 using Api.Identity;
 using AutoMapper;
 using Core.Entities.Identity;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -234,6 +237,156 @@ public class AccountController(
 
         _logger.LogWarning("_userManager.UpdateAsync failed:{IdentityResult}", result);
         return BadRequest(new ApiResponse(HttpStatusCode.BadRequest, "Problem updating the user"));
+    }
+
+    [HttpGet("external-login")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status302Found)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public IActionResult ExternalLogin([FromQuery] string provider, [FromQuery] string returnUrl = "/")
+    {
+        if (string.IsNullOrEmpty(provider))
+        {
+            return BadRequest(new ApiResponse(HttpStatusCode.BadRequest, "Provider is required"));
+        }
+
+        // Validate provider
+        if (!provider.Equals("Google", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new ApiResponse(HttpStatusCode.BadRequest, "Invalid provider. Supported providers: Google"));
+        }
+
+        var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl });
+        var properties = signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+
+        return Challenge(properties, provider);
+    }
+
+    [HttpGet("external-login-callback")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status302Found)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ExternalLoginCallback([FromQuery] string returnUrl = "/", [FromQuery] string remoteError = null)
+    {
+        var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+        if (!string.IsNullOrEmpty(remoteError))
+        {
+            _logger.LogWarning("External login failed with remote error: {RemoteError}", remoteError);
+            return Redirect($"{returnUrl}?error=external_login_failed&message={Uri.EscapeDataString(remoteError)}");
+        }
+
+        var info = await signInManager.GetExternalLoginInfoAsync();
+        if (info == null)
+        {
+            _logger.LogWarning("External login info is null");
+            return Redirect($"{returnUrl}?error=external_login_failed&message=Unable to get external login information");
+        }
+
+        // Try to sign in with the external login
+        var signInResult = await signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
+
+        if (signInResult.Succeeded)
+        {
+            // User exists and is linked - generate tokens
+            var existingUser = await userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            if (existingUser != null)
+            {
+                authEventsLog.Monitor_SuccessfulLogin(existingUser.Id, existingUser.Email, clientIp);
+                var response = await GenerateExternalLoginResponseAsync(existingUser, returnUrl);
+                return response;
+            }
+        }
+
+        if (signInResult.IsLockedOut)
+        {
+            return Redirect($"{returnUrl}?error=account_locked&message=Account is locked out");
+        }
+
+        // User doesn't exist or isn't linked - create or link account
+        var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+        var name = info.Principal.FindFirstValue(ClaimTypes.Name) ?? info.Principal.FindFirstValue(ClaimTypes.GivenName);
+
+        if (string.IsNullOrEmpty(email))
+        {
+            _logger.LogWarning("External login did not provide email");
+            return Redirect($"{returnUrl}?error=external_login_failed&message=Email is required from external provider");
+        }
+
+        var user = await userManager.FindByEmailAsync(email);
+
+        if (user != null)
+        {
+            // User exists with this email - link the external login
+            var addLoginResult = await userManager.AddLoginAsync(user, info);
+            if (!addLoginResult.Succeeded)
+            {
+                _logger.LogWarning("Failed to link external login for user {Email}: {Errors}", email, string.Join(", ", addLoginResult.Errors.Select(e => e.Description)));
+                return Redirect($"{returnUrl}?error=link_failed&message=Failed to link external account");
+            }
+
+            authEventsLog.Monitor_SuccessfulLogin(user.Id, user.Email, clientIp);
+            return await GenerateExternalLoginResponseAsync(user, returnUrl);
+        }
+
+        // Create new user
+        user = new AppUser
+        {
+            UserName = email,
+            Email = email,
+            DisplayName = name ?? email.Split('@')[0]
+        };
+
+        var createResult = await userManager.CreateAsync(user);
+        if (!createResult.Succeeded)
+        {
+            _logger.LogWarning("Failed to create user for external login {Email}: {Errors}", email, string.Join(", ", createResult.Errors.Select(e => e.Description)));
+            return Redirect($"{returnUrl}?error=registration_failed&message=Failed to create user account");
+        }
+
+        var linkResult = await userManager.AddLoginAsync(user, info);
+        if (!linkResult.Succeeded)
+        {
+            _logger.LogWarning("Failed to link external login for new user {Email}: {Errors}", email, string.Join(", ", linkResult.Errors.Select(e => e.Description)));
+            // User was created but linking failed - still allow login
+        }
+
+        authEventsLog.Monitor_UserRegistration(user.Id, user.Email, clientIp);
+        return await GenerateExternalLoginResponseAsync(user, returnUrl);
+    }
+
+    [HttpGet("external-logins")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<ExternalLoginInfoDto>>> GetExternalLogins()
+    {
+        var user = await userManager.FindByEmailFromClaimsPrinciple(HttpContext.User);
+
+        if (user == null)
+        {
+            return Unauthorized(new ApiResponse(HttpStatusCode.Unauthorized));
+        }
+
+        var logins = await userManager.GetLoginsAsync(user);
+
+        return Ok(logins.Select(l => new ExternalLoginInfoDto
+        {
+            LoginProvider = l.LoginProvider,
+            ProviderKey = l.ProviderKey,
+            ProviderDisplayName = l.ProviderDisplayName ?? l.LoginProvider
+        }));
+    }
+
+    private async Task<IActionResult> GenerateExternalLoginResponseAsync(AppUser user, string returnUrl)
+    {
+        var (accessToken, jwtId) = tokenService.CreateToken(user);
+        var refreshToken = await refreshTokenService.GenerateRefreshTokenAsync(user, jwtId);
+
+        Response.SetRefreshTokenCookie(refreshToken, _tokenSettings, !environment.IsDevelopment());
+
+        // Redirect back to frontend with token
+        var separator = returnUrl.Contains('?') ? '&' : '?';
+        return Redirect($"{returnUrl}{separator}token={accessToken}&email={Uri.EscapeDataString(user.Email)}&displayName={Uri.EscapeDataString(user.DisplayName)}");
     }
 
     private async Task<ActionResult<UserDto>> GenerateAuthResponseAsync(AppUser user)
