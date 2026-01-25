@@ -1,0 +1,39 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(C:\\work\\github\\repos\\eComNetApp\\.auto-claude\\worktrees\\tasks\\001-social-login-integration/**)",
+      "Write(C:\\work\\github\\repos\\eComNetApp\\.auto-claude\\worktrees\\tasks\\001-social-login-integration/**)",
+      "Edit(C:\\work\\github\\repos\\eComNetApp\\.auto-claude\\worktrees\\tasks\\001-social-login-integration/**)",
+      "Glob(C:\\work\\github\\repos\\eComNetApp\\.auto-claude\\worktrees\\tasks\\001-social-login-integration/**)",
+      "Grep(C:\\work\\github\\repos\\eComNetApp\\.auto-claude\\worktrees\\tasks\\001-social-login-integration/**)",
+      "Read(C:\\work\\github\\repos\\eComNetApp\\.auto-claude\\worktrees\\tasks\\001-social-login-integration\\.auto-claude\\specs\\001-social-login-integration/**)",
+      "Write(C:\\work\\github\\repos\\eComNetApp\\.auto-claude\\worktrees\\tasks\\001-social-login-integration\\.auto-claude\\specs\\001-social-login-integration/**)",
+      "Edit(C:\\work\\github\\repos\\eComNetApp\\.auto-claude\\worktrees\\tasks\\001-social-login-integration\\.auto-claude\\specs\\001-social-login-integration/**)",
+      "Read(C:\\work\\github\\repos\\eComNetApp\\.auto-claude/**)",
+      "Write(C:\\work\\github\\repos\\eComNetApp\\.auto-claude/**)",
+      "Edit(C:\\work\\github\\repos\\eComNetApp\\.auto-claude/**)",
+      "Glob(C:\\work\\github\\repos\\eComNetApp\\.auto-claude/**)",
+      "Grep(C:\\work\\github\\repos\\eComNetApp\\.auto-claude/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__get-library-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}

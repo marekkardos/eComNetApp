@@ -15,9 +15,11 @@
             </li>
         </ul>
        
-        <button [disabled]="registerForm.invalid" 
-                class="btn btn-lg btn-primary btn-block" 
+        <button [disabled]="registerForm.invalid"
+                class="btn btn-lg btn-primary btn-block"
                 type="submit">Register</button>
       </form>
+
+      <app-social-login [returnUrl]="returnUrl"></app-social-login>
     </div>
   </div>
