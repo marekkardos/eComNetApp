@@ -13,6 +13,7 @@ This document outlines a comprehensive phased approach for migrating the Skinet 
 3. [Technology Stack Comparison](#technology-stack-comparison)
 4. [Phase 0: Pre-Migration Preparation](#phase-0-pre-migration-preparation)
 5. [Phase 1: Angular 21 Project Scaffolding](#phase-1-angular-21-project-scaffolding)
+   - [1.7 Static UI Implementation](#17-static-ui-implementation-mock-data-phase) → See [Static UI Plan](./federated-tickling-dijkstra.md)
 6. [Phase 2: Core Infrastructure](#phase-2-core-infrastructure)
 7. [Phase 3: Shared Module](#phase-3-shared-module)
 8. [Phase 4: Feature Modules](#phase-4-feature-modules)
@@ -143,14 +144,29 @@ eComNetApp/
 |-------------------|---------|------------------------|-------|
 | `@angular/core` | 9.0.1 | 21.x | Complete API changes |
 | `rxjs` | 6.5.4 | 7.8+ | Operator imports changed |
-| `bootstrap` | 4.1.1 | 5.3.x | CSS class changes |
-| `ngx-bootstrap` | 5.3.2 | 18.x+ or **ng-bootstrap** | Consider switching |
+| `bootstrap` | 4.1.1 | **Tailwind CSS** | Complete redesign with utility-first CSS |
+| `ngx-bootstrap` | 5.3.2 | **@angular/material** | Material components for forms, dialogs, stepper |
 | `ngx-toastr` | 11.3.3 | 19.x+ | Standalone support |
 | `ngx-spinner` | 8.1.0 | 17.x+ | Standalone support |
 | `xng-breadcrumb` | 5.0.1 | 11.x+ | Standalone support |
-| `font-awesome` | 4.7.0 | **@fortawesome/angular-fontawesome** | Modern FA integration |
+| `font-awesome` | 4.7.0 | **Material Icons** | Bundled with Angular Material |
 | `uuid` | 3.4.0 | `crypto.randomUUID()` | Built-in browser API |
 | `zone.js` | 0.10.2 | 0.15.x (optional) | Zoneless possible |
+
+### UI Framework Decision
+
+The Angular 21 app will use **Angular Material + Tailwind CSS** instead of Bootstrap:
+
+| Concern | Technology | Rationale |
+|---------|------------|-----------|
+| **Forms & Dialogs** | Angular Material | Consistent form controls, validation, accessibility |
+| **Stepper/Wizard** | Angular Material | Built-in `mat-horizontal-stepper` for checkout |
+| **Layout & Cards** | Tailwind CSS | Utility-first responsive design |
+| **Navigation** | Tailwind CSS | Custom navbar with modern styling |
+| **Product Grids** | Tailwind CSS | Flexible responsive grids |
+| **Icons** | Material Icons | Consistent with Material components |
+
+**Design Theme**: Teal/Cyan primary (#00897b) with clean, minimal, modern e-commerce aesthetic.
 
 ---
 
@@ -241,14 +257,15 @@ mkdir -p src/app/features/{account,basket,checkout,home,orders,shop}
 #### 1.3 Install Dependencies
 
 ```bash
-# Core dependencies
-npm install bootstrap@5.3 @popperjs/core
-npm install @ng-bootstrap/ng-bootstrap
-npm install ngx-toastr
-npm install ngx-spinner
-npm install xng-breadcrumb
-npm install @fortawesome/fontawesome-free
-npm install @stripe/stripe-js
+# Angular Material
+ng add @angular/material
+
+# Tailwind CSS
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init
+
+# Additional packages
+npm install ngx-toastr ngx-spinner xng-breadcrumb @stripe/stripe-js
 
 # Dev dependencies
 npm install -D @types/node
@@ -265,8 +282,7 @@ npm install -D @types/node
           "options": {
             "outputPath": "dist/client-v21",
             "styles": [
-              "node_modules/bootstrap/dist/css/bootstrap.min.css",
-              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+              "@angular/material/prebuilt-themes/indigo-pink.css",
               "node_modules/ngx-toastr/toastr.css",
               "node_modules/ngx-spinner/animations/ball-spin-clockwise.css",
               "src/styles.scss"
@@ -281,6 +297,23 @@ npm install -D @types/node
       }
     }
   }
+}
+```
+
+#### 1.4.1 Configure Tailwind (`tailwind.config.js`)
+
+```js
+module.exports = {
+  content: ["./src/**/*.{html,ts}"],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#00897b',    // Teal (Material teal-600)
+        accent: '#ff4081',     // Material pink accent
+      }
+    }
+  },
+  plugins: []
 }
 ```
 
@@ -346,14 +379,55 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
+#### 1.7 Static UI Implementation (Mock Data Phase)
+
+Before wiring up to the real API, build all UI components with static/hardcoded data. This approach allows:
+
+- **Rapid UI iteration** without API dependencies
+- **Visual verification** of designs before backend integration
+- **Parallel development** - UI can be built while API contracts are finalized
+- **Easy testing** of component layouts and responsiveness
+
+**Detailed Implementation**: See [Static UI Implementation Plan](./federated-tickling-dijkstra.md) for:
+
+| Sub-Phase | Description | Key Components |
+|-----------|-------------|----------------|
+| **1A** | Project Scaffolding & Auth Pages | Login, Register, Auth Layout |
+| **1B** | Core Shopping Experience | Navbar, Home, Shop, Product Cards, Product Detail |
+| **1C** | Cart & Checkout | Cart Page, Checkout Stepper, Payment UI |
+| **1D** | Orders | Order List, Order Detail |
+
+**Mock Data Structure** (`shared/mock-data/`):
+- `products.mock.ts` - Sample products, brands, types
+- `user.mock.ts` - Test user and address
+- `basket.mock.ts` - Cart items and delivery methods
+- `orders.mock.ts` - Order history
+
+**Key Design Decisions** (from Static UI Plan):
+- Centered card layout for auth pages
+- Sidebar filters on desktop, drawer on mobile for shop
+- Horizontal Material stepper with accordion sections for checkout
+- Placeholder images via picsum.photos
+
 ### Deliverables
 
 - [ ] New Angular 21 project in `client-v21/`
 - [ ] Project structure with feature directories
-- [ ] Dependencies installed and configured
+- [ ] Dependencies installed and configured (Material + Tailwind)
+- [ ] Tailwind configuration with custom theme colors
 - [ ] Environment files created
 - [ ] App config with providers
 - [ ] Development server running on port 4201
+- [ ] **Static UI Phase Complete**:
+  - [ ] Auth layout and pages (login/register) with mock login
+  - [ ] Main layout with navbar (cart badge, user menu)
+  - [ ] Home page with hero section
+  - [ ] Shop page with product grid, filters, pagination (mock data)
+  - [ ] Product detail page
+  - [ ] Cart page with quantity controls
+  - [ ] Checkout stepper (address → delivery → review → payment)
+  - [ ] Orders list and detail pages
+  - [ ] Responsive design verified (mobile/tablet/desktop)
 
 ---
 
@@ -796,22 +870,20 @@ export class TextInputComponent implements ControlValueAccessor {
 ```typescript
 // src/app/shared/components/pager/pager.component.ts
 import { Component, input, output } from '@angular/core';
-import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 
 @Component({
   selector: 'app-pager',
   standalone: true,
-  imports: [NgbPaginationModule],
+  imports: [MatPaginatorModule],
   template: `
-    <ngb-pagination
-      [collectionSize]="totalCount()"
+    <mat-paginator
+      [length]="totalCount()"
       [pageSize]="pageSize()"
-      [page]="pageNumber()"
-      [maxSize]="5"
-      [rotate]="true"
-      [boundaryLinks]="true"
-      (pageChange)="pageChanged.emit($event)">
-    </ngb-pagination>
+      [pageIndex]="pageNumber() - 1"
+      [pageSizeOptions]="[6, 12, 24]"
+      (page)="onPageChange($event)">
+    </mat-paginator>
   `
 })
 export class PagerComponent {
@@ -819,6 +891,10 @@ export class PagerComponent {
   pageSize = input.required<number>();
   pageNumber = input.required<number>();
   pageChanged = output<number>();
+
+  onPageChange(event: PageEvent): void {
+    this.pageChanged.emit(event.pageIndex + 1);
+  }
 }
 ```
 
@@ -834,10 +910,13 @@ export class PagerComponent {
 
 ---
 
+
 ## Phase 4: Feature Modules
 
 **Duration**: 8-10 days
 **Dependencies**: Phase 3
+
+**Detailed Implementation**: See [Phase 4: Feature Modules](./Phase-4-Feature-Modules.md) for:
 
 ### Module Migration Order
 
@@ -872,512 +951,6 @@ export class PagerComponent {
 │                                                                      │
 └─────────────────────────────────────────────────────────────────────┘
 ```
-
-### 4.1 Home Feature (Day 1)
-
-```typescript
-// src/app/features/home/home.component.ts
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
-
-@Component({
-  selector: 'app-home',
-  standalone: true,
-  imports: [RouterLink],
-  template: `
-    <div class="container mt-5">
-      <section class="hero text-center">
-        <h1>Welcome to Skinet</h1>
-        <p class="lead">Your one-stop shop for quality products</p>
-        <a routerLink="/shop" class="btn btn-primary btn-lg">Shop Now</a>
-      </section>
-    </div>
-  `
-})
-export class HomeComponent {}
-
-// Route: src/app/features/home/home.routes.ts
-import { Routes } from '@angular/router';
-import { HomeComponent } from './home.component';
-
-export const HOME_ROUTES: Routes = [
-  { path: '', component: HomeComponent }
-];
-```
-
-### 4.2 Shop Feature (Days 2-4)
-
-#### Components Structure
-
-```
-features/shop/
-├── shop.component.ts              # Main catalog page
-├── shop.routes.ts                 # Shop routing
-├── components/
-│   ├── product-item/              # Product card
-│   └── product-details/           # Product detail page
-└── services/
-    └── shop.service.ts            # Product data service
-```
-
-#### Shop Service (Signals)
-
-```typescript
-// src/app/features/shop/services/shop.service.ts
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { environment } from '../../../../environments/environment';
-import { Product, Brand, ProductType } from '../../../shared/models';
-import { Pagination } from '../../../shared/models/pagination.model';
-import { ShopParams } from '../../../shared/models/shop-params.model';
-
-@Injectable({ providedIn: 'root' })
-export class ShopService {
-  private http = inject(HttpClient);
-  private baseUrl = environment.apiUrl;
-
-  // Signals
-  private productsSignal = signal<Product[]>([]);
-  private brandsSignal = signal<Brand[]>([]);
-  private typesSignal = signal<ProductType[]>([]);
-  private paginationSignal = signal<Pagination | null>(null);
-  private paramsSignal = signal<ShopParams>(new ShopParams());
-  private loadingSignal = signal(false);
-
-  // Public readonly signals
-  readonly products = this.productsSignal.asReadonly();
-  readonly brands = this.brandsSignal.asReadonly();
-  readonly types = this.typesSignal.asReadonly();
-  readonly pagination = this.paginationSignal.asReadonly();
-  readonly params = this.paramsSignal.asReadonly();
-  readonly loading = this.loadingSignal.asReadonly();
-
-  // Computed
-  readonly totalCount = computed(() => this.paginationSignal()?.count ?? 0);
-
-  async loadProducts(): Promise<void> {
-    this.loadingSignal.set(true);
-    const params = this.buildParams();
-
-    try {
-      const response = await firstValueFrom(
-        this.http.get<Pagination<Product[]>>(`${this.baseUrl}products`, { params })
-      );
-      this.productsSignal.set(response.data);
-      this.paginationSignal.set(response);
-    } finally {
-      this.loadingSignal.set(false);
-    }
-  }
-
-  updateParams(updates: Partial<ShopParams>): void {
-    this.paramsSignal.update(current => ({ ...current, ...updates }));
-  }
-
-  private buildParams(): HttpParams {
-    const p = this.paramsSignal();
-    let params = new HttpParams()
-      .set('pageIndex', p.pageNumber.toString())
-      .set('pageSize', p.pageSize.toString());
-
-    if (p.brandId > 0) params = params.set('brandId', p.brandId.toString());
-    if (p.typeId > 0) params = params.set('typeId', p.typeId.toString());
-    if (p.search) params = params.set('search', p.search);
-    if (p.sort) params = params.set('sort', p.sort);
-
-    return params;
-  }
-}
-```
-
-#### Shop Component
-
-```typescript
-// src/app/features/shop/shop.component.ts
-import { Component, inject, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { ShopService } from './services/shop.service';
-import { ProductItemComponent } from './components/product-item/product-item.component';
-import { PagerComponent } from '../../shared/components/pager/pager.component';
-import { PagingHeaderComponent } from '../../shared/components/paging-header/paging-header.component';
-
-@Component({
-  selector: 'app-shop',
-  standalone: true,
-  imports: [
-    FormsModule,
-    ProductItemComponent,
-    PagerComponent,
-    PagingHeaderComponent
-  ],
-  templateUrl: './shop.component.html',
-  styleUrl: './shop.component.scss'
-})
-export class ShopComponent implements OnInit {
-  shopService = inject(ShopService);
-
-  sortOptions = [
-    { name: 'Alphabetical', value: 'name' },
-    { name: 'Price: Low to High', value: 'priceAsc' },
-    { name: 'Price: High to Low', value: 'priceDesc' }
-  ];
-
-  ngOnInit(): void {
-    this.shopService.loadBrands();
-    this.shopService.loadTypes();
-    this.shopService.loadProducts();
-  }
-
-  onBrandSelected(brandId: number): void {
-    this.shopService.updateParams({ brandId, pageNumber: 1 });
-    this.shopService.loadProducts();
-  }
-
-  onTypeSelected(typeId: number): void {
-    this.shopService.updateParams({ typeId, pageNumber: 1 });
-    this.shopService.loadProducts();
-  }
-
-  onSortSelected(sort: string): void {
-    this.shopService.updateParams({ sort });
-    this.shopService.loadProducts();
-  }
-
-  onSearch(search: string): void {
-    this.shopService.updateParams({ search, pageNumber: 1 });
-    this.shopService.loadProducts();
-  }
-
-  onPageChanged(page: number): void {
-    this.shopService.updateParams({ pageNumber: page });
-    this.shopService.loadProducts();
-  }
-}
-```
-
-```html
-<!-- shop.component.html -->
-<div class="container mt-4">
-  <div class="row">
-    <!-- Filters Sidebar -->
-    <div class="col-3">
-      <h5>Sort</h5>
-      <select class="form-select mb-3" (change)="onSortSelected($any($event.target).value)">
-        @for (option of sortOptions; track option.value) {
-          <option [value]="option.value">{{ option.name }}</option>
-        }
-      </select>
-
-      <h5>Brands</h5>
-      <ul class="list-group mb-3">
-        <li class="list-group-item"
-            [class.active]="shopService.params().brandId === 0"
-            (click)="onBrandSelected(0)">
-          All
-        </li>
-        @for (brand of shopService.brands(); track brand.id) {
-          <li class="list-group-item"
-              [class.active]="shopService.params().brandId === brand.id"
-              (click)="onBrandSelected(brand.id)">
-            {{ brand.name }}
-          </li>
-        }
-      </ul>
-
-      <h5>Types</h5>
-      <ul class="list-group">
-        <li class="list-group-item"
-            [class.active]="shopService.params().typeId === 0"
-            (click)="onTypeSelected(0)">
-          All
-        </li>
-        @for (type of shopService.types(); track type.id) {
-          <li class="list-group-item"
-              [class.active]="shopService.params().typeId === type.id"
-              (click)="onTypeSelected(type.id)">
-            {{ type.name }}
-          </li>
-        }
-      </ul>
-    </div>
-
-    <!-- Products Grid -->
-    <div class="col-9">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <app-paging-header
-          [currentPage]="shopService.params().pageNumber"
-          [pageSize]="shopService.params().pageSize"
-          [totalCount]="shopService.totalCount()" />
-
-        <input type="text"
-               class="form-control w-50"
-               placeholder="Search..."
-               (keyup.enter)="onSearch($any($event.target).value)">
-      </div>
-
-      <div class="row">
-        @for (product of shopService.products(); track product.id) {
-          <div class="col-4 mb-4">
-            <app-product-item [product]="product" />
-          </div>
-        }
-      </div>
-
-      @if (shopService.totalCount() > shopService.params().pageSize) {
-        <app-pager
-          [totalCount]="shopService.totalCount()"
-          [pageSize]="shopService.params().pageSize"
-          [pageNumber]="shopService.params().pageNumber"
-          (pageChanged)="onPageChanged($event)" />
-      }
-    </div>
-  </div>
-</div>
-```
-
-### 4.3 Account Feature (Days 5-6)
-
-```
-features/account/
-├── account.routes.ts
-├── login/
-│   └── login.component.ts
-└── register/
-    └── register.component.ts
-```
-
-#### Login Component
-
-```typescript
-// src/app/features/account/login/login.component.ts
-import { Component, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { AccountService } from '../../../core/services/account.service';
-import { TextInputComponent } from '../../../shared/components/text-input/text-input.component';
-
-@Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, TextInputComponent],
-  templateUrl: './login.component.html'
-})
-export class LoginComponent {
-  private fb = inject(FormBuilder);
-  private accountService = inject(AccountService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-
-  loginForm = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required]
-  });
-
-  returnUrl: string;
-
-  constructor() {
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/shop';
-  }
-
-  async onSubmit(): Promise<void> {
-    if (this.loginForm.invalid) return;
-
-    try {
-      await this.accountService.login(
-        this.loginForm.value.email!,
-        this.loginForm.value.password!
-      );
-      this.router.navigateByUrl(this.returnUrl);
-    } catch (error) {
-      console.error('Login failed', error);
-    }
-  }
-}
-```
-
-### 4.4 Basket Feature (Days 7-8)
-
-```typescript
-// src/app/features/basket/basket.component.ts
-import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { BasketService } from '../../core/services/basket.service';
-import { BasketSummaryComponent } from '../../shared/components/basket-summary/basket-summary.component';
-import { OrderTotalsComponent } from '../../shared/components/order-totals/order-totals.component';
-
-@Component({
-  selector: 'app-basket',
-  standalone: true,
-  imports: [RouterLink, BasketSummaryComponent, OrderTotalsComponent],
-  templateUrl: './basket.component.html'
-})
-export class BasketComponent {
-  basketService = inject(BasketService);
-
-  incrementQuantity(itemId: number): void {
-    this.basketService.incrementItemQuantity(itemId);
-  }
-
-  decrementQuantity(itemId: number): void {
-    this.basketService.decrementItemQuantity(itemId);
-  }
-
-  removeItem(itemId: number): void {
-    this.basketService.removeItemFromBasket(itemId);
-  }
-}
-```
-
-### 4.5 Checkout Feature (Days 9-11)
-
-```
-features/checkout/
-├── checkout.component.ts          # Stepper container
-├── checkout.routes.ts
-├── checkout-address/              # Step 1: Address
-├── checkout-delivery/             # Step 2: Delivery
-├── checkout-payment/              # Step 3: Payment (Stripe)
-├── checkout-review/               # Step 4: Review
-├── checkout-success/              # Success page
-└── services/
-    └── checkout.service.ts
-```
-
-#### Stripe Integration
-
-```typescript
-// src/app/features/checkout/checkout-payment/checkout-payment.component.ts
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
-import { loadStripe, Stripe, StripeCardElement } from '@stripe/stripe-js';
-import { environment } from '../../../../environments/environment';
-import { BasketService } from '../../../core/services/basket.service';
-import { CheckoutService } from '../services/checkout.service';
-
-@Component({
-  selector: 'app-checkout-payment',
-  standalone: true,
-  templateUrl: './checkout-payment.component.html'
-})
-export class CheckoutPaymentComponent implements OnInit, OnDestroy {
-  private basketService = inject(BasketService);
-  private checkoutService = inject(CheckoutService);
-
-  stripe: Stripe | null = null;
-  cardElement: StripeCardElement | null = null;
-  cardErrors = signal<string>('');
-
-  async ngOnInit(): Promise<void> {
-    this.stripe = await loadStripe(environment.stripe.publishableKey);
-
-    if (this.stripe) {
-      const elements = this.stripe.elements();
-      this.cardElement = elements.create('card');
-      this.cardElement.mount('#card-element');
-
-      this.cardElement.on('change', event => {
-        this.cardErrors.set(event.error?.message ?? '');
-      });
-    }
-  }
-
-  ngOnDestroy(): void {
-    this.cardElement?.destroy();
-  }
-
-  async submitPayment(): Promise<boolean> {
-    const basket = this.basketService.basket();
-    if (!basket?.clientSecret || !this.stripe || !this.cardElement) {
-      return false;
-    }
-
-    const result = await this.stripe.confirmCardPayment(basket.clientSecret, {
-      payment_method: {
-        card: this.cardElement
-      }
-    });
-
-    if (result.error) {
-      this.cardErrors.set(result.error.message ?? 'Payment failed');
-      return false;
-    }
-
-    return true;
-  }
-}
-```
-
-### 4.6 Orders Feature (Days 12-13)
-
-```typescript
-// src/app/features/orders/orders.component.ts
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { OrdersService } from './services/orders.service';
-import { Order } from '../../shared/models/order.model';
-
-@Component({
-  selector: 'app-orders',
-  standalone: true,
-  imports: [RouterLink],
-  template: `
-    <div class="container mt-4">
-      <h2>Your Orders</h2>
-
-      @if (orders().length === 0) {
-        <p>No orders found.</p>
-      } @else {
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Order #</th>
-              <th>Date</th>
-              <th>Total</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (order of orders(); track order.id) {
-              <tr>
-                <td>{{ order.id }}</td>
-                <td>{{ order.orderDate | date }}</td>
-                <td>{{ order.total | currency }}</td>
-                <td>{{ order.status }}</td>
-                <td>
-                  <a [routerLink]="['/orders', order.id]" class="btn btn-sm btn-primary">
-                    View
-                  </a>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      }
-    </div>
-  `
-})
-export class OrdersComponent implements OnInit {
-  private ordersService = inject(OrdersService);
-  orders = signal<Order[]>([]);
-
-  async ngOnInit(): Promise<void> {
-    const orders = await this.ordersService.getOrders();
-    this.orders.set(orders);
-  }
-}
-```
-
-### Deliverables
-
-- [ ] Home feature (landing page)
-- [ ] Shop feature (products, filtering, pagination, details)
-- [ ] Account feature (login, register)
-- [ ] Basket feature (cart management)
-- [ ] Checkout feature (multi-step with Stripe)
-- [ ] Orders feature (history, details)
-- [ ] All routes configured
-
----
 
 ## Phase 5: Integration & Testing
 
@@ -1678,13 +1251,20 @@ readonly data = this.dataSignal.asReadonly();
 | Phase | Duration | Key Deliverables |
 |-------|----------|------------------|
 | Phase 0: Preparation | 1-2 days | Documentation, environment setup |
-| Phase 1: Scaffolding | 1-2 days | New Angular 21 project |
+| Phase 1: Scaffolding | 1-2 days | New Angular 21 project, Material + Tailwind setup |
+| Phase 1.7: Static UI | 3-5 days | All UI components with mock data ([details](./federated-tickling-dijkstra.md)) |
 | Phase 2: Core | 3-4 days | Services, interceptors, guards |
 | Phase 3: Shared | 2-3 days | Reusable components |
-| Phase 4: Features | 8-10 days | All feature modules |
+| Phase 4: Features | 8-10 days | All feature modules wired to API |
 | Phase 5: Integration | 3-4 days | Testing, bug fixes |
 | Phase 6: Cutover | 2-3 days | Production deployment |
-| **Total** | **~4-5 weeks** | Complete migration |
+| **Total** | **~5-6 weeks** | Complete migration |
+
+---
+
+## Related Documents
+
+- **[Static UI Implementation Plan](./federated-tickling-dijkstra.md)** - Detailed UI component designs, mock data structures, and verification checklists for Phase 1.7
 
 ---
 
@@ -1693,6 +1273,7 @@ readonly data = this.dataSignal.asReadonly();
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-23 | Claude | Initial plan created |
+| 1.1 | 2026-01-26 | Claude | Integrated Static UI plan (Phase 1.7), updated tech stack to Material + Tailwind |
 
 ---
 
@@ -1702,4 +1283,6 @@ readonly data = this.dataSignal.asReadonly();
 - [Angular Signals](https://angular.dev/guide/signals)
 - [Standalone Components](https://angular.dev/guide/standalone-components)
 - [New Control Flow](https://angular.dev/guide/templates/control-flow)
+- [Angular Material](https://material.angular.io/)
+- [Tailwind CSS](https://tailwindcss.com/)
 - [Stripe.js Documentation](https://stripe.com/docs/js)

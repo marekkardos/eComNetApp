@@ -1,5 +1,7 @@
 # Angular 21 Migration - Static UI Implementation Plan
 
+> **Parent Document**: [ANGULAR-21-MIGRATION-PLAN.md](./ANGULAR-21-MIGRATION-PLAN.md) - This document is Phase 1.7 of the main migration plan.
+
 ## Overview
 
 Build a new Angular 21 e-commerce application with Material + Tailwind CSS, starting with static/hardcoded data components before wiring up to the real API.
