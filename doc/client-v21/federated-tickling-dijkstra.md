@@ -93,14 +93,14 @@ client-v21/src/app/
 │   ├── models/
 │   └── mock-data/            # Hardcoded data for static phase
 ├── features/
-│   ├── auth/
+│   ├── account/
 │   │   ├── login/
 │   │   └── register/
 │   ├── home/
 │   ├── shop/
 │   │   ├── product-list/
 │   │   └── product-detail/
-│   ├── cart/
+│   ├── basket/
 │   ├── checkout/
 │   │   ├── checkout-address/
 │   │   ├── checkout-delivery/
@@ -219,7 +219,7 @@ export class AuthLayoutComponent {}
 
 ### 1.8 Login Page
 
-**File: `features/auth/login/login.component.ts`**
+**File: `features/account/login/login.component.ts`**
 
 Design elements:
 - Centered white card with shadow
@@ -277,7 +277,7 @@ Design elements:
   <!-- Register Link -->
   <p class="text-center mt-6 text-gray-600">
     Don't have an account?
-    <a routerLink="/auth/register" class="text-primary font-medium hover:underline">Sign up</a>
+    <a routerLink="/account/register" class="text-primary font-medium hover:underline">Sign up</a>
   </p>
 </div>
 ```
@@ -324,7 +324,7 @@ Design elements:
       <!-- Right Section -->
       <div class="flex items-center space-x-4">
         <!-- Cart -->
-        <a routerLink="/cart" class="relative p-2">
+        <a routerLink="/basket" class="relative p-2">
           <mat-icon>shopping_cart</mat-icon>
           @if (cartItemCount() > 0) {
             <span class="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -344,7 +344,7 @@ Design elements:
             <button mat-menu-item (click)="logout()">Logout</button>
           </mat-menu>
         } @else {
-          <a mat-stroked-button routerLink="/auth/login">Login</a>
+          <a mat-stroked-button routerLink="/account/login">Login</a>
         }
       </div>
     </div>
@@ -718,7 +718,7 @@ Design elements:
           </mat-accordion>
 
           <div class="flex justify-between mt-6">
-            <a routerLink="/cart" mat-stroked-button>Back to Cart</a>
+            <a routerLink="/basket" mat-stroked-button>Back to Cart</a>
             <button mat-raised-button color="primary" matStepperNext>
               Continue to Delivery
             </button>
@@ -963,7 +963,7 @@ export const routes: Routes = [
       { path: 'home', loadComponent: () => import('./features/home/home.component') },
       { path: 'shop', loadComponent: () => import('./features/shop/product-list/product-list.component') },
       { path: 'shop/:id', loadComponent: () => import('./features/shop/product-detail/product-detail.component') },
-      { path: 'cart', loadComponent: () => import('./features/cart/cart.component') },
+      { path: 'basket', loadComponent: () => import('./features/basket/basket.component') },
       { path: 'checkout', loadComponent: () => import('./features/checkout/checkout.component'), canActivate: [authGuard] },
       { path: 'checkout/success', loadComponent: () => import('./features/checkout/checkout-success/checkout-success.component') },
       { path: 'orders', loadComponent: () => import('./features/orders/order-list/order-list.component'), canActivate: [authGuard] },
@@ -973,11 +973,11 @@ export const routes: Routes = [
     ]
   },
   {
-    path: 'auth',
+    path: 'account',
     component: AuthLayoutComponent,
     children: [
-      { path: 'login', loadComponent: () => import('./features/auth/login/login.component') },
-      { path: 'register', loadComponent: () => import('./features/auth/register/register.component') },
+      { path: 'login', loadComponent: () => import('./features/account/login/login.component') },
+      { path: 'register', loadComponent: () => import('./features/account/register/register.component') },
     ]
   },
   { path: '**', redirectTo: 'not-found' }
@@ -1041,12 +1041,12 @@ src/app/
 │   ├── mock-data/*.ts (4 files)
 │   └── components/order-totals/order-totals.component.ts
 ├── features/
-│   ├── auth/login/login.component.ts
-│   ├── auth/register/register.component.ts
+│   ├── account/login/login.component.ts
+│   ├── account/register/register.component.ts
 │   ├── home/home.component.ts
 │   ├── shop/product-list/product-list.component.ts
 │   ├── shop/product-detail/product-detail.component.ts
-│   ├── cart/cart.component.ts
+│   ├── basket/basket.component.ts
 │   ├── checkout/checkout.component.ts
 │   ├── checkout/checkout-success/checkout-success.component.ts
 │   ├── orders/order-list/order-list.component.ts
