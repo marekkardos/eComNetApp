@@ -44,6 +44,26 @@ services:
     networks:
       - api-network
 
+  angular21:
+    profiles: ["backend-dev"]
+    build:
+      context: ../client-v21
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "4201:4201"
+    volumes:
+      # Mount source for hot reload
+      - ../client-v21:/app
+      # Preserve container's node_modules
+      - /app/node_modules
+    # depends_on:
+    #   - api
+    networks:
+      - api-network 
+
+
   dbserver:
     image: mcr.microsoft.com/mssql/server:2019-latest
     ports:

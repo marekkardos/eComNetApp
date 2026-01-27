@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document outlines a comprehensive phased approach for migrating the Skinet e-commerce application from Angular 9 to Angular 21. Rather than performing an incremental upgrade through multiple Angular versions, we will build a completely new Angular 21 application alongside the existing Angular 9 app, allowing for parallel development, feature parity verification, and minimal disruption to ongoing development.
+This document outlines a comprehensive phased approach for migrating the Skishop e-commerce application from Angular 9 to Angular 21. Rather than performing an incremental upgrade through multiple Angular versions, we will build a completely new Angular 21 application alongside the existing Angular 9 app, allowing for parallel development, feature parity verification, and minimal disruption to ongoing development.
 
 ---
 
@@ -11,10 +11,44 @@ This document outlines a comprehensive phased approach for migrating the Skinet 
 1. [Migration Strategy Overview](#migration-strategy-overview)
 2. [Project Structure During Migration](#project-structure-during-migration)
 3. [Technology Stack Comparison](#technology-stack-comparison)
-4. [Phase 0: Pre-Migration Preparation](#phase-0-pre-migration-preparation)
-5. [Phase 1: Angular 21 Project Scaffolding](#phase-1-angular-21-project-scaffolding)
+4. [Phase 0: Pre-Migration Preparation](#phase-0-pre-migration-preparation) ✅ **COMPLETE** → See [Phase 0 Documentation](./PHASE-0-DOCUMENTATION.md)
+5. [Phase 1: Angular 21 Project Scaffolding](#phase-1-angular-21-project-scaffolding) ✅ **COMPLETE**
    - [1.7 Static UI Implementation](#17-static-ui-implementation-mock-data-phase) → See [Static UI Plan](./federated-tickling-dijkstra.md)
-6. [Phase 2: Core Infrastructure](#phase-2-core-infrastructure)
+  
+  # The issue now 
+  The styles.css file with Tailwind's @import is being ignored by Angular's build.
+  Only styles.scss is being processed. Angular 21's build system isn't passing plain CSS files through PostCSS properly for Tailwind v4.
+
+  Here are your options:
+
+  Option 1: Keep the workaround (RECOMMENDED for now)
+
+  - Pros: Works now, maintainable, covers 90% of use cases
+  - Cons: Not true Tailwind, need to manually add new utilities
+  - Status: Currently working
+
+  Option 2: Downgrade to Tailwind v3
+
+  npm uninstall tailwindcss @tailwindcss/postcss
+  npm install -D tailwindcss@^3.4.0
+  Create tailwind.config.js for v3
+  - Pros: Proven Angular support, full Tailwind features
+  - Cons: Older version, requires migration later
+
+  Option 3: Try to fix Tailwind v4 integration
+
+  - Pros: Future-proof, official solution
+  - Cons: Complex, might require Angular build customization
+  - Status: Needs investigation, may not be possible yet
+
+  My recommendation: Keep Option 1 (manual utilities) for now since:
+  - It's working well
+  - Tailwind v4 + Angular 21 integration is still immature
+  - You can migrate to real Tailwind v4 later when the ecosystem catches up
+
+  OK for now  **Option 1 is in place**.
+
+6. [Phase 2: Core Infrastructure](#phase-2-core-infrastructure) ⬅️ **CURRENT**
 7. [Phase 3: Shared Module](#phase-3-shared-module)
 8. [Phase 4: Feature Modules](#phase-4-feature-modules)
 9. [Phase 5: Integration & Testing](#phase-5-integration--testing)
@@ -175,16 +209,17 @@ The Angular 21 app will use **Angular Material + Tailwind CSS** instead of Boots
 
 **Duration**: 1-2 days
 **Branch**: `feature/modernize`
+**Documentation**: [Phase 0 Documentation](./PHASE-0-DOCUMENTATION.md)
 
 ### Checklist
 
-- [ ] **0.1** Review and document all Angular 9 features
-- [ ] **0.2** Identify deprecated APIs and patterns
-- [ ] **0.3** Create API contract documentation
-- [ ] **0.4** Set up comparison testing environment
-- [ ] **0.5** Update Node.js to ^20.19.0 || ^22.12.0 || ^24.0.0 (Angular 21 requirement), install TypeScript >=5.9.0 <6.0.0
-- [ ] **0.6** Document all environment configurations
-- [ ] **0.7** Create feature parity checklist
+- [x] **0.1** Review and document all Angular 9 features
+- [x] **0.2** Identify deprecated APIs and patterns
+- [x] **0.3** Create API contract documentation
+- [x] **0.4** Set up comparison testing environment
+- [x] **0.5** Update Node.js to ^20.19.0 || ^22.12.0 || ^24.0.0 (Angular 21 requirement), install TypeScript >=5.9.0 <6.0.0
+- [x] **0.6** Document all environment configurations
+- [x] **0.7** Create feature parity checklist
 
 ### API Endpoints to Preserve
 
@@ -224,7 +259,7 @@ Orders API:
 ## Phase 1: Angular 21 Project Scaffolding
 
 **Duration**: 1-2 days
-**Dependencies**: Phase 0
+**Dependencies**: Phase 0 ✅
 
 ### Tasks
 
@@ -401,30 +436,30 @@ Before wiring up to the real API, build all UI components with static/hardcoded 
 
 ### Deliverables
 
-- [ ] New Angular 21 project in `client-v21/`
-- [ ] Project structure with feature directories
-- [ ] Dependencies installed and configured (Material + Tailwind)
-- [ ] Tailwind configuration with custom theme colors
-- [ ] Environment files created
-- [ ] App config with providers
-- [ ] Development server running on port 4201
-- [ ] **Static UI Phase Complete**:
-  - [ ] Auth layout and pages (login/register) with mock login
-  - [ ] Main layout with navbar (cart badge, user menu)
-  - [ ] Home page with hero section
-  - [ ] Shop page with product grid, filters, pagination (mock data)
-  - [ ] Product detail page
-  - [ ] Cart page with quantity controls
-  - [ ] Checkout stepper (address → delivery → review → payment)
-  - [ ] Orders list and detail pages
-  - [ ] Responsive design verified (mobile/tablet/desktop)
+- [x] New Angular 21 project in `client-v21/`
+- [x] Project structure with feature directories
+- [x] Dependencies installed and configured (Material + Tailwind)
+- [x] Tailwind configuration with custom theme colors
+- [x] Environment files created
+- [x] App config with providers
+- [x] Development server running on port 4201
+- [x] **Static UI Phase Complete**:
+  - [x] Auth layout and pages (login/register) with mock login
+  - [x] Main layout with navbar (cart badge, user menu)
+  - [x] Home page with hero section
+  - [x] Shop page with product grid, filters, pagination (mock data)
+  - [x] Product detail page
+  - [x] Cart page with quantity controls
+  - [x] Checkout stepper (address → delivery → review → payment)
+  - [x] Orders list and detail pages
+  - [x] Responsive design verified (mobile/tablet/desktop)
 
 ---
 
 ## Phase 2: Core Infrastructure
 
 **Duration**: 3-4 days
-**Dependencies**: Phase 1
+**Dependencies**: Phase 1 ✅
 
 ### 2.1 Models (Day 1)
 
@@ -725,7 +760,7 @@ export class NavBarComponent {
 <!-- nav-bar.component.html -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container">
-    <a class="navbar-brand" routerLink="/">Skinet</a>
+    <a class="navbar-brand" routerLink="/">Skishop</a>
 
     <ul class="navbar-nav me-auto">
       <li class="nav-item">
@@ -1254,6 +1289,7 @@ readonly data = this.dataSignal.asReadonly();
 
 ## Related Documents
 
+- **[Phase 0 Documentation](./PHASE-0-DOCUMENTATION.md)** - Pre-migration analysis, Angular 9 feature inventory, and API contracts
 - **[Static UI Implementation Plan](./federated-tickling-dijkstra.md)** - Detailed UI component designs, mock data structures, and verification checklists for Phase 1.7
 
 ---
@@ -1264,6 +1300,7 @@ readonly data = this.dataSignal.asReadonly();
 |---------|------|--------|---------|
 | 1.0 | 2026-01-23 | Claude | Initial plan created |
 | 1.1 | 2026-01-26 | Claude | Integrated Static UI plan (Phase 1.7), updated tech stack to Material + Tailwind |
+| 1.2 | 2026-01-27 | Claude | Marked Phase 0 and Phase 1 as complete, added Phase 0 documentation reference |
 
 ---
 

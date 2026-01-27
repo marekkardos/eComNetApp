@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__angular-cli__search_documentation",
+      "mcp__angular-cli__list_projects",
+      "mcp__angular-cli__get_best_practices",
+      "Bash(dir \"%APPDATA%\\\\Claude\" /b)",
+      "Bash(dir \"%LOCALAPPDATA%\\\\Claude\" /b)",
+      "Bash(where /r \"%USERPROFILE%\" *mcp*.json)",
+      "Bash(findstr:*)",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__take_screenshot",
+      "Bash(docker stop:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(docker logs:*)",
+      "mcp__chrome-devtools__evaluate_script",
+      "mcp__chrome-devtools__take_snapshot",
+      "Bash(docker ps:*)",
+      "mcp__chrome-devtools__hover"
+    ]
+  }
+}

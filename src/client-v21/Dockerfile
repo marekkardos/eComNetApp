@@ -1,4 +1,4 @@
-FROM node:12-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN npm install
 COPY . .
 
 # Expose Angular dev server port
-EXPOSE 4200
+EXPOSE 4201
 
 # Start dev server with hot reload for containers
-CMD ["npm", "run", "start:container"]
+CMD ["npm", "run", "start:docker"]
