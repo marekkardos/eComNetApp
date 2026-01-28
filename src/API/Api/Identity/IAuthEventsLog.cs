@@ -59,4 +59,21 @@ public interface IAuthEventsLog
     /// Failed login attempt (below threshold).
     /// </summary>
     void Monitor_LoginAttemptFailed(string userId, string email, string ipAddress, int failedAttempts);
+
+    // External authentication events
+
+    /// <summary>
+    /// User logged in via external provider (new account created).
+    /// </summary>
+    void Monitor_ExternalLogin(string userId, string email, string provider, string ipAddress);
+
+    /// <summary>
+    /// External provider linked to existing account.
+    /// </summary>
+    void Monitor_ExternalAccountLinked(string userId, string email, string provider, string ipAddress);
+
+    /// <summary>
+    /// External provider unlinked from account.
+    /// </summary>
+    void Monitor_ExternalAccountUnlinked(string userId, string email, string provider, string ipAddress);
 }

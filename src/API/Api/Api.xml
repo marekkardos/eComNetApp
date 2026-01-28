@@ -4,6 +4,114 @@
         <name>Api</name>
     </assembly>
     <members>
+        <member name="T:Api.Controllers.ExternalAuthController">
+            <summary>
+            Controller for external authentication (social login) endpoints.
+            Implements the BFF (Backend-for-Frontend) pattern with code exchange.
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.ExternalAuthController.#ctor(Microsoft.AspNetCore.Identity.SignInManager{Core.Entities.Identity.AppUser},Microsoft.AspNetCore.Identity.UserManager{Core.Entities.Identity.AppUser},Api.Identity.IExternalAuthService,Api.Identity.IExternalAuthCodeService,Api.Identity.IAuthenticationServices,Microsoft.Extensions.Options.IOptions{Api.Identity.GoogleAuthSettings},Microsoft.Extensions.Logging.ILogger{Api.Controllers.ExternalAuthController},Microsoft.AspNetCore.Hosting.IWebHostEnvironment)">
+            <summary>
+            Controller for external authentication (social login) endpoints.
+            Implements the BFF (Backend-for-Frontend) pattern with code exchange.
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.ExternalAuthController.GoogleLogin(System.String)">
+            <summary>
+            Initiates Google OAuth login flow. Redirects to Google for authentication.
+            </summary>
+            <param name="returnUrl">The URL to redirect to after successful authentication.</param>
+        </member>
+        <member name="M:Api.Controllers.ExternalAuthController.GoogleCallback(System.String)">
+            <summary>
+            Callback endpoint for Google OAuth. Creates/links user and redirects with auth code.
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.ExternalAuthController.ExchangeCode(Api.Dtos.ExternalAuthCodeExchangeDto)">
+            <summary>
+            Exchanges a short-lived authorization code for an access token.
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.ExternalAuthController.GoogleLink(System.String)">
+            <summary>
+            Initiates Google OAuth linking flow for authenticated users.
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.ExternalAuthController.GoogleLinkCallback(System.String)">
+            <summary>
+            Callback endpoint for Google OAuth linking.
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.ExternalAuthController.GoogleUnlink">
+            <summary>
+            Unlinks Google from the user's account.
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.ExternalAuthController.GetProviders">
+            <summary>
+            Gets the list of available external login providers and their link status for the current user.
+            </summary>
+        </member>
+        <member name="T:Api.Dtos.ExternalAuthCodeExchangeDto">
+            <summary>
+            DTO for exchanging an authorization code for an access token.
+            </summary>
+        </member>
+        <member name="P:Api.Dtos.ExternalAuthCodeExchangeDto.Code">
+            <summary>
+            The short-lived authorization code received from the OAuth callback.
+            </summary>
+        </member>
+        <member name="T:Api.Dtos.ExternalLoginInfoDto">
+            <summary>
+            DTO representing an external login provider linked to a user account.
+            </summary>
+        </member>
+        <member name="P:Api.Dtos.ExternalLoginInfoDto.Provider">
+            <summary>
+            The login provider name (e.g., "Google").
+            </summary>
+        </member>
+        <member name="P:Api.Dtos.ExternalLoginInfoDto.ProviderDisplayName">
+            <summary>
+            The display name of the provider (e.g., "Google").
+            </summary>
+        </member>
+        <member name="P:Api.Dtos.ExternalLoginInfoDto.IsLinked">
+            <summary>
+            Whether this provider is currently linked to the user's account.
+            </summary>
+        </member>
+        <member name="T:Api.Dtos.UserWithExternalLoginsDto">
+            <summary>
+            DTO representing a user with their linked external logins.
+            </summary>
+        </member>
+        <member name="P:Api.Dtos.UserWithExternalLoginsDto.Email">
+            <summary>
+            User's email address.
+            </summary>
+        </member>
+        <member name="P:Api.Dtos.UserWithExternalLoginsDto.DisplayName">
+            <summary>
+            User's display name.
+            </summary>
+        </member>
+        <member name="P:Api.Dtos.UserWithExternalLoginsDto.Token">
+            <summary>
+            JWT access token.
+            </summary>
+        </member>
+        <member name="P:Api.Dtos.UserWithExternalLoginsDto.HasPassword">
+            <summary>
+            Whether the user has a password set (for local authentication).
+            </summary>
+        </member>
+        <member name="P:Api.Dtos.UserWithExternalLoginsDto.ExternalLogins">
+            <summary>
+            List of external login providers linked to this account.
+            </summary>
+        </member>
         <member name="T:Api.Helpers.CachedAttribute">
             <summary>
              Caching Response in seconds.
@@ -21,6 +129,51 @@
             Authentication and authorization event logging implementation.
             Uses audit logger for critical security events and regular logger for monitoring.
             All events are tagged with AuthEvent=true for easy filtering in Seq.
+            </summary>
+        </member>
+        <member name="T:Api.Identity.ExternalAuthCodeService">
+            <summary>
+            Redis-backed service for managing short-lived authorization codes.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.ExternalAuthCodeService.#ctor(Microsoft.Extensions.Caching.Distributed.IDistributedCache,Microsoft.AspNetCore.Identity.UserManager{Core.Entities.Identity.AppUser},Microsoft.Extensions.Options.IOptions{Api.Identity.GoogleAuthSettings},Microsoft.Extensions.Logging.ILogger{Api.Identity.ExternalAuthCodeService})">
+            <summary>
+            Redis-backed service for managing short-lived authorization codes.
+            </summary>
+        </member>
+        <member name="T:Api.Identity.ExternalAuthService">
+            <summary>
+            Implementation of external authentication service for social login.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.ExternalAuthService.#ctor(Microsoft.AspNetCore.Identity.UserManager{Core.Entities.Identity.AppUser},Api.Identity.IAuthEventsLog,Microsoft.Extensions.Logging.ILogger{Api.Identity.ExternalAuthService})">
+            <summary>
+            Implementation of external authentication service for social login.
+            </summary>
+        </member>
+        <member name="T:Api.Identity.GoogleAuthSettings">
+            <summary>
+            Configuration settings for Google OAuth authentication.
+            </summary>
+        </member>
+        <member name="P:Api.Identity.GoogleAuthSettings.ClientId">
+            <summary>
+            Google OAuth Client ID from Google Cloud Console.
+            </summary>
+        </member>
+        <member name="P:Api.Identity.GoogleAuthSettings.ClientSecret">
+            <summary>
+            Google OAuth Client Secret from Google Cloud Console.
+            </summary>
+        </member>
+        <member name="P:Api.Identity.GoogleAuthSettings.AuthCodeExpirationSeconds">
+            <summary>
+            Time in seconds before the authorization code expires. Default is 60 seconds.
+            </summary>
+        </member>
+        <member name="P:Api.Identity.GoogleAuthSettings.AllowedReturnUrlHosts">
+            <summary>
+            List of allowed hosts for the returnUrl parameter to prevent open redirect attacks.
             </summary>
         </member>
         <member name="T:Api.Identity.IAuthEventsLog">
@@ -78,6 +231,93 @@
             <summary>
             Failed login attempt (below threshold).
             </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.Monitor_ExternalLogin(System.String,System.String,System.String,System.String)">
+            <summary>
+            User logged in via external provider (new account created).
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.Monitor_ExternalAccountLinked(System.String,System.String,System.String,System.String)">
+            <summary>
+            External provider linked to existing account.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthEventsLog.Monitor_ExternalAccountUnlinked(System.String,System.String,System.String,System.String)">
+            <summary>
+            External provider unlinked from account.
+            </summary>
+        </member>
+        <member name="T:Api.Identity.IExternalAuthCodeService">
+            <summary>
+            Service for managing short-lived authorization codes used in the OAuth code exchange flow.
+            These codes are single-use and expire quickly to prevent replay attacks.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IExternalAuthCodeService.GenerateCodeAsync(Core.Entities.Identity.AppUser)">
+            <summary>
+            Generates a cryptographically secure, short-lived authorization code for a user.
+            The code is stored in Redis and expires after the configured timeout.
+            </summary>
+            <param name="user">The authenticated user.</param>
+            <returns>The generated authorization code.</returns>
+        </member>
+        <member name="M:Api.Identity.IExternalAuthCodeService.ValidateAndConsumeCodeAsync(System.String)">
+            <summary>
+            Validates and consumes an authorization code, returning the associated user if valid.
+            The code is deleted after use to prevent replay attacks.
+            </summary>
+            <param name="code">The authorization code to validate.</param>
+            <returns>The user associated with the code, or null if the code is invalid or expired.</returns>
+        </member>
+        <member name="T:Api.Identity.ExternalAuthResult">
+            <summary>
+            Result of an external authentication operation.
+            </summary>
+        </member>
+        <member name="T:Api.Identity.IExternalAuthService">
+            <summary>
+            Service for handling external authentication operations (social login).
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IExternalAuthService.FindOrCreateUserAsync(Microsoft.AspNetCore.Identity.ExternalLoginInfo)">
+            <summary>
+            Finds an existing user by external login or creates a new user.
+            If a user with the same verified email exists, auto-links the external login.
+            </summary>
+            <param name="info">The external login information from the OAuth provider.</param>
+            <returns>The result containing the user or error information.</returns>
+        </member>
+        <member name="M:Api.Identity.IExternalAuthService.LinkExternalLoginAsync(Core.Entities.Identity.AppUser,Microsoft.AspNetCore.Identity.ExternalLoginInfo)">
+            <summary>
+            Links an external login to an existing authenticated user.
+            </summary>
+            <param name="user">The authenticated user.</param>
+            <param name="info">The external login information to link.</param>
+            <returns>The result of the linking operation.</returns>
+        </member>
+        <member name="M:Api.Identity.IExternalAuthService.UnlinkExternalLoginAsync(Core.Entities.Identity.AppUser,System.String,System.String)">
+            <summary>
+            Unlinks an external login from a user's account.
+            Fails if this is the user's only authentication method.
+            </summary>
+            <param name="user">The authenticated user.</param>
+            <param name="provider">The login provider name (e.g., "Google").</param>
+            <param name="providerKey">The unique key for this user from the provider.</param>
+            <returns>The result of the unlinking operation.</returns>
+        </member>
+        <member name="M:Api.Identity.IExternalAuthService.GetExternalLoginsAsync(Core.Entities.Identity.AppUser)">
+            <summary>
+            Gets all external logins linked to a user's account.
+            </summary>
+            <param name="user">The user.</param>
+            <returns>List of external login information.</returns>
+        </member>
+        <member name="M:Api.Identity.IExternalAuthService.HasPasswordAsync(Core.Entities.Identity.AppUser)">
+            <summary>
+            Checks if a user has a password set (for determining if they can unlink external logins).
+            </summary>
+            <param name="user">The user.</param>
+            <returns>True if the user has a password.</returns>
         </member>
         <member name="P:Api.Identity.LockoutSettings.DefaultLockoutTimeSpanMinutes">
             <summary>

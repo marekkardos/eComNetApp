@@ -18,7 +18,7 @@ public static class CookieExtensions
             Secure = isProduction,
             SameSite = SameSiteMode.Strict,
             Expires = refreshToken.ExpiresAt,
-            Path = "/api/account"
+            Path = "/api"
         };
 
         response.Cookies.Append(tokenSettings.CookieName, refreshToken.Token, cookieOptions);
@@ -34,7 +34,7 @@ public static class CookieExtensions
             HttpOnly = true,
             Secure = isProduction,
             SameSite = SameSiteMode.Strict,
-            Path = "/api/account"
+            Path = "/api"
         });
     }
 }

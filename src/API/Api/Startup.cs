@@ -8,6 +8,7 @@ using Services;
 using StackExchange.Redis;
 using Api.ApiResponses;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace Api;
 
@@ -15,6 +16,10 @@ public static class Startup
 {
     public static void ConfigureServices(IServiceCollection services, IConfiguration conf, IWebHostEnvironment environment)
     {
+        services.AddDataProtection()
+            .PersistKeysToFileSystem(new DirectoryInfo("dataprotection-keys"))
+            .SetApplicationName("eComNetApi");
+
         services.AddLogging(conf, environment);
 
         var redisConnection = conf.GetConnectionString("Redis")
@@ -23,6 +28,13 @@ public static class Startup
         {
             var configuration = ConfigurationOptions.Parse(redisConnection, true);
             return ConnectionMultiplexer.Connect(configuration);
+        });
+
+        // Add distributed cache for external auth codes
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnection;
+            options.InstanceName = "eComNetApp:";
         });
 
         services.AddCors(opt =>
@@ -72,7 +84,7 @@ public static class Startup
         services.AddAutoMapperServiceExt();
 
         services.AddDataPersistenceServices(conf, environment);
-        services.AddCustomIdentityServices(conf);
+        services.AddCustomIdentityServices(conf, environment);
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerServicesExt();
@@ -81,10 +93,13 @@ public static class Startup
         services.AddScoped<IPictureUrlResolver, PictureUrlResolver>();
 
         services.Configure<TokenSettings>(conf.GetSection("TokenSettings"));
+        services.Configure<GoogleAuthSettings>(conf.GetSection("GoogleAuth"));
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IAuthEventsLog, AuthEventsLog>();
         services.AddScoped<IAuthenticationServices, AuthenticationServices>();
+        services.AddScoped<IExternalAuthCodeService, ExternalAuthCodeService>();
+        services.AddScoped<IExternalAuthService, ExternalAuthService>();
         services.AddApplicationServices(conf);
 
         services.AddHealthChecksExt(conf);
