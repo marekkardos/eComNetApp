@@ -110,6 +110,6 @@ export class MainLayoutComponent {
 
   logout(): void {
     this.mockLoggedIn.set(false);
-    this.mockUser.set(null as any);
+    this.mockUser.set(null as never);
   }
 }

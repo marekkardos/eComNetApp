@@ -1,0 +1,38 @@
+<div class="form-label-group">
+  <input
+    [type]="type"
+    (input)="onInput($event)"
+    (blur)="onBlur()"
+    [id]="label"
+    [class.is-invalid]="isInvalid"
+    [class.is-valid]="!isInvalid && control?.touched"
+    class="form-control"
+    [placeholder]="label"
+    [attr.aria-label]="label"
+  >
+
+  @if (isPending) {
+    <div class="fa fa-spinner fa-spin loader"></div>
+  }
+
+  <label [for]="label">{{ label }}</label>
+
+  @if (isInvalid) {
+    <div class="invalid-feedback">
+      @if (errors?.['required']) {
+        <span>{{ label }} is required</span>
+      }
+      @if (errors?.['pattern']) {
+        <span>Invalid email address</span>
+      }
+    </div>
+  }
+
+  @if (isInvalid && control?.dirty) {
+    <div class="invalid-feedback d-block">
+      @if (errors?.['emailExists']) {
+        <span>Email address is in use</span>
+      }
+    </div>
+  }
+</div>

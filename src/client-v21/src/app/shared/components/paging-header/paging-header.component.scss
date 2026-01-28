@@ -1,0 +1,15 @@
+.paging-header {
+  padding: 1rem 0;
+  color: #495057;
+  font-size: 0.875rem;
+  font-weight: 500;
+
+  strong {
+    color: #212529;
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+  }
+}

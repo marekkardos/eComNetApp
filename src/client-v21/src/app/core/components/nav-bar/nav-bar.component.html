@@ -1,0 +1,64 @@
+<header class="fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm">
+  <div class="container mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between">
+    <nav class="mb-2 md:mb-0 md:mr-6 text-sm md:text-base uppercase font-semibold">
+      <a
+        routerLink="/shop"
+        routerLinkActive="text-teal-600 font-bold"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="p-2 hover:text-teal-600 transition-colors">
+        Shop
+      </a>
+    </nav>
+
+    <div class="flex items-center gap-4">
+      <a
+        routerLink="/basket"
+        class="relative flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors">
+        <span class="material-icons text-2xl text-gray-700">shopping_cart</span>
+        @if (basketService.itemCount() > 0) {
+          <span class="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+            {{ basketService.itemCount() }}
+          </span>
+        }
+      </a>
+
+      @if (!accountService.currentUser()) {
+        <a
+          routerLink="/account/login"
+          class="px-4 py-2 border-2 border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors font-medium">
+          Login
+        </a>
+      } @else {
+        <div class="relative group">
+          <button class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded transition-colors font-medium">
+            <span class="material-icons text-gray-700">account_circle</span>
+            <span class="text-gray-700">Welcome, {{ accountService.currentUser()?.displayName }}</span>
+            <span class="material-icons text-gray-700">expand_more</span>
+          </button>
+
+          <div class="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+            <a
+              routerLink="/basket"
+              class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+              <span class="material-icons text-gray-600">shopping_cart</span>
+              <span>View Basket</span>
+            </a>
+            <a
+              routerLink="/orders"
+              class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+              <span class="material-icons text-gray-600">history</span>
+              <span>View Orders</span>
+            </a>
+            <hr class="my-1">
+            <button
+              (click)="logout()"
+              class="flex items-center gap-3 w-full px-4 py-3 hover:bg-red-50 text-red-600 transition-colors">
+              <span class="material-icons">logout</span>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</header>

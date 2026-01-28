@@ -1,0 +1,17 @@
+<header class="paging-header">
+  @if (hasResults()) {
+    <span>
+      Showing
+      <strong>{{ startRange() }} - {{ endRange() }}</strong>
+      of
+      <strong>{{ totalCount() }}</strong>
+      Results
+    </span>
+  } @else {
+    <span>
+      There are
+      <strong>0</strong>
+      results for this filter
+    </span>
+  }
+</header>

@@ -1,0 +1,57 @@
+.form-label-group {
+  position: relative;
+  margin-bottom: 1rem;
+
+  input {
+    padding: 0.75rem 0.75rem 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+
+    &::placeholder {
+      color: transparent;
+    }
+
+    &:not(:placeholder-shown) + label {
+      font-size: 0.75rem;
+      top: 0.25rem;
+      padding: 0 0.25rem;
+      background-color: white;
+    }
+  }
+
+  label {
+    position: absolute;
+    top: 0.75rem;
+    left: 1rem;
+    pointer-events: none;
+    transition: all 0.2s ease-in-out;
+    color: #6c757d;
+    font-size: 0.875rem;
+  }
+
+  .loader {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #00897b;
+  }
+}
+
+.is-invalid {
+  border-color: #dc3545 !important;
+}
+
+.is-valid {
+  border-color: #28a745 !important;
+}
+
+.invalid-feedback {
+  display: none;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #dc3545;
+
+  &.d-block {
+    display: block;
+  }
+}

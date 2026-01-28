@@ -48,9 +48,9 @@ This document outlines a comprehensive phased approach for migrating the Skishop
 
   OK for now  **Option 1 is in place**.
 
-6. [Phase 2: Core Infrastructure](#phase-2-core-infrastructure) ⬅️ **CURRENT**
-7. [Phase 3: Shared Module](#phase-3-shared-module)
-8. [Phase 4: Feature Modules](#phase-4-feature-modules)
+ 6. [Phase 2: Core Infrastructure](#phase-2-core-infrastructure) ✅ **COMPLETE**
+7. [Phase 3: Shared Module](#phase-3-shared-module) ✅ **COMPLETE**
+8. [Phase 4: Feature Modules](#phase-4-feature-modules) ⬅️ **CURRENT**
 9. [Phase 5: Integration & Testing](#phase-5-integration--testing)
 10. [Phase 6: Production Cutover](#phase-6-production-cutover)
 11. [Risk Mitigation](#risk-mitigation)
@@ -515,6 +515,8 @@ export interface BasketTotals {
 
 ### 2.2 Core Services with Signals (Days 1-2)
 
+from `client/src/app/core/services/`:
+
 #### Account Service (Modern Pattern)
 
 ```typescript
@@ -801,12 +803,14 @@ export class NavBarComponent {
 
 ### Deliverables
 
-- [ ] All TypeScript models ported
-- [ ] Core services with signals (Account, Basket, Shop, Busy)
-- [ ] Functional HTTP interceptors (JWT, Error, Loading)
-- [ ] Auth guard with signal support
-- [ ] Core components (NavBar, SectionHeader, NotFound, ServerError)
-- [ ] Breadcrumb integration
+- [x] All TypeScript models ported
+- [x] Core services with signals (Account, Basket, Shop, Busy, Orders, Checkout)
+- [x] Functional HTTP interceptors (JWT, Error, Loading)
+- [x] Auth guard with signal support
+- [x] Core components (NavBar, NotFound, ServerError)
+- [x] All components use `inject()` instead of constructor injection
+- [x] All components standalone
+- [x] Zoneless change detection enabled
 
 ---
 
@@ -925,13 +929,14 @@ export class PagerComponent {
 
 ### Deliverables
 
-- [ ] TextInputComponent (form control wrapper)
-- [ ] PagerComponent (pagination)
-- [ ] PagingHeaderComponent (results info)
-- [ ] OrderTotalsComponent (totals display)
-- [ ] BasketSummaryComponent (basket items)
-- [ ] StepperComponent (checkout stepper)
-- [ ] All shared models
+- [x] TextInputComponent (form control wrapper)
+- [x] PagerComponent (pagination with Material)
+- [x] PagingHeaderComponent (results info with signals)
+- [x] OrderTotalsComponent (totals display)
+- [x] BasketSummaryComponent (basket items with @for)
+- [x] StepperComponent (checkout stepper with CDK)
+- [x] All shared models
+- [x] Barrel exports in index.ts
 
 ---
 
@@ -1291,6 +1296,7 @@ readonly data = this.dataSignal.asReadonly();
 
 - **[Phase 0 Documentation](./PHASE-0-DOCUMENTATION.md)** - Pre-migration analysis, Angular 9 feature inventory, and API contracts
 - **[Static UI Implementation Plan](./federated-tickling-dijkstra.md)** - Detailed UI component designs, mock data structures, and verification checklists for Phase 1.7
+- **[Phase 2 & 3 Summary](./PHASE-2-3-SUMMARY.md)** - Detailed implementation summary of core infrastructure and shared module components
 
 ---
 
@@ -1301,6 +1307,7 @@ readonly data = this.dataSignal.asReadonly();
 | 1.0 | 2026-01-23 | Claude | Initial plan created |
 | 1.1 | 2026-01-26 | Claude | Integrated Static UI plan (Phase 1.7), updated tech stack to Material + Tailwind |
 | 1.2 | 2026-01-27 | Claude | Marked Phase 0 and Phase 1 as complete, added Phase 0 documentation reference |
+| 1.3 | 2026-01-28 | Claude | Marked Phase 2 and Phase 3 as complete, added Phase 2-3 Summary document |
 
 ---
 

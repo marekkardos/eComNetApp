@@ -1,0 +1,24 @@
+<div class="order-totals">
+  <div class="order-totals-header">
+    Order Summary
+  </div>
+  <div class="order-totals-body">
+    <p class="shipping-note">
+      Shipping costs will be added depending on choices made during checkout
+    </p>
+    <ul class="order-totals-list">
+      <li class="order-totals-item">
+        <span class="order-totals-label">Order subtotal</span>
+        <span class="order-totals-value">{{ subtotal() | currency }}</span>
+      </li>
+      <li class="order-totals-item">
+        <span class="order-totals-label">Shipping and handling</span>
+        <span class="order-totals-value">{{ shippingPrice() | currency }}</span>
+      </li>
+      <li class="order-totals-item order-totals-item-total">
+        <span class="order-totals-label">Total</span>
+        <span class="order-totals-value">{{ total() | currency }}</span>
+      </li>
+    </ul>
+  </div>
+</div>

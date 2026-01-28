@@ -1,0 +1,44 @@
+:host {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+
+  mat-paginator {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+::ng-deep .mat-mdc-paginator-range-label {
+  color: #495057;
+}
+
+::ng-deep .mat-mdc-icon-button {
+  color: #00897b;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(0, 137, 123, 0.1);
+  }
+
+  &:disabled {
+    color: #adb5bd;
+  }
+}
+
+::ng-deep .mat-mdc-select {
+  .mat-mdc-select-value {
+    color: #495057;
+  }
+
+  .mat-mdc-select-arrow {
+    color: #00897b;
+  }
+}
+
+::ng-deep .mat-mdc-paginator {
+  .mat-mdc-form-field {
+    font-size: 14px;
+  }
+}

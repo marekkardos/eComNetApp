@@ -5,6 +5,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideToastr } from 'ngx-toastr';
 
 import { routes } from './app.routes';
+import { jwtInterceptor, errorInterceptor, loadingInterceptor } from './core/interceptors';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,10 +18,9 @@ export const appConfig: ApplicationConfig = {
     ),
     provideHttpClient(
       withInterceptors([
-        // Interceptors will be added in Phase 2
-        // jwtInterceptor,
-        // errorInterceptor,
-        // loadingInterceptor,
+        jwtInterceptor,
+        errorInterceptor,
+        loadingInterceptor
       ])
     ),
     provideAnimations(),

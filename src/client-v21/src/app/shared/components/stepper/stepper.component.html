@@ -1,0 +1,20 @@
+<div class="stepper-container">
+  <ul class="stepper-nav">
+    @for (step of steps; track step; let i = $index) {
+      <li class="stepper-nav-item">
+        <button
+          (click)="onClick(i)"
+          [disabled]="true"
+          [class.active]="selectedIndex === i"
+          class="stepper-nav-button">
+          {{ step.label }}
+        </button>
+      </li>
+    }
+  </ul>
+  <div class="stepper-content">
+    @if (selected) {
+      <ng-container [ngTemplateOutlet]="selected.content"></ng-container>
+    }
+  </div>
+</div>

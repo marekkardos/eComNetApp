@@ -1,0 +1,51 @@
+@for (item of items(); track getItemId(item)) {
+  <div class="basket-item">
+    <div class="basket-item-image">
+      <img [src]="getPictureUrl(item)" [alt]="getProductName(item)">
+    </div>
+    <div class="basket-item-details">
+      <h5>
+        <a [routerLink]="'/shop/' + getItemId(item)" class="basket-item-name">
+          {{ getProductName(item) }}
+        </a>
+      </h5>
+      @if (getType(item)) {
+        <span class="basket-item-type">
+          Type: {{ getType(item) }}
+        </span>
+      }
+    </div>
+    <div class="basket-item-price">
+      {{ getItemPrice(item) | currency }}
+    </div>
+    <div class="basket-item-quantity" [class.justify-content-center]="!isBasket()">
+      @if (isBasket()) {
+        <button class="basket-item-button" (click)="decrementItemQuantity(item)" aria-label="Decrease quantity">
+          <i class="fa fa-minus-circle"></i>
+        </button>
+      }
+      <span class="basket-item-quantity-value">{{ getItemQuantity(item) }}</span>
+      @if (isBasket()) {
+        <button class="basket-item-button" (click)="incrementItemQuantity(item)" aria-label="Increase quantity">
+          <i class="fa fa-plus-circle"></i>
+        </button>
+      }
+    </div>
+    <div class="basket-item-total">
+      {{ getItemTotal(item) | currency }}
+    </div>
+    @if (isBasket()) {
+      <div class="basket-item-remove">
+        <button class="basket-item-remove-button" (click)="removeBasketItem(item)" aria-label="Remove item">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>
+    }
+  </div>
+}
+
+@if (items().length === 0) {
+  <div class="basket-empty">
+    Your basket is empty
+  </div>
+}

@@ -62,7 +62,7 @@ export const MOCK_DELIVERY_METHODS: DeliveryMethod[] = [
   }
 ];
 
-export function calculateBasketTotals(items: BasketItem[], shippingPrice: number = 0): BasketTotals {
+export function calculateBasketTotals(items: BasketItem[], shippingPrice = 0): BasketTotals {
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   return {
     shipping: shippingPrice,

@@ -1,0 +1,9 @@
+<mat-paginator
+  [length]="totalCount()"
+  [pageIndex]="pageNumber() - 1"
+  [pageSize]="pageSize()"
+  [pageSizeOptions]="[6, 12, 24, 48]"
+  [showFirstLastButtons]="true"
+  (page)="handlePageChange($event)"
+  aria-label="Pagination controls">
+</mat-paginator>
