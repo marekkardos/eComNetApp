@@ -81,11 +81,6 @@
                 }
               ]
             },
-            "development": {
-              "optimization": false,
-              "extractLicenses": false,
-              "sourceMap": true
-            },
             "local": {
               "optimization": false,
               "extractLicenses": false,
@@ -120,14 +115,11 @@
             "production": {
               "buildTarget": "client-v21:build:production"
             },
-            "development": {
-              "buildTarget": "client-v21:build:development"
-            },
             "local": {
-              "buildTarget": "client-v21:build:development"
+              "buildTarget": "client-v21:build:local"
             },
             "docker": {
-              "buildTarget": "client-v21:build:development",
+              "buildTarget": "client-v21:build:docker",
               "host": "0.0.0.0"
             }
           },

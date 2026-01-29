@@ -31,3 +31,4 @@ src/**/.sonarqube.json
 .security-key
 logs/security/
 /src/client-v21/nul
+/src/client-v21/.vscode

@@ -12,7 +12,7 @@
         "aspire-dashboard": "DoNotStart",
         "dbserver": "StartWithoutDebugging",
         "redis": "StartWithoutDebugging",
-        "seq": "DoNotStart",
+        "seq": "StartWithoutDebugging",
         "angular21": "StartWithoutDebugging"
       }
     }

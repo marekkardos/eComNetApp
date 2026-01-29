@@ -1,10 +1,13 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AccountService } from '../../../core/services/account.service';
+import { BusyService } from '../../../core/services/busy.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -56,8 +59,12 @@ import { MatIconModule } from '@angular/material/icon';
           </div>
         }
 
-        <button mat-raised-button color="primary" class="w-full mt-6 py-3" type="submit" [disabled]="loginForm.invalid">
-          Sign in
+        <button mat-raised-button color="primary" class="w-full mt-6 py-3" type="submit" [disabled]="loginForm.invalid || this.busyRequestCount() > 0">
+          @if (this.busyRequestCount() > 0) {
+            <span>Signing in...</span>
+          } @else {
+            <span>Sign in</span>
+          }
         </button>
       </form>
 
@@ -94,6 +101,9 @@ import { MatIconModule } from '@angular/material/icon';
 export class LoginComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private accountService = inject(AccountService);
+  private busyService = inject(BusyService);
 
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -103,11 +113,31 @@ export class LoginComponent {
   hidePassword = signal(true);
   loginError = signal(false);
 
-  onSubmit(): void {
-    if (this.loginForm.valid) {
-      // Mock login - navigate to shop
-      this.loginError.set(false);
-      this.router.navigateByUrl('/shop');
+  busyRequestCount(): number {
+    return this.busyService.busyRequestCount();
+  }
+
+  async onSubmit(): Promise<void> {
+    if (!this.loginForm.valid) {
+      return;
+    }
+
+    const { email, password } = this.loginForm.value;
+    if (!email || !password) {
+      return;
+    }
+
+    this.loginError.set(false);
+    this.busyService.busy();
+
+    try {
+      await firstValueFrom(this.accountService.login({ email, password }));
+      const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/shop';
+      this.router.navigateByUrl(returnUrl);
+    } catch {
+      this.loginError.set(true);
+    } finally {
+      this.busyService.idle();
     }
   }
 }

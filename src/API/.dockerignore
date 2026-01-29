@@ -22,4 +22,7 @@
 **/secrets.dev.yaml
 **/values.dev.yaml
 **/logs
-README.md
+*.md
+**/.claude
+**/dist
+**/.editorconfig

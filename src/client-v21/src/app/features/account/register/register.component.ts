@@ -5,6 +5,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { AccountService } from '../../../core/services/account.service';
+import { BusyService } from '../../../core/services/busy.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-register',
@@ -14,7 +18,8 @@ import { MatIconModule } from '@angular/material/icon';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    MatProgressSpinnerModule
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -38,13 +43,20 @@ import { MatIconModule } from '@angular/material/icon';
 
         <mat-form-field appearance="outline" class="w-full mt-4">
           <mat-label>Email</mat-label>
-          <input matInput formControlName="email" type="email" autocomplete="email">
-          <mat-icon matSuffix>mail</mat-icon>
+          <input matInput formControlName="email" type="email" autocomplete="email" (blur)="checkEmail()">
+          @if (checkingEmail()) {
+            <mat-spinner matSuffix diameter="20"></mat-spinner>
+          } @else {
+            <mat-icon matSuffix>mail</mat-icon>
+          }
           @if (registerForm.get('email')?.hasError('required') && registerForm.get('email')?.touched) {
             <mat-error>Email is required</mat-error>
           }
           @if (registerForm.get('email')?.hasError('email') && registerForm.get('email')?.touched) {
             <mat-error>Please enter a valid email</mat-error>
+          }
+          @if (emailExists() && !checkingEmail()) {
+            <mat-error>Email is already taken</mat-error>
           }
         </mat-form-field>
 
@@ -66,10 +78,11 @@ import { MatIconModule } from '@angular/material/icon';
         @if (registerForm.get('password')?.value) {
           <div class="mt-2">
             <div class="flex gap-1">
-              <div class="h-1 flex-1 rounded" [class]="getPasswordStrengthClass(0)"></div>
-              <div class="h-1 flex-1 rounded" [class]="getPasswordStrengthClass(1)"></div>
-              <div class="h-1 flex-1 rounded" [class]="getPasswordStrengthClass(2)"></div>
-              <div class="h-1 flex-1 rounded" [class]="getPasswordStrengthClass(3)"></div>
+              <span>Strength:</span>
+              <div class="h-1 flex-1 rounded" [class]="getPasswordStrengthClass(0)">&nbsp;</div>
+              <div class="h-1 flex-1 rounded" [class]="getPasswordStrengthClass(1)">&nbsp;</div>
+              <div class="h-1 flex-1 rounded" [class]="getPasswordStrengthClass(2)">&nbsp;</div>
+              <div class="h-1 flex-1 rounded" [class]="getPasswordStrengthClass(3)">&nbsp;</div>
             </div>
             <p class="text-xs text-gray-500 mt-1">{{ getPasswordStrengthText() }}</p>
           </div>
@@ -83,8 +96,12 @@ import { MatIconModule } from '@angular/material/icon';
           </div>
         }
 
-        <button mat-raised-button color="primary" class="w-full mt-6 py-3" type="submit" [disabled]="registerForm.invalid">
-          Create Account
+        <button mat-raised-button color="primary" class="w-full mt-6 py-3" type="submit" [disabled]="registerForm.invalid || this.busyRequestCount() > 0">
+          @if (this.busyRequestCount() > 0) {
+            <span>Creating Account...</span>
+          } @else {
+            <span>Create Account</span>
+          }
         </button>
       </form>
 
@@ -121,6 +138,8 @@ import { MatIconModule } from '@angular/material/icon';
 export class RegisterComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private accountService = inject(AccountService);
+  private busyService = inject(BusyService);
 
   registerForm = this.fb.group({
     displayName: ['', Validators.required],
@@ -130,13 +149,19 @@ export class RegisterComponent {
 
   hidePassword = signal(true);
   errors = signal<string[]>([]);
-
+  emailExists = signal(false);
+  checkingEmail = signal(false);
+ 
+  busyRequestCount(): number {
+    return this.busyService.busyRequestCount();
+  }
+  
   getPasswordStrength(): number {
     const password = this.registerForm.get('password')?.value || '';
     let strength = 0;
     if (password.length >= 6) strength++;
-    if (password.length >= 8) strength++;
     if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
     if (/[0-9]/.test(password)) strength++;
     return strength;
   }
@@ -160,11 +185,72 @@ export class RegisterComponent {
     return 'Strong';
   }
 
-  onSubmit(): void {
-    if (this.registerForm.valid) {
-      // Mock registration - navigate to shop
-      this.errors.set([]);
+  async checkEmail(): Promise<void> {
+    const emailControl = this.registerForm.get('email');
+    if (!emailControl || emailControl.invalid) {
+      this.emailExists.set(false);
+      return;
+    }
+
+    const email = emailControl.value;
+    if (!email || email.trim() === '') {
+      this.emailExists.set(false);
+      return;
+    }
+
+    if (emailControl.pristine) {
+      return;
+    }
+
+    this.checkingEmail.set(true);
+    this.emailExists.set(false);
+
+    try {
+      const exists = await firstValueFrom(this.accountService.checkEmailExists(email));
+      this.emailExists.set(exists);
+      if (exists) {
+        emailControl.setErrors({ emailExists: true });
+      }
+    } catch {
+      this.emailExists.set(false);
+    } finally {
+      this.checkingEmail.set(false);
+    }
+  }
+
+  async onSubmit(): Promise<void> {
+    if (!this.registerForm.valid) {
+      return;
+    }
+
+    const { displayName, email, password } = this.registerForm.value;
+    if (!displayName || !email || !password) {
+      return;
+    }
+
+    this.errors.set([]);
+    this.busyService.busy();
+
+    try {
+      await firstValueFrom(this.accountService.register({ displayName, email, password }));
       this.router.navigateByUrl('/shop');
+    } catch (err) {
+      console.warn('Registration error:', err);
+      
+      if (Array.isArray(err)) {
+        this.errors.set(err);
+      } else {
+        const error = err as { error?: { errors?: string[]; message?: string; statusCode?: number } };
+        if (error.error?.errors && Array.isArray(error.error.errors)) {
+          this.errors.set(error.error.errors);
+        } else if (error.error?.message) {
+          this.errors.set([error.error.message]);
+        } else {
+          this.errors.set(['Registration failed. Please try again.']);
+        }
+      }
+    } finally {
+      this.busyService.idle();
     }
   }
 }

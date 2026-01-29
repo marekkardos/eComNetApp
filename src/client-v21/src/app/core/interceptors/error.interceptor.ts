@@ -8,17 +8,23 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const toastr = inject(ToastrService);
 
+  const isLogin = req.url.includes('/login');
+  const isRefresh = req.url.includes('/refresh');
+
   return next(req).pipe(
     catchError(error => {
       if (error.status === 400) {
         if (error.error.errors) {
-          const errors = Object.values(error.error.errors).flat();
+          const errors = Array.isArray(error.error.errors) 
+            ? error.error.errors 
+            : Object.values(error.error.errors).flat();
           throw errors;
         }
         toastr.error(error.error.message || 'Bad request');
       }
-      if (error.status === 401) {
-        toastr.error('Unauthorized');
+      // Don't show toast for 401 on refresh (handled by interceptor)
+      if (error.status === 401 && !isLogin && !isRefresh) {
+          toastr.error(error.error?.message || 'Unauthorized', error.error?.statusCode || '401');
       }
       if (error.status === 404) {
         router.navigateByUrl('/not-found');

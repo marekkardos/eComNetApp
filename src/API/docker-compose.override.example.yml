@@ -4,6 +4,9 @@
 
 services:
   api:
+    environment:
+      - ConnectionStrings__DefaultConnectionMssql=dbconnectionstring
+      - ConnectionStrings__IdentityConnectionMssql=dbconnectionstring
     volumes:
       # macOS / Linux:
       - ${HOME}/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
