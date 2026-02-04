@@ -45,6 +45,10 @@ public static class Startup
                 // e.g application/xml
                 m.ReturnHttpNotAcceptable = true;
             })
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+            })
             .ConfigureApiBehaviorOptions(options =>
             {
                 options.InvalidModelStateResponseFactory = actionContext =>
