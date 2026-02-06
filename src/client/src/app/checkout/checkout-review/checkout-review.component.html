@@ -1,7 +1,7 @@
 <div class="mt-4">
     <app-basket-summary 
         [isBasket]=false
-        [items]="(basket$ | async).items"
+        [items]="(basket$ | async)?.items"
     >
     </app-basket-summary>
 </div>
@@ -12,7 +12,7 @@
     </button>
     <button class="btn btn-primary" 
             (click)="createPaymentIntent()" 
-            [disabled]="(basket$ | async).items.length === 0" >
+            [disabled]="(basket$ | async)?.items.length === 0" >
         Go to Payment <i class="fa fa-angle-right"></i> 
     </button>
 </div>

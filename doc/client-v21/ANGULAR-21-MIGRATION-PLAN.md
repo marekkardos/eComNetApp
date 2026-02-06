@@ -69,46 +69,47 @@ This document outlines a comprehensive phased approach for migrating the Skinet 
 
 ```
 eComNetApp/
-├── client/                    # Angular 9 app (comparison baseline)
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── account/
-│   │   │   ├── basket/
-│   │   │   ├── checkout/
-│   │   │   ├── core/
-│   │   │   ├── home/
-│   │   │   ├── orders/
-│   │   │   ├── shared/
-│   │   │   └── shop/
-│   │   └── environments/
-│   ├── angular.json
-│   └── package.json
-│
-├── client-v21/                # Angular 21 app (new implementation)
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── core/          # Standalone components
-│   │   │   ├── shared/        # Shared utilities & components
-│   │   │   ├── features/      # Feature modules
+├── src/
+│   ├── client/                # Angular 9 app (comparison baseline)
+│   │   ├── src/
+│   │   │   ├── app/
 │   │   │   │   ├── account/
 │   │   │   │   ├── basket/
 │   │   │   │   ├── checkout/
+│   │   │   │   ├── core/
 │   │   │   │   ├── home/
 │   │   │   │   ├── orders/
+│   │   │   │   ├── shared/
 │   │   │   │   └── shop/
-│   │   │   ├── app.component.ts
-│   │   │   ├── app.config.ts
-│   │   │   └── app.routes.ts
-│   │   └── environments/
-│   ├── angular.json
-│   └── package.json
+│   │   │   └── environments/
+│   │   ├── angular.json
+│   │   └── package.json
+│   │
+│   └── client-v21/            # Angular 21 app (new implementation)
+│       ├── src/
+│       │   ├── app/
+│       │   │   ├── core/      # Standalone components
+│       │   │   ├── shared/    # Shared utilities & components
+│       │   │   ├── features/  # Feature modules
+│       │   │   │   ├── account/
+│       │   │   │   ├── basket/
+│       │   │   │   ├── checkout/
+│       │   │   │   ├── home/
+│       │   │   │   ├── orders/
+│       │   │   │   └── shop/
+│       │   │   ├── app.component.ts
+│       │   │   ├── app.config.ts
+│       │   │   └── app.routes.ts
+│       │   └── environments/
+│       ├── angular.json
+│       └── package.json
 │
-├── Api/                       # Backend API (shared by both)
+├── API/                       # Backend API (shared by both)
 │
 ├── docker-compose.yml         # Run both frontends + API
 ├── docker-compose.migration.yml  # Migration-specific compose
 │
-└── ANGULAR-21-MIGRATION-PLAN.md  # This document
+└── doc/client-v21/            # Migration documentation
 ```
 
 ### Development Ports
@@ -181,7 +182,7 @@ The Angular 21 app will use **Angular Material + Tailwind CSS** instead of Boots
 - [ ] **0.2** Identify deprecated APIs and patterns
 - [ ] **0.3** Create API contract documentation
 - [ ] **0.4** Set up comparison testing environment
-- [ ] **0.5** Update Node.js to v22+ (required for Angular 21)
+- [ ] **0.5** Update Node.js to ^20.19.0 || ^22.12.0 || ^24.0.0 (Angular 21 requirement), install TypeScript >=5.9.0 <6.0.0
 - [ ] **0.6** Document all environment configurations
 - [ ] **0.7** Create feature parity checklist
 
@@ -230,17 +231,11 @@ Orders API:
 #### 1.1 Create New Angular 21 Project
 
 ```bash
-# Navigate to project root
-cd /home/user/eComNetApp
+# Navigate to src folder
+cd C:\work\github\repos\eComNetApp\src
 
 # Create Angular 21 project with modern defaults
-ng new client-v21 \
-  --style=scss \
-  --routing=true \
-  --ssr=false \
-  --standalone=true \
-  --skip-git \
-  --package-manager=npm
+ng new client-v21 --style=scss --routing=true --ssr=false --standalone=true --skip-git --package-manager=npm
 
 cd client-v21
 ```
@@ -354,22 +349,17 @@ export const environment = {
 // src/app/app.config.ts
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideToastr } from 'ngx-toastr';
 
 import { routes } from './app.routes';
-import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
-import { errorInterceptor } from './core/interceptors/error.interceptor';
-import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, withComponentInputBinding()),
-    provideHttpClient(
-      withInterceptors([jwtInterceptor, errorInterceptor, loadingInterceptor])
-    ),
+    provideHttpClient(),  // Interceptors will be added in Phase 2
     provideAnimations(),
     provideToastr({
       positionClass: 'toast-bottom-right',

@@ -1,0 +1,93 @@
+meta {
+  name: post /api/Payments//api/Payments/{basketId} Authorised
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/Payments/23d41179-27e3-41c0-b8f0-2c86df873bb4
+  body: json
+  auth: inherit
+}
+
+tests {
+  test("Status is 200", function() {
+    expect([200]).to.include(res.status);
+  });
+}
+
+example {
+  name: 201 Response
+  description: Success
+  
+  request: {
+    url: {{baseUrl}}/api/Account/register
+    method: POST
+    mode: json
+    body:json: {
+      {
+        "displayName": "",
+        "email": "",
+        "password": ""
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 201
+      text: Created
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "email": "",
+          "displayName": "",
+          "token": ""
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 400 Response
+  description: Bad Request
+  
+  request: {
+    url: {{baseUrl}}/api/Account/register
+    method: POST
+    mode: json
+    body:json: {
+      {
+        "displayName": "",
+        "email": "",
+        "password": ""
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 400
+      text: Bad Request
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {}
+      '''
+    }
+  }
+}

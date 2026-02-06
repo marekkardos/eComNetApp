@@ -98,7 +98,7 @@ cd ..
 - Stripe: https://dashboard.stripe.com/test/apikeys
 
 **For complete Stripe local development setup (webhooks, testing, troubleshooting):**
-- See [STRIPE_DEVELOPMENT.md](STRIPE_DEVELOPMENT.md) for detailed guide
+- See [STRIPE_DEVELOPMENT.md](../../doc/Stripe/STRIPE_DEVELOPMENT.md) for detailed guide
 
 ### 3. Set Up Node.js for Angular
 

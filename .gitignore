@@ -29,3 +29,4 @@ src/**/.sonarqube.json
 .worktrees/
 .security-key
 logs/security/
+/.vs
