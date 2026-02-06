@@ -17,7 +17,6 @@ services:
       - Seq__ServerUrl=http://seq:5341
     volumes:
       - .data/dataprotection-keys:/app/dataprotection-keys
-      - ${APPDATA}/ASP.NET/https:/https:ro
     ports:
       - "44369:80"
       - "44370:443"
