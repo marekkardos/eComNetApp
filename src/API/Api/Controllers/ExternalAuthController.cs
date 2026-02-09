@@ -4,6 +4,8 @@ using Api.Dtos;
 using Api.Extensions;
 using Api.Identity;
 using Core.Entities.Identity;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -92,6 +94,9 @@ public class ExternalAuthController(
         var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
         _authEventsLog.Monitor_SuccessfulLogin(user.Id, user.Email, clientIp);
 
+        // Clean up the temporary cookie
+        await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+
         // Redirect to frontend with code
         var redirectUrl = AppendQueryParam(returnUrl, "code", code);
         return Redirect(redirectUrl);
@@ -172,6 +177,9 @@ public class ExternalAuthController(
             return RedirectWithError(returnUrl, "link_failed", result.Error ?? "Failed to link account.");
         }
 
+        // Clean up the temporary cookie
+        await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+        
         var redirectUrl = AppendQueryParam(returnUrl, "linked", "google");
         return Redirect(redirectUrl);
     }

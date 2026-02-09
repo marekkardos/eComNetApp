@@ -63,37 +63,34 @@ public static class IdentityServiceExtensions
                     ValidateAudience = false
                 };
             })
+            // Register the specific "Identity.External" scheme that SignInManager needs
+            .AddCookie(IdentityConstants.ExternalScheme, options =>
+            {
+                options.Cookie.Name = IdentityConstants.ExternalScheme;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+            })
             .AddGoogle(options =>
             {
                 options.ClientId = googleSettings.ClientId;
                 options.ClientSecret = googleSettings.ClientSecret;
 
+                options.SignInScheme = IdentityConstants.ExternalScheme;
+
                 // Request email and profile scopes
                 //options.Scope.Add("email");
                 //options.Scope.Add("profile");
 
-                //// Map claims from Google
-                //options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.NameIdentifier, "sub");
-                //options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "email");
-                //options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Name, "name");
-                //options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.GivenName, "given_name");
-                //options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Surname, "family_name");
-
                 // Configure the callback path for OAuth flow
-                options.CallbackPath = "/api/externalauth/google/callback";
+                options.CallbackPath = "/signin-google";
 
-                // Store tokens for potential future use
-                //options.SaveTokens = true;
-
-                // Configure cookie policy for OAuth correlation/nonce cookies
-                // In development with HTTP, we cannot use Secure flag and SameSite=None
-                //options.CorrelationCookie.SecurePolicy = environment.IsDevelopment()
-                //    ? CookieSecurePolicy.SameAsRequest
-                //    : CookieSecurePolicy.Always;
-
-                //options.CorrelationCookie.SameSite = environment.IsDevelopment()
-                //    ? SameSiteMode.Lax
-                //    : SameSiteMode.None;
+                // Configure cookie policy for OAuth correlation cookies
+                options.CorrelationCookie.SecurePolicy = environment.IsDevelopment()
+                    ? CookieSecurePolicy.SameAsRequest
+                    : CookieSecurePolicy.Always;
+                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             });
     }
 }

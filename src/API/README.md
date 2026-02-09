@@ -142,7 +142,7 @@ Edit each file and replace `REPLACE_WITH_YOUR_KEY` with your Stripe publishable 
 **Note:** The `.ts` files are gitignored to prevent committing secrets. Only the `.template.ts` files are tracked.
 
 
-### 5. Using HTTPS Only - Docker Setup [DOCKER_HTTPS](DOCKER_HTTPS.md)
+### 5. Using HTTPS Only - Docker Setup [DOCKER_HTTPS](../../doc/DOCKER_HTTPS.md)
 
 You're ready to start development! Choose your workflow below.
 
