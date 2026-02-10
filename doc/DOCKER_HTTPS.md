@@ -115,7 +115,7 @@ docker-compose --profile backend-dev up --build
 - **HTTP**: http://localhost:44369
 - **HTTPS**: https://localhost:44370
 - **Swagger**: https://localhost:44370/swagger
-- **Health Checks**: https://localhost:44370/healthz?api_key=myHealthCheckApiKey
+- **Health Checks**: https://localhost:44370/healthz (Headers["X-Health-Check-Key"])
 
 ### Frontend (when using backend-dev profile)
 
@@ -136,7 +136,8 @@ The following origins are configured in `docker-compose.yml`:
 - `http://localhost:4200` - Angular HTTP (localhost access)
 - `http://angular:4200` - Angular HTTP (Docker network access)
 
-**Note:** Angular always runs on HTTP port 4200 in the container. The API is HTTPS-enabled, and Angular can call it via HTTPS (CORS allows cross-protocol access).
+**Note:** Angular always runs on HTTP port 4200 in the container. 
+The API is HTTPS-enabled, and Angular can call it via HTTPS (CORS allows cross-protocol access).
 
 ## Troubleshooting
 
@@ -210,7 +211,7 @@ If you see "The password provided for certificate file is incorrect":
 
 ### Port Already in Use
 
-If ports 443, 44369, or 4200 are already in use:
+If ports 443, 44370, or 4200 are already in use:
 
 1. Find the process using the port:
    ```bash

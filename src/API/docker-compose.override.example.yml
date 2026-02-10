@@ -6,7 +6,7 @@ services:
   api:
     environment:
       - ASPNETCORE_Kestrel__Certificates__Default__Password=...
-      - ConnectionStrings__DefaultConnectionMssql=Server=...
+      - ConnectionStrings__DefaultConnectionMssql=...
       - ConnectionStrings__IdentityConnectionMssql=...
     volumes:
       # macOS / Linux:
@@ -16,3 +16,17 @@ services:
       # Windows:
       # - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       # - ${APPDATA}/ASP.NET/https:/https:ro
+
+# seeddata:
+#     image: ${DOCKER_REGISTRY-}seeddata
+#     build:
+#       context: .
+#       dockerfile: SeedData/Dockerfile
+#     environment:
+#       - ConnectionStrings__DefaultConnectionMssql=...
+#       - ConnectionStrings__IdentityConnectionMssql=...
+#     depends_on:
+#       - dbserver
+#     restart: "no"
+#     networks:
+#       - api-network

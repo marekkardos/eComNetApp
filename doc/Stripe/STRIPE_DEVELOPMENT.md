@@ -59,7 +59,7 @@ export const environment = {
 ### 3. Start Webhook Listener
 
 ```bash
-stripe listen --forward-to http://localhost:44369/api/payments/webhook
+stripe listen --forward-to https://localhost:44370/api/payments/webhook
 ```
 
 This command:
@@ -106,7 +106,7 @@ This is the recommended way to test the full payment integration:
 
 ```bash
 # Terminal 1: Start webhook listener FIRST
-stripe listen --forward-to http://localhost:44369/api/payments/webhook
+stripe listen --forward-to https://localhost:44370/api/payments/webhook
 
 # Terminal 2: Start API
 dotnet run --project Api/Api.csproj
@@ -204,7 +204,7 @@ You'll see a warning in your logs: `Order not found for PaymentIntent: pi_xxxxx`
 
 3. **Check the secret in logs**
    ```bash
-   stripe listen --forward-to http://localhost:44369/api/payments/webhook --print-json
+   stripe listen --forward-to https://localhost:44370/api/payments/webhook --print-json
    ```
 
 ### Payment Succeeds But Order Not Updated
@@ -270,10 +270,10 @@ stripe login
 stripe config --list
 
 # Start webhook forwarding
-stripe listen --forward-to http://localhost:44369/api/payments/webhook
+stripe listen --forward-to https://localhost:44370/api/payments/webhook
 
 # With verbose output
-stripe listen --forward-to http://localhost:44369/api/payments/webhook --print-json
+stripe listen --forward-to https://localhost:44370/api/payments/webhook --print-json
 
 # Trigger test event
 stripe trigger payment_intent.succeeded
