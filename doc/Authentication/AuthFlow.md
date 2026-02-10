@@ -7,6 +7,21 @@ Angular stores access token in memory only (not localStorage)
 Token expires → Call /refresh → Cookie auto-sent → New access token
 ```
 
+
+**Flow:**
+1. User logs in → receives short-lived access token in response body
+2. Access token stored **in memory only** (not localStorage) - protects against XSS
+3. Refresh token stored in HttpOnly cookie by API (automatically sent with requests)
+4. On app startup → calls `/api/account/refresh` to get new access token if refresh token exists
+5. On 401 error → automatically calls refresh endpoint → retries original request
+
+**Security Features:**
+- Access tokens never stored in localStorage
+- Automatic token refresh on app initialization
+- Request retry after token refresh
+- Clean logout clears in-memory token
+
+
 ---
   ###  Layer 1 — The cookie Path (server-side scope)
 
@@ -18,7 +33,7 @@ Token expires → Call /refresh → Cookie auto-sent → New access token
   ---
   ###  Layer 2 — withCredentials (the actual gate, client-side)
 
-  Angular and the API run on different origins (e.g. localhost:4200 vs localhost:44369). For cross-origin requests,
+  Angular and the API run on different origins (e.g. localhost:4200 vs localhost:44370). For cross-origin requests,
   browsers block cookies by default unless the request explicitly opts in with withCredentials: true.
 
   Look at where withCredentials: true is set in account.service.ts:
