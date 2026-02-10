@@ -124,7 +124,7 @@ Quick start:
 docker-compose up api dbserver redis
 ```
 
-The API is accessible at `http://localhost:44369` when running in containers.
+The API is accessible at `https://localhost:44370` when running in containers.
 
 **User Secrets in Docker:** Copy `docker-compose.override.example.yml` to `docker-compose.override.yml` and configure for your platform. The UserSecretsId `56ee6ee3-b7d8-4759-ab17-87297accef46` must match in both `Api/Api.csproj` and `docker-compose.dcproj`.
 
@@ -255,7 +255,7 @@ Payment processing uses Stripe Payment Intents with webhook-based order status u
 - PaymentIntentId is the critical link: baskets (Redis) store it, orders (SQL) must copy it during creation, webhooks (Stripe) use it to find and update the correct order. If an order lacks the PaymentIntentId, webhook updates will silently fail
 
 **Local Development:**
-- Requires Stripe CLI for webhook forwarding: `stripe listen --forward-to http://localhost:44369/api/payments/webhook`
+- Requires Stripe CLI for webhook forwarding: `stripe listen --forward-to https://localhost:44370/api/payments/webhook`
 - See [STRIPE_DEVELOPMENT.md](STRIPE_DEVELOPMENT.md) for complete setup guide
 
 ### CORS Configuration
@@ -294,7 +294,7 @@ Static files served from `Api/Content/` directory, accessible at `/content` URL 
 
 | Service | Port | URL |
 |---------|------|-----|
-| API (Docker) | 44369 | http://localhost:44369 |
+| API (Docker) | 44370 | https://localhost:44370 |
 | API (Local VS) | 5001 | https://localhost:5001 |
 | Angular | 4200 | http://localhost:4200 |
 | SQL Server | 1433 | localhost,1433 |
