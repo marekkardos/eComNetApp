@@ -80,16 +80,14 @@ public static class IdentityServiceExtensions
                 options.SignInScheme = IdentityConstants.ExternalScheme;
 
                 // Request email and profile scopes
-                //options.Scope.Add("email");
-                //options.Scope.Add("profile");
+                options.Scope.Add("email");
+                options.Scope.Add("profile");
 
                 // Configure the callback path for OAuth flow
                 options.CallbackPath = "/signin-google";
 
                 // Configure cookie policy for OAuth correlation cookies
-                options.CorrelationCookie.SecurePolicy = environment.IsDevelopment()
-                    ? CookieSecurePolicy.SameAsRequest
-                    : CookieSecurePolicy.Always;
+                options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
             });
     }

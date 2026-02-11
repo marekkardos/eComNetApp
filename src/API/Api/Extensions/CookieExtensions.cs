@@ -9,13 +9,12 @@ public static class CookieExtensions
     public static void SetRefreshTokenCookie(
         this HttpResponse response,
         RefreshToken refreshToken,
-        TokenSettings tokenSettings,
-        bool isProduction)
+        TokenSettings tokenSettings)
     {
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = isProduction,
+            Secure = true,
             SameSite = SameSiteMode.Strict,
             Expires = refreshToken.ExpiresAt,
             Path = "/api"
@@ -26,13 +25,12 @@ public static class CookieExtensions
 
     public static void ClearRefreshTokenCookie(
         this HttpResponse response,
-        TokenSettings tokenSettings,
-        bool isProduction)
+        TokenSettings tokenSettings)
     {
         response.Cookies.Delete(tokenSettings.CookieName, new CookieOptions
         {
             HttpOnly = true,
-            Secure = isProduction,
+            Secure = true,
             SameSite = SameSiteMode.Strict,
             Path = "/api"
         });

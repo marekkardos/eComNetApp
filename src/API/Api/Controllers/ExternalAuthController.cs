@@ -5,7 +5,6 @@ using Api.Extensions;
 using Api.Identity;
 using Core.Entities.Identity;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -89,7 +88,7 @@ public class ExternalAuthController(
         // Generate refresh token and set cookie (ready for code exchange)
         var (_, jwtId) = _tokenService.CreateToken(user);
         var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user, jwtId);
-        Response.SetRefreshTokenCookie(refreshToken, _tokenSettings, !environment.IsDevelopment());
+        Response.SetRefreshTokenCookie(refreshToken, _tokenSettings);
 
         var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
         _authEventsLog.Monitor_SuccessfulLogin(user.Id, user.Email, clientIp);

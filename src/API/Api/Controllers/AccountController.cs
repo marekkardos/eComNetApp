@@ -20,8 +20,7 @@ public class AccountController(
     SignInManager<AppUser> signInManager,
     IAuthenticationServices authServices,
     IMapper mapper,
-    ILoggerFactory loggerFactory,
-    IWebHostEnvironment environment) : BaseApiController
+    ILoggerFactory loggerFactory) : BaseApiController
 {
     private readonly ILogger<AccountController> _logger = loggerFactory.CreateLogger<AccountController>();
     private readonly TokenSettings _tokenSettings = authServices.TokenSettings;
@@ -162,7 +161,7 @@ public class AccountController(
 
         if (refreshToken == null)
         {
-            Response.ClearRefreshTokenCookie(_tokenSettings, !environment.IsDevelopment());
+            Response.ClearRefreshTokenCookie(_tokenSettings);
             return Unauthorized(new ApiResponse(HttpStatusCode.Unauthorized, "Invalid refresh token"));
         }
 
@@ -170,7 +169,7 @@ public class AccountController(
         var (accessToken, jwtId) = tokenService.CreateToken(user);
 
         var newRefreshToken = await refreshTokenService.RotateRefreshTokenAsync(refreshToken, user, jwtId);
-        Response.SetRefreshTokenCookie(newRefreshToken, _tokenSettings, !environment.IsDevelopment());
+        Response.SetRefreshTokenCookie(newRefreshToken, _tokenSettings);
 
         authEventsLog.Monitor_TokenRefresh(user.Id, user.Email, clientIp);
 
@@ -200,7 +199,7 @@ public class AccountController(
             }
         }
 
-        Response.ClearRefreshTokenCookie(_tokenSettings, !environment.IsDevelopment());
+        Response.ClearRefreshTokenCookie(_tokenSettings);
         return NoContent();
     }
 
@@ -241,7 +240,7 @@ public class AccountController(
         var (accessToken, jwtId) = tokenService.CreateToken(user);
         var refreshToken = await refreshTokenService.GenerateRefreshTokenAsync(user, jwtId);
 
-        Response.SetRefreshTokenCookie(refreshToken, _tokenSettings, !environment.IsDevelopment());
+        Response.SetRefreshTokenCookie(refreshToken, _tokenSettings);
 
         return new UserDto
         {
