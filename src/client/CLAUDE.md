@@ -78,6 +78,8 @@ Multiple environment configurations in `src/environments/` for different develop
 - `environment.container.ts` - Running in Docker container
 - `environment.stage.ts` - Staging environment (used for production builds)
 
+Template files are provided - environment.local.template.ts, environment.container.template.ts
+
 **Key Configuration Values:**
 - `apiUrl` - Backend API base URL
 - `stripePublishableKey` - Stripe frontend publishable key for payment processing

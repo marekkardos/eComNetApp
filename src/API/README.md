@@ -122,7 +122,8 @@ cd ..
 
 ### 4. Set Up Angular Environment Files
 
-Angular uses environment-specific configuration files. Template files are provided - copy them and add your Stripe publishable key:
+Angular uses environment-specific configuration files. 
+Template files are provided - copy them and add your Stripe publishable key:
 
 ```bash
 cd client/src/environments

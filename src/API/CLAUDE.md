@@ -249,14 +249,9 @@ Payment processing uses Stripe Payment Intents with webhook-based order status u
 - `StripeSettings:WebHookSecret` - Webhook signature verification secret
 - Frontend publishable key configured in Angular environment files
 
-**Important:**
-- Order status updates happen via webhooks, not client-side confirmation
-- Webhook signature verification ensures requests come from Stripe (PaymentsController.cs:46)
-- PaymentIntentId is the critical link: baskets (Redis) store it, orders (SQL) must copy it during creation, webhooks (Stripe) use it to find and update the correct order. If an order lacks the PaymentIntentId, webhook updates will silently fail
-
 **Local Development:**
 - Requires Stripe CLI for webhook forwarding: `stripe listen --forward-to https://localhost:44370/api/payments/webhook`
-- See [STRIPE_DEVELOPMENT.md](STRIPE_DEVELOPMENT.md) for complete setup guide
+- See [STRIPE_DEVELOPMENT.md](../../doc/Stripe/STRIPE_DEVELOPMENT.md) for complete setup guide
 
 ### CORS Configuration
 

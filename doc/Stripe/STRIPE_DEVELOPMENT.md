@@ -1,3 +1,30 @@
+# Stripe Payment Integration
+
+Payment processing uses Stripe Payment Intents with webhook-based order status updates.
+
+**Key Components:**
+- `StripePaymentService.cs` (Services) - Payment Intent creation and order status updates
+- `PaymentsController.cs` (Api/Controllers) - Payment endpoints and webhook handler
+- Webhook endpoint: `POST /api/payments/webhook`
+
+**Payment Flow:**
+1. Client calls `POST /api/payments/{basketId}` to create/update Payment Intent
+2. API validates basket, creates Stripe Payment Intent, returns `ClientSecret`
+3. Angular frontend completes payment using Stripe.js
+4. Stripe sends webhook to API with payment result
+5. API updates order status: `PaymentReceived` or `PaymentFailed`
+
+**Configuration:**
+- `StripeSettings:SecretKey` - Stripe API secret key (backend only)
+- `StripeSettings:WebHookSecret` - Webhook signature verification secret
+- Frontend publishable key configured in Angular environment files
+
+**Important:**
+- Order status updates happen via webhooks, not client-side confirmation
+- Webhook signature verification ensures requests come from Stripe (PaymentsController.cs:46)
+- PaymentIntentId is the critical link: baskets (Redis) store it, orders (SQL) must copy it during creation, webhooks (Stripe) use it to find and update the correct order. If an order lacks the PaymentIntentId, webhook updates will silently fail
+
+
 # Local Stripe Development Guide
 
 This guide explains how to set up and test Stripe payment integration during local development.
