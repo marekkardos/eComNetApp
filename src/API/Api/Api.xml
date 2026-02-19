@@ -10,7 +10,7 @@
             Implements the BFF (Backend-for-Frontend) pattern with code exchange.
             </summary>
         </member>
-        <member name="M:Api.Controllers.ExternalAuthController.#ctor(Microsoft.AspNetCore.Identity.SignInManager{Core.Entities.Identity.AppUser},Microsoft.AspNetCore.Identity.UserManager{Core.Entities.Identity.AppUser},Api.Identity.IExternalAuthService,Api.Identity.IExternalAuthCodeService,Api.Identity.IAuthenticationServices,Microsoft.Extensions.Options.IOptions{Api.Identity.GoogleAuthSettings},Microsoft.Extensions.Logging.ILogger{Api.Controllers.ExternalAuthController},Microsoft.AspNetCore.Hosting.IWebHostEnvironment)">
+        <member name="M:Api.Controllers.ExternalAuthController.#ctor(Microsoft.AspNetCore.Identity.SignInManager{Core.Entities.Identity.AppUser},Microsoft.AspNetCore.Identity.UserManager{Core.Entities.Identity.AppUser},Api.Identity.IExternalAuthService,Api.Identity.IExternalAuthCodeService,Api.Identity.IAuthenticationServices,Microsoft.Extensions.Options.IOptions{Api.Identity.GoogleAuthSettings},Microsoft.Extensions.Logging.ILogger{Api.Controllers.ExternalAuthController})">
             <summary>
             Controller for external authentication (social login) endpoints.
             Implements the BFF (Backend-for-Frontend) pattern with code exchange.
@@ -95,11 +95,6 @@
         <member name="P:Api.Dtos.UserWithExternalLoginsDto.DisplayName">
             <summary>
             User's display name.
-            </summary>
-        </member>
-        <member name="P:Api.Dtos.UserWithExternalLoginsDto.Token">
-            <summary>
-            JWT access token.
             </summary>
         </member>
         <member name="P:Api.Dtos.UserWithExternalLoginsDto.HasPassword">

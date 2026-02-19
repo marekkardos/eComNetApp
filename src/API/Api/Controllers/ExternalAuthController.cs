@@ -25,8 +25,7 @@ public class ExternalAuthController(
     IExternalAuthCodeService externalAuthCodeService,
     IAuthenticationServices authServices,
     IOptions<GoogleAuthSettings> googleAuthSettings,
-    ILogger<ExternalAuthController> logger,
-    IWebHostEnvironment environment) : BaseApiController
+    ILogger<ExternalAuthController> logger) : BaseApiController
 {
     private readonly GoogleAuthSettings _googleSettings = googleAuthSettings.Value;
     private readonly TokenSettings _tokenSettings = authServices.TokenSettings;
@@ -40,6 +39,7 @@ public class ExternalAuthController(
     /// <param name="returnUrl">The URL to redirect to after successful authentication.</param>
     [HttpGet("google")]
     [AllowAnonymous]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public IActionResult GoogleLogin([FromQuery] string returnUrl = "/")
     {
         if (!IsValidReturnUrl(returnUrl))
@@ -85,11 +85,6 @@ public class ExternalAuthController(
         // Generate short-lived code for code exchange
         var code = await externalAuthCodeService.GenerateCodeAsync(user);
 
-        // Generate refresh token and set cookie (ready for code exchange)
-        var (_, jwtId) = _tokenService.CreateToken(user);
-        var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user, jwtId);
-        Response.SetRefreshTokenCookie(refreshToken, _tokenSettings);
-
         var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
         _authEventsLog.Monitor_SuccessfulLogin(user.Id, user.Email, clientIp);
 
@@ -107,18 +102,21 @@ public class ExternalAuthController(
     [HttpPost("exchange")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserDto>> ExchangeCode([FromBody] ExternalAuthCodeExchangeDto dto)
     {
-        var user = await externalAuthCodeService.ValidateAndConsumeCodeAsync(dto.Code);
+        AppUser user = await externalAuthCodeService.ValidateAndConsumeCodeAsync(dto.Code);
 
         if (user == null)
         {
             return Unauthorized(new ApiResponse(HttpStatusCode.Unauthorized, "Invalid or expired code"));
         }
 
-        // Generate new access token (refresh token cookie should already be set from callback)
-        var (accessToken, _) = _tokenService.CreateToken(user);
+        // Generate access token and refresh token together — both issued atomically here
+        (string accessToken, string jwtId) = _tokenService.CreateToken(user);
+        RefreshToken refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user, jwtId);
+        Response.SetRefreshTokenCookie(refreshToken, _tokenSettings);
 
         return new UserDto
         {
@@ -133,6 +131,7 @@ public class ExternalAuthController(
     /// </summary>
     [HttpGet("google/link")]
     [Authorize]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public IActionResult GoogleLink([FromQuery] string returnUrl = "/")
     {
         if (!IsValidReturnUrl(returnUrl))
@@ -236,13 +235,10 @@ public class ExternalAuthController(
         var logins = await externalAuthService.GetExternalLoginsAsync(user);
         var hasPassword = await externalAuthService.HasPasswordAsync(user);
 
-        var (accessToken, _) = _tokenService.CreateToken(user);
-
         return new UserWithExternalLoginsDto
         {
             Email = user.Email,
             DisplayName = user.DisplayName,
-            Token = accessToken,
             HasPassword = hasPassword,
             ExternalLogins =
             [

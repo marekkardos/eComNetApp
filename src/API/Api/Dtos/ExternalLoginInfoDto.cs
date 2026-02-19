@@ -37,11 +37,6 @@ public class UserWithExternalLoginsDto
     public string DisplayName { get; set; } = string.Empty;
 
     /// <summary>
-    /// JWT access token.
-    /// </summary>
-    public string Token { get; set; } = string.Empty;
-
-    /// <summary>
     /// Whether the user has a password set (for local authentication).
     /// </summary>
     public bool HasPassword { get; set; }

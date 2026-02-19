@@ -10,7 +10,9 @@ export interface IExternalLoginInfo {
     isLinked: boolean;
 }
 
-export interface IUserWithExternalLogins extends IUser {
+export interface IUserWithExternalLogins {
     hasPassword: boolean;
     externalLogins: IExternalLoginInfo[];
+    email: string;
+    displayName: string;
 }
