@@ -24,7 +24,7 @@ Feature-based module structure:
 
 ### Technology Stack
 
-- **Framework**: Angular 9
+- **Framework**: Angular 9, rxjs 6.5.4
 - **UI**: Bootstrap 4, ngx-bootstrap, ngx-toastr
 - **Build**: Angular CLI with webpack
 - **Node**: Requires Node.js 12.x (use nvm to manage versions)
@@ -44,7 +44,7 @@ npm start
 # or: ng serve --configuration=local
 ```
 
-Run in container mode (API at http://localhost:44369):
+Run in container mode (API at https://localhost:44370):
 ```bash
 npm run start:container
 ```
@@ -73,10 +73,12 @@ npm run lint
 
 Multiple environment configurations in `src/environments/` for different development scenarios:
 
-- `environment.ts` - Default (API at http://localhost:44369)
+- `environment.ts` - Default (API at https://localhost:44370)
 - `environment.local.ts` - Local full-stack development (API at https://localhost:5001)
 - `environment.container.ts` - Running in Docker container
 - `environment.stage.ts` - Staging environment (used for production builds)
+
+Template files are provided - environment.local.template.ts, environment.container.template.ts
 
 **Key Configuration Values:**
 - `apiUrl` - Backend API base URL
@@ -95,18 +97,10 @@ The Angular app implements a secure authentication pattern using in-memory token
 - `jwt.interceptor.ts` - Automatic token refresh on 401 errors with request retry
 - Refresh tokens stored in HttpOnly cookies (set by API, sent automatically)
 
-**Flow:**
-1. User logs in → receives short-lived access token in response body
-2. Access token stored **in memory only** (not localStorage) - protects against XSS
-3. Refresh token stored in HttpOnly cookie by API (automatically sent with requests)
-4. On app startup → calls `/api/account/refresh` to get new access token if refresh token exists
-5. On 401 error → automatically calls refresh endpoint → retries original request
+More details in the [AuthFlow.md](../../doc/Authentication/AuthFlow.md)
 
-**Security Features:**
-- Access tokens never stored in localStorage
-- Automatic token refresh on app initialization
-- Request retry after token refresh
-- Clean logout clears in-memory token
+Google social login was added. 
+More details in the [GoogleAuthFlow.md](../../doc/Social%20Login%20Integration/GoogleAuthFlow.md)
 
 ### Stripe Payment Integration
 
@@ -127,6 +121,8 @@ Payment processing uses Stripe.js library with Payment Intents:
 - Order status updates are webhook-based (backend responsibility)
 - Never send sensitive card data directly to the API
 
+More details in the [STRIPE_DEVELOPMENT.md](../../doc/Stripe/STRIPE_DEVELOPMENT.md)
+
 ## Development Workflow Notes
 
 ### Port Mappings
@@ -134,7 +130,7 @@ Payment processing uses Stripe.js library with Payment Intents:
 | Service | Port | URL |
 |---------|------|-----|
 | Angular | 4200 | http://localhost:4200 |
-| API (Docker) | 44369 | http://localhost:44369 |
+| API (Docker) | 44370 | https://localhost:44370 |
 | API (Local) | 5001 | https://localhost:5001 |
 
 ### Docker Development
@@ -157,6 +153,6 @@ npm start
 ### Important Notes
 
 - Angular 9 requires Node.js 12.x - use nvm to manage versions
-- Use `npm run start:container` when API runs in Docker on port 44369
+- Use `npm run start:container` when API runs in Docker on port 44370
 - Use `npm start` when API runs locally on port 5001
 - Environment files control which API URL is used

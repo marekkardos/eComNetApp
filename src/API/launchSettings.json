@@ -9,7 +9,7 @@
       "serviceActions": {
         "angular": "StartWithoutDebugging",
         "api": "StartDebugging",
-        "aspire-dashboard": "StartWithoutDebugging",
+        "aspire-dashboard": "DoNotStart",
         "dbserver": "StartWithoutDebugging",
         "redis": "StartWithoutDebugging",
         "seq": "StartWithoutDebugging"

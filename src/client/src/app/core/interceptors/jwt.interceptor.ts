@@ -79,7 +79,7 @@ export class JwtInterceptor implements HttpInterceptor {
     }
 
     private isAuthEndpoint(url: string): boolean {
-        const authEndpoints = ['/account/login', '/account/register', '/account/refresh', '/account/logout'];
+        const authEndpoints = ['/account/login', '/account/register', '/account/refresh', '/account/logout', '/externalauth/exchange'];
         return authEndpoints.some(endpoint => url.includes(endpoint));
     }
 }

@@ -30,3 +30,4 @@ src/**/.sonarqube.json
 .security-key
 logs/security/
 /.vs
+src/API/Api/dataprotection-keys/

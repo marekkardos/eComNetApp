@@ -122,7 +122,8 @@ cd ..
 
 ### 4. Set Up Angular Environment Files
 
-Angular uses environment-specific configuration files. Template files are provided - copy them and add your Stripe publishable key:
+Angular uses environment-specific configuration files. 
+Template files are provided - copy them and add your Stripe publishable key:
 
 ```bash
 cd client/src/environments
@@ -140,6 +141,9 @@ Edit each file and replace `REPLACE_WITH_YOUR_KEY` with your Stripe publishable 
 - Get your key from: https://dashboard.stripe.com/test/apikeys (use the **Publishable key**, starts with `pk_test_`)
 
 **Note:** The `.ts` files are gitignored to prevent committing secrets. Only the `.template.ts` files are tracked.
+
+
+### 5. Using HTTPS Only - Docker Setup [DOCKER_HTTPS](../../doc/DOCKER_HTTPS.md)
 
 You're ready to start development! Choose your workflow below.
 
@@ -167,7 +171,7 @@ You work primarily on the Angular application and need the backend API running b
 ### Environment Configuration
 
 Angular uses `environment.ts` which points to:
-- API URL: `http://localhost:44369/api/`
+- API URL: `https://localhost:44370/api/`
 
 ### How to Start
 
@@ -190,7 +194,7 @@ ng serve
 - ✅ Angular runs on http://localhost:4200
 - ✅ Hot reload - save file, browser refreshes automatically
 - ✅ Chrome DevTools for debugging
-- ✅ API available at http://localhost:44369/swagger
+- ✅ API available at https://localhost:44370/swagger
 - ✅ Aspire Dashboard at http://localhost:18888 (traces, logs, metrics)
 - ✅ All API calls work
 
@@ -234,7 +238,7 @@ You work primarily on the API and need Angular running for testing, but don't ne
 ### Environment Configuration
 
 Angular uses `environment.container.ts` which points to:
-- API URL: `http://localhost:44369/api/`
+- API URL: `https://localhost:44370/api/`
 
 ### Two Options
 
@@ -247,7 +251,7 @@ Angular uses `environment.container.ts` which points to:
 docker-compose --profile backend-dev up
 
 # Open browser: http://localhost:4200
-# Open Swagger: http://localhost:44369/swagger
+# Open Swagger: https://localhost:44370/swagger
 ```
 
 **What you get:**
@@ -277,7 +281,7 @@ docker-compose down
    - Angular (without debugging)
    - Database (without debugging)
    - Redis (without debugging)
-4. Browser opens to Swagger at http://localhost:44369/swagger
+4. Browser opens to Swagger at https://localhost:44370/swagger
 
 **What you get:**
 - ✅ Full stack running (all services started automatically by VS)
@@ -429,13 +433,13 @@ api-network (bridge)
 
 **Inside containers:** Services can reach each other by name (e.g., `http://api:80`)
 
-**From host machine:** Must use `localhost` with published ports (e.g., `http://localhost:44369`)
+**From host machine:** Must use `localhost` with published ports (e.g., `https://localhost:44370`)
 
 ### Port Mappings
 
 | Service | Container Port | Host Port | URL from Host |
 |---------|----------------|-----------|---------------|
-| API | 80 | 44369 | http://localhost:44369 |
+| API | 80 | 44370 | https://localhost:44370 |
 | Angular | 4200 | 4200 | http://localhost:4200 |
 | SQL Server | 1433 | 1433 | localhost,1433 |
 | Redis | 6379 | 6379 | localhost:6379 |
@@ -448,9 +452,9 @@ Angular uses different environment files for different scenarios:
 
 | File | Used By | API URL |
 |------|---------|---------|
-| `environment.ts` | Frontend dev (ng serve) | `http://localhost:44369/api/` |
+| `environment.ts` | Frontend dev (ng serve) | `https://localhost:44370/api/` |
 | `environment.local.ts` | Full-stack local (npm start) | `https://localhost:5001/api/` |
-| `environment.container.ts` | Backend dev (containerized) | `http://localhost:44369/api/` |
+| `environment.container.ts` | Backend dev (containerized) | `https://localhost:44370/api/` |
 
 **Template Pattern:** Files containing secrets use a template pattern:
 - `*.template.ts` - Tracked in git, contains placeholder `REPLACE_WITH_YOUR_KEY`

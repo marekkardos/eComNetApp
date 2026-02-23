@@ -1,19 +1,20 @@
 using Api;
 using Api.StartupConfigurations;
 using Serilog;
+using Serilog.Core;
 
 try
 {
     Log.Debug("init main");
 
-    var builder = WebApplication.CreateBuilder(args);
+    WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
     // Create dedicated audit logger for critical security events
     // Uses AuditTo.Seq() which:
     // - Throws exceptions on write failure (guaranteed delivery)
     // - Sends events synchronously (blocking network calls)
     // - Should only be used for critical security events due to performance impact
-    var auditLogger = new LoggerConfiguration()
+    Logger auditLogger = new LoggerConfiguration()
         .Enrich.FromLogContext()
         .Enrich.WithProperty("Application", "eComNetApp_API")
         .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
@@ -33,7 +34,7 @@ try
 
     builder.AddOpenTelemetry("eComNetAPI");
 
-    var app = builder.Build();
+    WebApplication app = builder.Build();
 
     Startup.ConfigureApp(app, builder.Environment);
 

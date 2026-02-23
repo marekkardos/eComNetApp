@@ -19,6 +19,7 @@ public class AuthEventsLog(
     private const string FailedAttemptsProperty = "FailedAttempts";
     private const string TokenIdProperty = "TokenId";
     private const string RevokedAtProperty = "RevokedAt";
+    private const string ProviderProperty = "Provider";
 
     // Critical events - written to audit log (must succeed)
 
@@ -181,6 +182,53 @@ public class AuthEventsLog(
             logger.LogInformation(
                 "Failed login attempt for {Email} from IP: {IpAddress}. Attempt count: {FailedAttempts}",
                 email, ipAddress, failedAttempts);
+        }
+    }
+
+    // External authentication events
+
+    public void Monitor_ExternalLogin(string userId, string email, string provider, string ipAddress)
+    {
+        using (LogContext.PushProperty(AuthEventProperty, true))
+        using (LogContext.PushProperty(EventTypeProperty, "ExternalLogin"))
+        using (LogContext.PushProperty(UserIdProperty, userId))
+        using (LogContext.PushProperty(EmailProperty, email))
+        using (LogContext.PushProperty(ProviderProperty, provider))
+        using (LogContext.PushProperty(IpAddressProperty, ipAddress))
+        {
+            logger.LogInformation(
+                "New user {Email} registered via {Provider} from IP {IpAddress}",
+                email, provider, ipAddress);
+        }
+    }
+
+    public void Monitor_ExternalAccountLinked(string userId, string email, string provider, string ipAddress)
+    {
+        using (LogContext.PushProperty(AuthEventProperty, true))
+        using (LogContext.PushProperty(EventTypeProperty, "ExternalAccountLinked"))
+        using (LogContext.PushProperty(UserIdProperty, userId))
+        using (LogContext.PushProperty(EmailProperty, email))
+        using (LogContext.PushProperty(ProviderProperty, provider))
+        using (LogContext.PushProperty(IpAddressProperty, ipAddress))
+        {
+            logger.LogInformation(
+                "User {Email} linked {Provider} account from IP {IpAddress}",
+                email, provider, ipAddress);
+        }
+    }
+
+    public void Monitor_ExternalAccountUnlinked(string userId, string email, string provider, string ipAddress)
+    {
+        using (LogContext.PushProperty(AuthEventProperty, true))
+        using (LogContext.PushProperty(EventTypeProperty, "ExternalAccountUnlinked"))
+        using (LogContext.PushProperty(UserIdProperty, userId))
+        using (LogContext.PushProperty(EmailProperty, email))
+        using (LogContext.PushProperty(ProviderProperty, provider))
+        using (LogContext.PushProperty(IpAddressProperty, ipAddress))
+        {
+            logger.LogInformation(
+                "User {Email} unlinked {Provider} account from IP {IpAddress}",
+                email, provider, ipAddress);
         }
     }
 }

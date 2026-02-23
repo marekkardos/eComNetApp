@@ -2,12 +2,15 @@ using Api.StartupConfigurations;
 using Api.Helpers;
 using Api.Identity;
 using Core.Entities;
+using Core.Interfaces;
 using MediatR;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Services;
 using StackExchange.Redis;
 using Api.ApiResponses;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace Api;
 
@@ -15,9 +18,13 @@ public static class Startup
 {
     public static void ConfigureServices(IServiceCollection services, IConfiguration conf, IWebHostEnvironment environment)
     {
+        services.AddDataProtection()
+            .PersistKeysToFileSystem(new DirectoryInfo("dataprotection-keys"))
+            .SetApplicationName("eComNetApi");
+
         services.AddLogging(conf, environment);
 
-        var redisConnection = conf.GetConnectionString("Redis")
+        string redisConnection = conf.GetConnectionString("Redis")
                                 ?? throw new InvalidOperationException("Redis connection string is missing");
         services.AddSingleton<IConnectionMultiplexer>(c =>
         {
@@ -53,7 +60,7 @@ public static class Startup
             {
                 options.InvalidModelStateResponseFactory = actionContext =>
                 {
-                    var errors = actionContext.ModelState
+                    string[] errors = actionContext.ModelState
                         .Where(e => e.Value.Errors.Count > 0)
                         .SelectMany(x => x.Value.Errors)
                         .Select(x => x.ErrorMessage).ToArray();
@@ -63,8 +70,8 @@ public static class Startup
                         Errors = errors
                     };
 
-                    var logger = services.BuildServiceProvider()
-                                .GetRequiredService<ILogger<ApiValidationErrorResponse>>();
+                    ILogger<ApiValidationErrorResponse> logger = services.BuildServiceProvider()
+                                                                        .GetRequiredService<ILogger<ApiValidationErrorResponse>>();
 
                     logger.LogInformation("Validation errors occurred: {Errors}", string.Join(Environment.NewLine, errors));
 
@@ -76,7 +83,7 @@ public static class Startup
         services.AddAutoMapperServiceExt();
 
         services.AddDataPersistenceServices(conf, environment);
-        services.AddCustomIdentityServices(conf);
+        services.AddCustomIdentityServices(conf, environment);
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerServicesExt();
@@ -85,10 +92,13 @@ public static class Startup
         services.AddScoped<IPictureUrlResolver, PictureUrlResolver>();
 
         services.Configure<TokenSettings>(conf.GetSection("TokenSettings"));
+        services.Configure<GoogleAuthSettings>(conf.GetSection("GoogleAuth"));
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IAuthEventsLog, AuthEventsLog>();
         services.AddScoped<IAuthenticationServices, AuthenticationServices>();
+        services.AddScoped<IExternalAuthCodeService, ExternalAuthCodeService>();
+        services.AddScoped<IExternalAuthService, ExternalAuthService>();
         services.AddApplicationServices(conf);
 
         services.AddHealthChecksExt(conf);
@@ -96,6 +106,23 @@ public static class Startup
 
     public static void ConfigureApp(WebApplication app, IWebHostEnvironment env)
     {
+        // Warn if AllowedReturnUrlHosts is still the default ["localhost"] in a non-Development environment.
+        // Google login silently falls back to '/' for any non-localhost returnUrl in that case.
+        if (!app.Environment.IsDevelopment())
+        {
+            var googleSettings = app.Services.GetRequiredService<IOptions<GoogleAuthSettings>>().Value;
+            if (googleSettings.AllowedReturnUrlHosts.Length == 1 &&
+                string.Equals(googleSettings.AllowedReturnUrlHosts[0], "localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                app.Services.GetRequiredService<ILogger<GoogleAuthSettings>>()
+                    .LogWarning(
+                        "GoogleAuth:AllowedReturnUrlHosts is set to [\"localhost\"] only. " +
+                        "Google login will silently fail for non-localhost return URLs. " +
+                        "Configure AllowedReturnUrlHosts in appsettings.{EnvironmentName}.json.",
+                        app.Environment.EnvironmentName);
+            }
+        }
+
         if (app.Environment.IsDevelopment())
         {
             app.AssertAutoMapperConfigurationIsValid();

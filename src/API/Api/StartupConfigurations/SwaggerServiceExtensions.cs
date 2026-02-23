@@ -41,6 +41,14 @@ public static class SwaggerServiceExtensions
 
             });
 
+            c.SwaggerDoc("ExternalAuth", new OpenApiInfo
+            {
+                Title = "Api",
+                Version = "v1",
+                Description = "ExternalAuth related API. (Google, Facebook)",
+
+            });
+
             c.SwaggerDoc("Orders", new OpenApiInfo
             {
                 Title = "Api",
@@ -95,6 +103,8 @@ public static class SwaggerServiceExtensions
             c.SwaggerEndpoint("/swagger/Buggy/swagger.json", "Buggy Api");
 
             c.SwaggerEndpoint("/swagger/Account/swagger.json", "Account Api");
+
+            c.SwaggerEndpoint("/swagger/ExternalAuth/swagger.json", "ExternalAuth Api");
 
             c.SwaggerEndpoint("/swagger/Orders/swagger.json", "Orders Api");
 

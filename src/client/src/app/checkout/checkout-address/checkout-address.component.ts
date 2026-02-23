@@ -22,7 +22,13 @@ export class CheckoutAddressComponent implements OnInit {
     this.accountService.updateUserAddress(this.checkoutForm.get('addressForm').value)
       .subscribe((address: IAddress) => {
         this.toastr.success('Address saved');
-        this.checkoutForm.get('addressForm').reset(address);
+        const addressForm = this.checkoutForm.get('addressForm');
+        if (address) {
+          console.log('address from API:', address)
+          addressForm.patchValue(address);
+        }
+        addressForm.markAsPristine();
+        addressForm.markAsUntouched();
       }, error => {
         this.toastr.error(error.message);
         console.log(error);

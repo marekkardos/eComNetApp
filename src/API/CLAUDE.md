@@ -124,7 +124,7 @@ Quick start:
 docker-compose up api dbserver redis
 ```
 
-The API is accessible at `http://localhost:44369` when running in containers.
+The API is accessible at `https://localhost:44370` when running in containers.
 
 **User Secrets in Docker:** Copy `docker-compose.override.example.yml` to `docker-compose.override.yml` and configure for your platform. The UserSecretsId `56ee6ee3-b7d8-4759-ab17-87297accef46` must match in both `Api/Api.csproj` and `docker-compose.dcproj`.
 
@@ -184,6 +184,14 @@ The solution uses C# 12 features. When adding new functionality or refactoring e
 - Collection expressions
 - Using directives for aliases
 - Raw string literals
+
+### Code Style
+
+Always follow `.editorconfig` rules. Notable: prefer explicit types over `var` (IDE0008 — use `var` only when the type is apparent from the right-hand side, e.g. `new Foo()`).
+
+### File Organization
+
+**One type per file** — every class, interface, record, or enum must live in its own dedicated file named after the type. Never place multiple types in the same file. This applies to all layers: `Core/`, `Api/`, `Services/`, `Data/`.
 
 ### Central Package Management
 
@@ -249,14 +257,9 @@ Payment processing uses Stripe Payment Intents with webhook-based order status u
 - `StripeSettings:WebHookSecret` - Webhook signature verification secret
 - Frontend publishable key configured in Angular environment files
 
-**Important:**
-- Order status updates happen via webhooks, not client-side confirmation
-- Webhook signature verification ensures requests come from Stripe (PaymentsController.cs:46)
-- PaymentIntentId is the critical link: baskets (Redis) store it, orders (SQL) must copy it during creation, webhooks (Stripe) use it to find and update the correct order. If an order lacks the PaymentIntentId, webhook updates will silently fail
-
 **Local Development:**
-- Requires Stripe CLI for webhook forwarding: `stripe listen --forward-to http://localhost:44369/api/payments/webhook`
-- See [STRIPE_DEVELOPMENT.md](STRIPE_DEVELOPMENT.md) for complete setup guide
+- Requires Stripe CLI for webhook forwarding: `stripe listen --forward-to https://localhost:44370/api/payments/webhook`
+- See [STRIPE_DEVELOPMENT.md](../../doc/Stripe/STRIPE_DEVELOPMENT.md) for complete setup guide
 
 ### CORS Configuration
 
@@ -294,7 +297,7 @@ Static files served from `Api/Content/` directory, accessible at `/content` URL 
 
 | Service | Port | URL |
 |---------|------|-----|
-| API (Docker) | 44369 | http://localhost:44369 |
+| API (Docker) | 44370 | https://localhost:44370 |
 | API (Local VS) | 5001 | https://localhost:5001 |
 | Angular | 4200 | http://localhost:4200 |
 | SQL Server | 1433 | localhost,1433 |
