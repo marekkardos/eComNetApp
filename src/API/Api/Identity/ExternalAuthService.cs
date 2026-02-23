@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Core.Entities.Identity;
+using Core.Interfaces;
 using Microsoft.AspNetCore.Identity;
 
 namespace Api.Identity;

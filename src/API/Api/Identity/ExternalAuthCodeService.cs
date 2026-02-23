@@ -1,9 +1,10 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using Core.Entities.Identity;
+using Core.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 
 namespace Api.Identity;
 
@@ -11,7 +12,7 @@ namespace Api.Identity;
 /// Redis-backed service for managing short-lived authorization codes.
 /// </summary>
 public class ExternalAuthCodeService(
-    IDistributedCache cache,
+    IConnectionMultiplexer redis,
     UserManager<AppUser> userManager,
     IOptions<GoogleAuthSettings> googleAuthSettings,
     ILogger<ExternalAuthCodeService> logger) : IExternalAuthCodeService
@@ -19,53 +20,50 @@ public class ExternalAuthCodeService(
     private readonly GoogleAuthSettings _settings = googleAuthSettings.Value;
     private const string CacheKeyPrefix = "external_auth_code:";
 
-    public async Task<string> GenerateCodeAsync(AppUser user)
+    public async Task<string> GenerateCodeAsync(AppUser user, CancellationToken cancellationToken = default)
     {
-        var code = GenerateSecureCode();
-        var cacheKey = GetCacheKey(code);
+        string code = GenerateSecureCode();
+        string cacheKey = GetCacheKey(code);
 
         var codeData = new AuthCodeData
         {
             UserId = user.Id,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow
         };
 
-        var options = new DistributedCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(_settings.AuthCodeExpirationSeconds)
-        };
-
-        await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(codeData), options);
+        IDatabase db = redis.GetDatabase();
+        await db.StringSetAsync(
+            cacheKey,
+            JsonSerializer.Serialize(codeData),
+            TimeSpan.FromSeconds(_settings.AuthCodeExpirationSeconds));
 
         logger.LogInformation("Generated external auth code for user {UserId}", user.Id);
 
         return code;
     }
 
-    public async Task<AppUser> ValidateAndConsumeCodeAsync(string code)
+    public async Task<AppUser> ValidateAndConsumeCodeAsync(string code, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(code))
         {
             return null;
         }
 
-        var cacheKey = GetCacheKey(code);
+        string cacheKey = GetCacheKey(code);
+        IDatabase db = redis.GetDatabase();
 
-        // Get and immediately delete the code (single-use)
-        var cachedValue = await cache.GetStringAsync(cacheKey);
+        // Atomic read-and-delete — eliminates the TOCTOU race from the prior IDistributedCache approach
+        RedisValue cachedValue = await db.StringGetDeleteAsync(cacheKey);
 
-        if (string.IsNullOrEmpty(cachedValue))
+        if (cachedValue.IsNullOrEmpty)
         {
             logger.LogWarning("Invalid or expired external auth code attempted");
             return null;
         }
 
-        // Delete immediately to ensure single-use
-        await cache.RemoveAsync(cacheKey);
-
         try
         {
-            var codeData = JsonSerializer.Deserialize<AuthCodeData>(cachedValue);
+            AuthCodeData codeData = JsonSerializer.Deserialize<AuthCodeData>((string)cachedValue);
 
             if (codeData == null || string.IsNullOrEmpty(codeData.UserId))
             {
@@ -73,7 +71,7 @@ public class ExternalAuthCodeService(
                 return null;
             }
 
-            var user = await userManager.FindByIdAsync(codeData.UserId);
+            AppUser user = await userManager.FindByIdAsync(codeData.UserId);
 
             if (user == null)
             {
@@ -94,7 +92,7 @@ public class ExternalAuthCodeService(
     private static string GenerateSecureCode()
     {
         // Generate a 32-byte (256-bit) cryptographically secure random code
-        var bytes = RandomNumberGenerator.GetBytes(32);
+        byte[] bytes = RandomNumberGenerator.GetBytes(32);
         return Convert.ToBase64String(bytes)
             .Replace("+", "-")
             .Replace("/", "_")
@@ -102,10 +100,4 @@ public class ExternalAuthCodeService(
     }
 
     private static string GetCacheKey(string code) => $"{CacheKeyPrefix}{code}";
-
-    private class AuthCodeData
-    {
-        public string UserId { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-    }
 }

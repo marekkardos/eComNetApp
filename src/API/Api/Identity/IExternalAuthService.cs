@@ -1,25 +1,13 @@
+using System.Collections.Generic;
 using Core.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 
 namespace Api.Identity;
 
-/// <summary>
-/// Result of an external authentication operation.
-/// </summary>
-public class ExternalAuthResult
-{
-    public bool Succeeded { get; set; }
-    public AppUser User { get; set; }
-    public string Error { get; set; }
-    public bool IsNewUser { get; set; }
-    public bool WasLinked { get; set; }
-
-    public static ExternalAuthResult Success(AppUser user, bool isNewUser = false, bool wasLinked = false)
-        => new() { Succeeded = true, User = user, IsNewUser = isNewUser, WasLinked = wasLinked };
-
-    public static ExternalAuthResult Failure(string error)
-        => new() { Succeeded = false, Error = error };
-}
+// Note: this interface intentionally lives in Api/Identity/ rather than Core/Interfaces/.
+// It depends on ExternalLoginInfo (Microsoft.AspNetCore.Identity), which is an ASP.NET Core
+// framework type unavailable in the Core project's netstandard2.0 target. If Core is ever
+// retargeted to net8.0, move this interface to Core/Interfaces/.
 
 /// <summary>
 /// Service for handling external authentication operations (social login).

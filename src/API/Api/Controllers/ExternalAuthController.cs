@@ -4,6 +4,7 @@ using Api.Dtos;
 using Api.Extensions;
 using Api.Identity;
 using Core.Entities.Identity;
+using Core.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
@@ -28,9 +29,6 @@ public class ExternalAuthController(
     ILogger<ExternalAuthController> logger) : BaseApiController
 {
     private readonly GoogleAuthSettings _googleSettings = googleAuthSettings.Value;
-    private readonly TokenSettings _tokenSettings = authServices.TokenSettings;
-    private readonly ITokenService _tokenService = authServices.TokenService;
-    private readonly IRefreshTokenService _refreshTokenService = authServices.RefreshTokenService;
     private readonly IAuthEventsLog _authEventsLog = authServices.AuthEventsLog;
 
     /// <summary>
@@ -63,7 +61,7 @@ public class ExternalAuthController(
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> GoogleCallback([FromQuery] string returnUrl = "/")
     {
-        var info = await signInManager.GetExternalLoginInfoAsync();
+        ExternalLoginInfo info = await signInManager.GetExternalLoginInfoAsync();
 
         if (info == null)
         {
@@ -72,7 +70,7 @@ public class ExternalAuthController(
         }
 
         // Find or create user
-        var result = await externalAuthService.FindOrCreateUserAsync(info);
+        ExternalAuthResult result = await externalAuthService.FindOrCreateUserAsync(info);
 
         if (!result.Succeeded)
         {
@@ -80,12 +78,12 @@ public class ExternalAuthController(
             return RedirectWithError(returnUrl, "external_auth_failed", result.Error ?? "Authentication failed.");
         }
 
-        var user = result.User!;
+        AppUser user = result.User!;
 
         // Generate short-lived code for code exchange
-        var code = await externalAuthCodeService.GenerateCodeAsync(user);
+        string code = await externalAuthCodeService.GenerateCodeAsync(user, HttpContext.RequestAborted);
 
-        var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+        string clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
         _authEventsLog.Monitor_SuccessfulLogin(user.Id, user.Email, clientIp);
 
         // Clean up the temporary cookie
@@ -106,7 +104,7 @@ public class ExternalAuthController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserDto>> ExchangeCode([FromBody] ExternalAuthCodeExchangeDto dto)
     {
-        AppUser user = await externalAuthCodeService.ValidateAndConsumeCodeAsync(dto.Code);
+        AppUser user = await externalAuthCodeService.ValidateAndConsumeCodeAsync(dto.Code, HttpContext.RequestAborted);
 
         if (user == null)
         {
@@ -114,16 +112,7 @@ public class ExternalAuthController(
         }
 
         // Generate access token and refresh token together — both issued atomically here
-        (string accessToken, string jwtId) = _tokenService.CreateToken(user);
-        RefreshToken refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user, jwtId);
-        Response.SetRefreshTokenCookie(refreshToken, _tokenSettings);
-
-        return new UserDto
-        {
-            Email = user.Email,
-            DisplayName = user.DisplayName,
-            Token = accessToken
-        };
+        return await authServices.GenerateLoginResponseAsync(user, Response);
     }
 
     /// <summary>
@@ -274,9 +263,9 @@ public class ExternalAuthController(
         return false;
     }
 
-    private IActionResult RedirectWithError(string returnUrl, string error, string errorDescription)
+    private RedirectResult RedirectWithError(string returnUrl, string error, string errorDescription)
     {
-        var url = AppendQueryParam(returnUrl, "error", error);
+        string url = AppendQueryParam(returnUrl, "error", error);
         url = AppendQueryParam(url, "error_description", errorDescription);
         return Redirect(url);
     }

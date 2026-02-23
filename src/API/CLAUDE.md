@@ -185,6 +185,14 @@ The solution uses C# 12 features. When adding new functionality or refactoring e
 - Using directives for aliases
 - Raw string literals
 
+### Code Style
+
+Always follow `.editorconfig` rules. Notable: prefer explicit types over `var` (IDE0008 — use `var` only when the type is apparent from the right-hand side, e.g. `new Foo()`).
+
+### File Organization
+
+**One type per file** — every class, interface, record, or enum must live in its own dedicated file named after the type. Never place multiple types in the same file. This applies to all layers: `Core/`, `Api/`, `Services/`, `Data/`.
+
 ### Central Package Management
 
 The solution uses Central Package Management (CPM) with `Directory.Packages.props` at the root. Package versions are centrally managed, and individual projects reference packages without version attributes.

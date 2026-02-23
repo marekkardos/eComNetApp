@@ -33,12 +33,16 @@ public class StoreContext : DbContext
         var efLoggingConfigurationsStr = "Logging:Ef:";
         
         var enableDetailedErrorsStr = _config[efLoggingConfigurationsStr + "EnableDetailedErrors"];
-        bool.TryParse(enableDetailedErrorsStr, out var enableDetailedErrors);
-        optionsBuilder.EnableDetailedErrors(enableDetailedErrors);
+        if (bool.TryParse(enableDetailedErrorsStr, out bool enableDetailedErrors))
+        {
+            optionsBuilder.EnableDetailedErrors(enableDetailedErrors);
+        }
 
         var enableSensitiveDataLoggingStr = _config[efLoggingConfigurationsStr + "EnableSensitiveDataLogging"];
-        bool.TryParse(enableSensitiveDataLoggingStr, out var enableSensitiveDataLogging);
-        optionsBuilder.EnableSensitiveDataLogging(enableSensitiveDataLogging);
+        if (bool.TryParse(enableSensitiveDataLoggingStr, out bool enableSensitiveDataLogging))
+        {
+            optionsBuilder.EnableSensitiveDataLogging(enableSensitiveDataLogging);
+        }
 
         optionsBuilder
             .ConfigureWarnings(b => b.Log(

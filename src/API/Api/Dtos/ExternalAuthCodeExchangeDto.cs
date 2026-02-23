@@ -11,5 +11,6 @@ public class ExternalAuthCodeExchangeDto
     /// The short-lived authorization code received from the OAuth callback.
     /// </summary>
     [Required]
+    [MaxLength(64)]
     public string Code { get; set; } = string.Empty;
 }

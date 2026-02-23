@@ -1,6 +1,8 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Core.Entities.Identity;
 
-namespace Api.Identity;
+namespace Core.Interfaces;
 
 /// <summary>
 /// Service for managing short-lived authorization codes used in the OAuth code exchange flow.
@@ -13,14 +15,16 @@ public interface IExternalAuthCodeService
     /// The code is stored in Redis and expires after the configured timeout.
     /// </summary>
     /// <param name="user">The authenticated user.</param>
+    /// <param name="cancellationToken">Token to cancel the operation on client disconnect.</param>
     /// <returns>The generated authorization code.</returns>
-    Task<string> GenerateCodeAsync(AppUser user);
+    Task<string> GenerateCodeAsync(AppUser user, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Validates and consumes an authorization code, returning the associated user if valid.
     /// The code is deleted after use to prevent replay attacks.
     /// </summary>
     /// <param name="code">The authorization code to validate.</param>
+    /// <param name="cancellationToken">Token to cancel the operation on client disconnect.</param>
     /// <returns>The user associated with the code, or null if the code is invalid or expired.</returns>
-    Task<AppUser> ValidateAndConsumeCodeAsync(string code);
+    Task<AppUser> ValidateAndConsumeCodeAsync(string code, CancellationToken cancellationToken = default);
 }

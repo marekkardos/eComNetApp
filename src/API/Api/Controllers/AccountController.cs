@@ -27,7 +27,7 @@ public class AccountController(
     private readonly LockoutSettings _lockoutSettings = authServices.LockoutSettings;
     private readonly ITokenService tokenService = authServices.TokenService;
     private readonly IRefreshTokenService refreshTokenService = authServices.RefreshTokenService;
-    private readonly IAuthEventsLog authEventsLog =  authServices.AuthEventsLog;
+    private readonly IAuthEventsLog authEventsLog = authServices.AuthEventsLog;
 
     [HttpGet("emailexists")]
     [AllowAnonymous]
@@ -67,8 +67,8 @@ public class AccountController(
             var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
             authEventsLog.Monitor_UserRegistration(user.Id, user.Email, clientIp);
 
-            var response = await GenerateAuthResponseAsync(user);
-            return Created("account", response.Value);
+            UserDto userDto = await authServices.GenerateLoginResponseAsync(user, Response);
+            return Created("account", userDto);
         }
 
         _logger.LogWarning("Problem creating the user: _userManager.CreateAsync failed:{IdentityResult}", result);
@@ -119,7 +119,7 @@ public class AccountController(
         }
 
         authEventsLog.Monitor_SuccessfulLogin(user.Id, user.Email, clientIp);
-        return await GenerateAuthResponseAsync(user);
+        return await authServices.GenerateLoginResponseAsync(user, Response);
     }
 
     [HttpGet]
@@ -235,18 +235,4 @@ public class AccountController(
         return BadRequest(new ApiResponse(HttpStatusCode.BadRequest, "Problem updating the user"));
     }
 
-    private async Task<ActionResult<UserDto>> GenerateAuthResponseAsync(AppUser user)
-    {
-        var (accessToken, jwtId) = tokenService.CreateToken(user);
-        var refreshToken = await refreshTokenService.GenerateRefreshTokenAsync(user, jwtId);
-
-        Response.SetRefreshTokenCookie(refreshToken, _tokenSettings);
-
-        return new UserDto
-        {
-            Email = user.Email,
-            Token = accessToken,
-            DisplayName = user.DisplayName
-        };
-    }
 }
