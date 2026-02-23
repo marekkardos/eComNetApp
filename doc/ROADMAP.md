@@ -4,6 +4,18 @@ This document tracks planned and upcoming features for the eComNetApp platform.
 
 ---
 
+## Table of Contents
+
+- [Planned Features](#planned-features)
+  - [1. Two-Factor Authentication (2FA)](#1-two-factor-authentication-2fa)
+  - [2. Password Management for Social-Login Accounts](#2-password-management-for-social-login-accounts)
+  - [3. Email Confirmation for New Accounts](#3-email-confirmation-for-new-accounts)
+  - [4. Link/Unlink Management for Social-Login Accounts](#4-linkunlink-management-for-social-login-accounts)
+  - [5. Facebook Social Login](#5-facebook-social-login)
+- [Status Legend](#status-legend)
+
+---
+
 ## Planned Features
 
 ### 1. Two-Factor Authentication (2FA)
