@@ -30,5 +30,8 @@ src/**/.sonarqube.json
 .worktrees/
 .security-key
 logs/security/
+/.vs
+src/API/Api/dataprotection-keys/
+/worktrees/
 /src/client-v21/nul
 /src/client-v21/.vscode

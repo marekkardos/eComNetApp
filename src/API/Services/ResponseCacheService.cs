@@ -7,16 +7,15 @@ using StackExchange.Redis;
 
 namespace Services;
 
-public class ResponseCacheService : IResponseCacheService
+public class ResponseCacheService(IConnectionMultiplexer redis, ILogger<ResponseCacheService> logger) : IResponseCacheService
 {
-    private readonly ILogger<ResponseCacheService> _logger;
-    private readonly IDatabase _database;
+    private readonly ILogger<ResponseCacheService> _logger = logger;
+    private readonly IDatabase _database = redis.GetDatabase();
 
-    public ResponseCacheService(IConnectionMultiplexer redis, ILogger<ResponseCacheService> logger)
+    private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
     {
-        _logger = logger;
-        _database = redis.GetDatabase();
-    }
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
     public Task CacheResponseAsync(string cacheKey, object response, TimeSpan timeToLive)
     {
@@ -28,12 +27,8 @@ public class ResponseCacheService : IResponseCacheService
 
         _logger.LogDebug("CacheResponseAsync cacheKey:'{CacheKey}' , timeToLive:{TimeToLive} ms", cacheKey, timeToLive.TotalMilliseconds);
 
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
 
-        var serializedResponse = JsonSerializer.Serialize(response, options);
+        var serializedResponse = JsonSerializer.Serialize(response, _jsonOptions);
 
         return _database.StringSetAsync(cacheKey, serializedResponse, timeToLive);
     }

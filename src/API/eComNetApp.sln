@@ -33,6 +33,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{26C3C819-AA9F-4FB6-A822-4C5518F3143E}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\doc\DOCKER_HTTPS.md = ..\..\doc\DOCKER_HTTPS.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -149,6 +154,7 @@ Global
 		{4CBAF000-7FCC-C288-7C09-9F5282F47CA9} = {40D59E8C-DE75-4AED-89C5-BBEB641F14CD}
 		{E7C0C5AD-DF97-4DBB-96A8-8A86317AD2F7} = {0DF9452B-7411-4285-A3CA-F914F8BBB09B}
 		{2C351C89-DC35-48DE-92D2-CFDA861A47C6} = {0DF9452B-7411-4285-A3CA-F914F8BBB09B}
+		{26C3C819-AA9F-4FB6-A822-4C5518F3143E} = {2FA6DD00-0D59-4C23-888F-BD542F6A0AA2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {10E0C739-6AC1-4313-BF53-68DDCBBCD71B}

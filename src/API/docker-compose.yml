@@ -8,13 +8,18 @@ services:
       dockerfile: Api/Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=443
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
       - ConnectionStrings__Redis=redis:6379
       - AllowedOrigins=http://localhost:4200,http://angular:4200,http://localhost:4201,http://angular21:4201
       - OPEN_TELEMETRY__ENDPOINT=http://aspire-dashboard:18889
       - Seq__ServerUrl=http://seq:5341
+    volumes:
+      - .data/dataprotection-keys:/app/dataprotection-keys
     ports:
       - "44369:80"
+      - "44370:443"
     depends_on:
       - dbserver
       - redis

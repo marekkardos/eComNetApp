@@ -11,10 +11,10 @@ public class ErrorHandlerController(ILogger<ErrorHandlerController> logger, IWeb
 {
     public IActionResult HandleErrorDevelopment()
     {
-        var exceptionFeature = HttpContext.Features.Get<IExceptionHandlerFeature>();
-        var exception = exceptionFeature?.Error;
+        IExceptionHandlerFeature exceptionFeature = HttpContext.Features.Get<IExceptionHandlerFeature>();
+        Exception exception = exceptionFeature?.Error;
 
-        logger.LogError(exception, exception?.Message);
+        logger.LogError(exception, "An unhandled exception occurred: {Message}", exception?.Message);
 
         if (!env.IsDevelopment())
         {

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, throwError, ReplaySubject } from 'rxjs';
-import { IUser } from '../shared/models/user';
+import { IUser, IUserWithExternalLogins } from '../shared/models/user';
 import { tap, catchError, shareReplay } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { IAddress } from '../shared/models/address';
@@ -126,6 +126,53 @@ export class AccountService {
 
   updateUserAddress(address: IAddress): Observable<IAddress> {
     return this.http.put<IAddress>(this.baseUrl + 'account/address', address);
+  }
+
+  // --- External Authentication (Google OAuth) ---
+
+  /**
+   * Initiates Google OAuth login by redirecting to the API endpoint.
+   * @param returnUrl The URL to redirect to after successful authentication.
+   */
+  initiateGoogleLogin(returnUrl: string = '/'): void {
+    const encodedReturnUrl = encodeURIComponent(returnUrl);
+    window.location.href = `${this.baseUrl}externalauth/google?returnUrl=${encodedReturnUrl}`;
+  }
+
+  /**
+   * Exchanges an authorization code for an access token.
+   * Called after redirect from OAuth callback.
+   * @param code The short-lived authorization code.
+   */
+  exchangeAuthCode(code: string): Observable<IUser> {
+    return this.http.post<IUser>(this.baseUrl + 'externalauth/exchange', { code }, {
+      withCredentials: true
+    }).pipe(
+      tap(user => this.handleAuthSuccess(user))
+    );
+  }
+
+  /**
+   * Gets the current user's external login providers and link status.
+   */
+  getExternalLogins(): Observable<IUserWithExternalLogins> {
+    return this.http.get<IUserWithExternalLogins>(this.baseUrl + 'externalauth/providers');
+  }
+
+  /**
+   * Initiates Google OAuth linking for authenticated users.
+   * @param returnUrl The URL to redirect to after linking.
+   */
+  initiateGoogleLink(returnUrl: string = '/'): void {
+    const encodedReturnUrl = encodeURIComponent(returnUrl);
+    window.location.href = `${this.baseUrl}externalauth/google/link?returnUrl=${encodedReturnUrl}`;
+  }
+
+  /**
+   * Unlinks Google from the current user's account.
+   */
+  unlinkGoogle(): Observable<void> {
+    return this.http.delete<void>(this.baseUrl + 'externalauth/google/unlink');
   }
 
   private handleAuthSuccess(user: IUser): void {

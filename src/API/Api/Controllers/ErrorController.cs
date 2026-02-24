@@ -10,7 +10,7 @@ namespace API.Controllers;
 [AllowAnonymous]
 public class ErrorController : BaseApiController
 {
-    [HttpGet]
+    [HttpGet, HttpPost, HttpPut, HttpDelete, HttpPatch]
     public IActionResult Error(int code)
     {
         return new ObjectResult(new ApiResponse(code));

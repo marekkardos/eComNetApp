@@ -6,7 +6,7 @@
 // Angular on host, API in Docker container
 export const  environment = {
   production: false,
-  apiUrl: 'http://localhost:44369/api/',
+  apiUrl: 'https://localhost:44370/api/',
   stripeSettings: {
     PublishableKey: 'REPLACE_WITH_YOUR_KEY'
   }
