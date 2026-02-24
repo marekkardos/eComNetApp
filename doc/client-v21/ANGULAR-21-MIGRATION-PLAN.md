@@ -14,41 +14,7 @@ This document outlines a comprehensive phased approach for migrating the Skishop
 4. [Phase 0: Pre-Migration Preparation](#phase-0-pre-migration-preparation) ✅ **COMPLETE** → See [Phase 0 Documentation](./PHASE-0-DOCUMENTATION.md)
 5. [Phase 1: Angular 21 Project Scaffolding](#phase-1-angular-21-project-scaffolding) ✅ **COMPLETE**
    - [1.7 Static UI Implementation](#17-static-ui-implementation-mock-data-phase) → See [Static UI Plan](./federated-tickling-dijkstra.md)
-  
-  # The issue now 
-  The styles.css file with Tailwind's @import is being ignored by Angular's build.
-  Only styles.scss is being processed. Angular 21's build system isn't passing plain CSS files through PostCSS properly for Tailwind v4.
-
-  Here are your options:
-
-  Option 1: Keep the workaround (RECOMMENDED for now)
-
-  - Pros: Works now, maintainable, covers 90% of use cases
-  - Cons: Not true Tailwind, need to manually add new utilities
-  - Status: Currently working
-
-  Option 2: Downgrade to Tailwind v3
-
-  npm uninstall tailwindcss @tailwindcss/postcss
-  npm install -D tailwindcss@^3.4.0
-  Create tailwind.config.js for v3
-  - Pros: Proven Angular support, full Tailwind features
-  - Cons: Older version, requires migration later
-
-  Option 3: Try to fix Tailwind v4 integration
-
-  - Pros: Future-proof, official solution
-  - Cons: Complex, might require Angular build customization
-  - Status: Needs investigation, may not be possible yet
-
-  My recommendation: Keep Option 1 (manual utilities) for now since:
-  - It's working well
-  - Tailwind v4 + Angular 21 integration is still immature
-  - You can migrate to real Tailwind v4 later when the ecosystem catches up
-
-  OK for now  **Option 1 is in place**.
-
- 6. [Phase 2: Core Infrastructure](#phase-2-core-infrastructure) ✅ **COMPLETE**
+6. [Phase 2: Core Infrastructure](#phase-2-core-infrastructure) ✅ **COMPLETE**
 7. [Phase 3: Shared Module](#phase-3-shared-module) ✅ **COMPLETE**
 8. [Phase 4: Feature Modules](#phase-4-feature-modules) ⬅️ **CURRENT**
 9. [Phase 5: Integration & Testing](#phase-5-integration--testing)
@@ -1308,6 +1274,7 @@ readonly data = this.dataSignal.asReadonly();
 | 1.1 | 2026-01-26 | Claude | Integrated Static UI plan (Phase 1.7), updated tech stack to Material + Tailwind |
 | 1.2 | 2026-01-27 | Claude | Marked Phase 0 and Phase 1 as complete, added Phase 0 documentation reference |
 | 1.3 | 2026-01-28 | Claude | Marked Phase 2 and Phase 3 as complete, added Phase 2-3 Summary document |
+| 1.4 | 2026-02-24 | Claude | Fixed Tailwind v4 integration (replaced `postcss.config.js` with `.postcssrc.json`); removed ~400 lines of manual utility fallbacks from `styles.scss`; Tailwind v4 now fully operational via PostCSS pipeline |
 
 ---
 
@@ -1319,4 +1286,5 @@ readonly data = this.dataSignal.asReadonly();
 - [New Control Flow](https://angular.dev/guide/templates/control-flow)
 - [Angular Material](https://material.angular.io/)
 - [Tailwind CSS](https://tailwindcss.com/)
+- [Angular + Tailwind v4 Guide](https://angular.dev/guide/tailwind)
 - [Stripe.js Documentation](https://stripe.com/docs/js)
