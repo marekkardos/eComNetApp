@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
@@ -9,8 +9,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MOCK_PRODUCTS, MOCK_BRANDS, MOCK_TYPES } from '../../shared/mock-data';
-import { Product } from '../../shared/models';
+import { firstValueFrom } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
+import { ShopService } from '../../core/services/shop.service';
+import { BasketService } from '../../core/services/basket.service';
+import { Product, Brand, ProductType } from '../../shared/models';
 
 @Component({
   selector: 'app-shop',
@@ -33,20 +36,26 @@ import { Product } from '../../shared/models';
       <div class="flex flex-col justify-between items-start mb-8" style="gap: 1rem;">
         <div>
           <h1 class="text-3xl font-bold text-gray-900">Shop</h1>
-          <p class="text-teal-600 mt-1 font-semibold">{{ filteredProducts().length }} products found</p>
+          <p class="text-teal-600 mt-1 font-semibold">{{ totalCount() }} products found</p>
         </div>
 
         <!-- Search and Sort -->
         <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <mat-form-field appearance="outline" class="w-full sm:w-64">
             <mat-label>Search</mat-label>
-            <input matInput [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" placeholder="Search products...">
-            <mat-icon matSuffix>search</mat-icon>
+            <input matInput
+                   [ngModel]="searchTerm()"
+                   (ngModelChange)="searchTerm.set($event)"
+                   (keyup.enter)="onSearch()"
+                   placeholder="Search products...">
+            <button matSuffix mat-icon-button (click)="onSearch()" aria-label="Search products">
+              <mat-icon>search</mat-icon>
+            </button>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full sm:w-48">
             <mat-label>Sort By</mat-label>
-            <mat-select [ngModel]="sortOption()" (ngModelChange)="sortOption.set($event)">
+            <mat-select [ngModel]="shopParams().sort" (ngModelChange)="onSortSelected($event)">
               <mat-option value="name">Name (A-Z)</mat-option>
               <mat-option value="priceAsc">Price: Low to High</mat-option>
               <mat-option value="priceDesc">Price: High to Low</mat-option>
@@ -57,17 +66,19 @@ import { Product } from '../../shared/models';
 
       <div class="flex flex-col gap-8">
         <!-- Sidebar Filters -->
-        <aside class="w-full">
+        <aside class="w-full" aria-label="Product filters">
           <div class="bg-white rounded-lg shadow-md p-6" style="border-left: 4px solid var(--color-primary-600);">
             <h2 class="font-semibold text-gray-900 mb-6 text-lg">Filters</h2>
 
             <!-- Brand Filter -->
             <div class="mb-6">
-              <h3 class="text-sm font-semibold text-teal-700 mb-2">Brand</h3>
+              <h3 class="text-sm font-semibold text-teal-700 mb-2" id="brand-filter-label">Brand</h3>
               <mat-form-field appearance="outline" class="w-full">
-                <mat-select [ngModel]="selectedBrandId()" (ngModelChange)="selectedBrandId.set($event)">
+                <mat-select [ngModel]="shopParams().brandId"
+                            (ngModelChange)="onBrandSelected($event)"
+                            aria-labelledby="brand-filter-label">
                   <mat-option [value]="0">All Brands</mat-option>
-                  @for (brand of brands; track brand.id) {
+                  @for (brand of brands(); track brand.id) {
                     <mat-option [value]="brand.id">{{ brand.name }}</mat-option>
                   }
                 </mat-select>
@@ -76,11 +87,13 @@ import { Product } from '../../shared/models';
 
             <!-- Type Filter -->
             <div class="mb-6">
-              <h3 class="text-sm font-semibold text-teal-700 mb-2">Type</h3>
+              <h3 class="text-sm font-semibold text-teal-700 mb-2" id="type-filter-label">Type</h3>
               <mat-form-field appearance="outline" class="w-full">
-                <mat-select [ngModel]="selectedTypeId()" (ngModelChange)="selectedTypeId.set($event)">
+                <mat-select [ngModel]="shopParams().typeId"
+                            (ngModelChange)="onTypeSelected($event)"
+                            aria-labelledby="type-filter-label">
                   <mat-option [value]="0">All Types</mat-option>
-                  @for (type of types; track type.id) {
+                  @for (type of types(); track type.id) {
                     <mat-option [value]="type.id">{{ type.name }}</mat-option>
                   }
                 </mat-select>
@@ -96,24 +109,43 @@ import { Product } from '../../shared/models';
         </aside>
 
         <!-- Product Grid -->
-        <main class="flex-1">
-          @if (paginatedProducts().length > 0) {
+        <main class="flex-1" aria-live="polite" aria-label="Product listing">
+          @if (loading()) {
+            <!-- Loading Skeleton -->
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              @for (product of paginatedProducts(); track product.id) {
-                <mat-card class="cursor-pointer overflow-hidden transition-shadow hover:shadow-lg" style="border: 1px solid #f3f4f6; display: flex; flex-direction: column;">
+              @for (item of [1,2,3,4,5,6]; track item) {
+                <div class="rounded-lg overflow-hidden bg-white shadow-md animate-pulse">
+                  <div class="w-full h-48 bg-gray-200"></div>
+                  <div class="p-5 space-y-3">
+                    <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div class="h-5 bg-gray-200 rounded w-3/4"></div>
+                    <div class="h-6 bg-gray-200 rounded w-1/3"></div>
+                  </div>
+                  <div class="p-5 pt-0">
+                    <div class="h-10 bg-gray-200 rounded w-full"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else if (products().length > 0) {
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              @for (product of products(); track product.id) {
+                <mat-card class="cursor-pointer overflow-hidden transition-shadow hover:shadow-lg"
+                          style="border: 1px solid #f3f4f6; display: flex; flex-direction: column;">
                   <a [routerLink]="['/shop', product.id]"
                      class="block"
                      style="text-decoration: none; color: inherit; flex: 1;"
-                     tabindex="0"
                      [attr.aria-label]="'View details for ' + product.name">
                     <div class="relative overflow-hidden bg-gray-50">
                       <img [src]="product.pictureUrl"
                            [alt]="product.name"
-                           class="w-full h-48 object-cover transition-transform hover:scale-105" style="transition-duration: 0.5s;">
+                           class="w-full h-48 object-cover transition-transform hover:scale-105"
+                           style="transition-duration: 0.5s;">
                     </div>
                     <mat-card-content class="p-5">
                       <p class="text-sm uppercase tracking-wider text-teal-600 font-semibold mb-2">{{ product.productBrand }}</p>
-                      <h3 class="font-bold text-gray-900 mb-3" style="min-height: 2.5rem; overflow: hidden; text-overflow: ellipsis;">{{ product.name }}</h3>
+                      <h3 class="font-bold text-gray-900 mb-3"
+                          style="min-height: 2.5rem; overflow: hidden; text-overflow: ellipsis;">{{ product.name }}</h3>
                       <p class="text-2xl font-bold text-teal-700">{{ product.price | currency }}</p>
                     </mat-card-content>
                   </a>
@@ -134,16 +166,18 @@ import { Product } from '../../shared/models';
             <!-- Pagination -->
             <mat-paginator
               class="mt-8 bg-white rounded-lg shadow"
-              [length]="filteredProducts().length"
-              [pageSize]="pageSize()"
-              [pageIndex]="pageIndex()"
+              [length]="totalCount()"
+              [pageSize]="shopParams().pageSize"
+              [pageIndex]="shopParams().pageNumber - 1"
               [pageSizeOptions]="[6, 12, 24]"
-              (page)="onPageChange($event)"
-              showFirstLastButtons>
+              (page)="onPageChanged($event)"
+              showFirstLastButtons
+              aria-label="Product pagination">
             </mat-paginator>
           } @else {
             <div class="text-center py-16">
-              <mat-icon class="text-primary-200" style="font-size: 4rem; width: 4rem; height: 4rem;">inventory_2</mat-icon>
+              <mat-icon style="font-size: 4rem; width: 4rem; height: 4rem; color: #d1d5db;"
+                        aria-hidden="true">inventory_2</mat-icon>
               <h3 class="text-xl font-semibold text-gray-600 mt-4">No products found</h3>
               <p class="text-gray-500 mt-2">Try adjusting your search or filters</p>
               <button mat-raised-button color="primary" class="mt-4 font-semibold" (click)="resetFilters()">
@@ -156,94 +190,98 @@ import { Product } from '../../shared/models';
     </div>
   `
 })
-export class ShopComponent {
-  // Mock data
-  brands = MOCK_BRANDS;
-  types = MOCK_TYPES;
-  private allProducts = MOCK_PRODUCTS;
+export class ShopComponent implements OnInit {
+  private shopService = inject(ShopService);
+  private basketService = inject(BasketService);
+  private toastr = inject(ToastrService);
 
-  // Filter signals
+  private productsSignal = signal<Product[]>([]);
+  private brandsSignal = signal<Brand[]>([]);
+  private typesSignal = signal<ProductType[]>([]);
+  private loadingSignal = signal(false);
+
+  readonly products = this.productsSignal.asReadonly();
+  readonly brands = this.brandsSignal.asReadonly();
+  readonly types = this.typesSignal.asReadonly();
+  readonly loading = this.loadingSignal.asReadonly();
+  readonly totalCount = computed(() => this.shopService.pagination().count);
+  readonly shopParams = this.shopService.shopParams;
+
   searchTerm = signal('');
-  selectedBrandId = signal(0);
-  selectedTypeId = signal(0);
-  sortOption = signal('name');
 
-  // Pagination signals
-  pageIndex = signal(0);
-  pageSize = signal(6);
-
-  // Computed filtered products
-  filteredProducts = computed(() => {
-    let products = [...this.allProducts];
-
-    // Filter by search
-    const search = this.searchTerm().toLowerCase();
-    if (search) {
-      products = products.filter(p =>
-        p.name.toLowerCase().includes(search) ||
-        p.productBrand.toLowerCase().includes(search) ||
-        p.productType.toLowerCase().includes(search)
-      );
+  async ngOnInit(): Promise<void> {
+    this.searchTerm.set(this.shopService.shopParams().search);
+    this.loadingSignal.set(true);
+    try {
+      const [brands, types, result] = await Promise.all([
+        firstValueFrom(this.shopService.getBrands()),
+        firstValueFrom(this.shopService.getTypes()),
+        firstValueFrom(this.shopService.getProducts(false))
+      ]);
+      this.brandsSignal.set(brands);
+      this.typesSignal.set(types);
+      this.productsSignal.set(result.data);
+    } finally {
+      this.loadingSignal.set(false);
     }
+  }
 
-    // Filter by brand
-    const brandId = this.selectedBrandId();
-    if (brandId > 0) {
-      const brand = this.brands.find(b => b.id === brandId);
-      if (brand) {
-        products = products.filter(p => p.productBrand === brand.name);
-      }
+  private async loadProducts(useCache: boolean): Promise<void> {
+    this.loadingSignal.set(true);
+    try {
+      const result = await firstValueFrom(this.shopService.getProducts(useCache));
+      this.productsSignal.set(result.data);
+    } finally {
+      this.loadingSignal.set(false);
     }
+  }
 
-    // Filter by type
-    const typeId = this.selectedTypeId();
-    if (typeId > 0) {
-      const type = this.types.find(t => t.id === typeId);
-      if (type) {
-        products = products.filter(p => p.productType === type.name);
-      }
-    }
+  onBrandSelected(brandId: number): void {
+    const p = this.shopService.getShopParams();
+    this.shopService.setShopParams({ ...p, brandId, pageNumber: 1 });
+    this.loadProducts(false);
+  }
 
-    // Sort
-    switch (this.sortOption()) {
-      case 'priceAsc':
-        products.sort((a, b) => a.price - b.price);
-        break;
-      case 'priceDesc':
-        products.sort((a, b) => b.price - a.price);
-        break;
-      case 'name':
-      default:
-        products.sort((a, b) => a.name.localeCompare(b.name));
-    }
+  onTypeSelected(typeId: number): void {
+    const p = this.shopService.getShopParams();
+    this.shopService.setShopParams({ ...p, typeId, pageNumber: 1 });
+    this.loadProducts(false);
+  }
 
-    return products;
-  });
+  onSortSelected(sort: string): void {
+    const p = this.shopService.getShopParams();
+    this.shopService.setShopParams({ ...p, sort });
+    this.loadProducts(false);
+  }
 
-  // Computed paginated products
-  paginatedProducts = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    const end = start + this.pageSize();
-    return this.filteredProducts().slice(start, end);
-  });
+  onSearch(): void {
+    const p = this.shopService.getShopParams();
+    this.shopService.setShopParams({ ...p, search: this.searchTerm(), pageNumber: 1 });
+    this.loadProducts(false);
+  }
 
-  onPageChange(event: PageEvent): void {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
+  onPageChanged(event: PageEvent): void {
+    const p = this.shopService.getShopParams();
+    this.shopService.setShopParams({
+      ...p,
+      pageNumber: event.pageIndex + 1,
+      pageSize: event.pageSize
+    });
+    this.loadProducts(true);
   }
 
   resetFilters(): void {
     this.searchTerm.set('');
-    this.selectedBrandId.set(0);
-    this.selectedTypeId.set(0);
-    this.sortOption.set('name');
-    this.pageIndex.set(0);
+    this.shopService.setShopParams({
+      brandId: 0, typeId: 0, sort: 'name', pageNumber: 1, pageSize: 6, search: ''
+    });
+    this.loadProducts(false);
   }
 
   addToCart(product: Product, event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    // Mock - will be implemented with real service in Phase 2
-    console.log('Added to cart:', product.name);
+    this.basketService.addItemToBasket(product);
+    this.toastr.success(`${product.name} added to basket`);
   }
 }

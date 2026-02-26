@@ -26,6 +26,9 @@ namespace Core.Specifications
                     case "priceDesc":
                         Query.OrderByDescending(p => p.Price);
                         break;
+                    case "newest":
+                        Query.OrderByDescending(p => p.Id);
+                        break;
                     default:
                         Query.OrderBy(n => n.Name);
                         break;

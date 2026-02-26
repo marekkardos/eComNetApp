@@ -16,8 +16,8 @@ This document outlines a comprehensive phased approach for migrating the Skishop
    - [1.7 Static UI Implementation](#17-static-ui-implementation-mock-data-phase) → See [Static UI Plan](./federated-tickling-dijkstra.md)
 6. [Phase 2: Core Infrastructure](#phase-2-core-infrastructure) ✅ **COMPLETE**
 7. [Phase 3: Shared Module](#phase-3-shared-module) ✅ **COMPLETE**
-8. [Phase 4: Feature Modules](#phase-4-feature-modules) ⬅️ **CURRENT**
-9. [Phase 5: Integration & Testing](#phase-5-integration--testing)
+8. [Phase 4: Feature Modules](#phase-4-feature-modules) ✅ **COMPLETE**
+9. [Phase 5: Integration & Testing](#phase-5-integration--testing) ⬅️ **CURRENT**
 10. [Phase 6: Production Cutover](#phase-6-production-cutover)
 11. [Risk Mitigation](#risk-mitigation)
 12. [Appendix: Breaking Changes Reference](#appendix-breaking-changes-reference)
@@ -910,7 +910,8 @@ export class PagerComponent {
 ## Phase 4: Feature Modules
 
 **Duration**: 8-10 days
-**Dependencies**: Phase 3
+**Dependencies**: Phase 3 ✅
+**Status**: ✅ **COMPLETE**
 
 **Detailed Implementation**: See [Phase 4: Feature Modules](./Phase-4-Feature-Modules.md) for:
 
@@ -947,6 +948,18 @@ export class PagerComponent {
 │                                                                      │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+### Deliverables
+
+- [x] Home feature (landing page)
+- [x] Shop feature (products, filtering, pagination, details) — wired to real API
+- [x] Account feature (login, register, external/social logins)
+- [x] Basket feature (cart management) — wired to real API
+- [x] Checkout feature (multi-step with Stripe) — wired to real API
+- [x] Orders feature (history, details) — wired to real API
+- [x] All routes configured with `authGuard` on protected routes
+
+---
 
 ## Phase 5: Integration & Testing
 
@@ -1275,6 +1288,7 @@ readonly data = this.dataSignal.asReadonly();
 | 1.2 | 2026-01-27 | Claude | Marked Phase 0 and Phase 1 as complete, added Phase 0 documentation reference |
 | 1.3 | 2026-01-28 | Claude | Marked Phase 2 and Phase 3 as complete, added Phase 2-3 Summary document |
 | 1.4 | 2026-02-24 | Claude | Fixed Tailwind v4 integration (replaced `postcss.config.js` with `.postcssrc.json`); removed ~400 lines of manual utility fallbacks from `styles.scss`; Tailwind v4 now fully operational via PostCSS pipeline |
+| 1.5 | 2026-02-26 | Claude | Marked Phase 4 as complete; all feature modules wired to real API; Phase 5 is next |
 
 ---
 

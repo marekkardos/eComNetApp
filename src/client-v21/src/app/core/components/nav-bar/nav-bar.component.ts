@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AccountService } from '../../services/account.service';
 import { BasketService } from '../../services/basket.service';
@@ -8,7 +8,8 @@ import { BasketService } from '../../services/basket.service';
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
   templateUrl: './nav-bar.component.html',
-  styleUrl: './nav-bar.component.scss'
+  styleUrl: './nav-bar.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NavBarComponent {
   accountService = inject(AccountService);

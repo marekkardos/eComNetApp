@@ -16,5 +16,10 @@ export const ACCOUNT_ROUTES: Routes = [
         data: { breadcrumb: 'Register' }
       }
     ]
+  },
+  {
+    path: 'external-logins',
+    loadComponent: () => import('./external-logins/external-logins.component').then(m => m.ExternalLoginsComponent),
+    data: { breadcrumb: 'Linked Accounts' }
   }
 ];

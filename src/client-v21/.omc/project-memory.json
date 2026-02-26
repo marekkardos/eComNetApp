@@ -1,0 +1,105 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1772121979649,
+  "projectRoot": "/Users/marek/work/github/eComNetApp/worktrees/feature/client-v21/src/client-v21",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "@angular/core",
+        "version": "21.1.0",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run start",
+    "scripts": {
+      "ng": "ng",
+      "start": "ng serve --configuration=local",
+      "start:docker": "ng serve --host 0.0.0.0 --poll 3000 --configuration=docker ",
+      "build": "ng build",
+      "build:prod": "ng build --configuration=production",
+      "watch": "ng build --watch --configuration=local",
+      "test": "ng test",
+      "lint": "ng lint"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": "ES modules",
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "public",
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "master",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 1,
+      "lastAccessed": 1772121979636,
+      "keyFiles": [
+        "favicon.ico"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 5,
+      "lastAccessed": 1772121979637,
+      "keyFiles": [
+        "index.html",
+        "main.ts",
+        "styles.css",
+        "styles.scss"
+      ]
+    },
+    "src/app": {
+      "path": "src/app",
+      "purpose": "Application code",
+      "fileCount": 5,
+      "lastAccessed": 1772121979642,
+      "keyFiles": [
+        "app.config.ts",
+        "app.html",
+        "app.routes.ts"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}

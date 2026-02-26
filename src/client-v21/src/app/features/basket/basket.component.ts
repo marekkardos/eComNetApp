@@ -1,11 +1,12 @@
-import { Component, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
-import { MOCK_BASKET_ITEMS, MOCK_DELIVERY_METHODS } from '../../shared/mock-data';
+import { ToastrService } from 'ngx-toastr';
+import { BasketService } from '../../core/services/basket.service';
 import { BasketItem } from '../../shared/models';
 
 @Component({
@@ -159,43 +160,25 @@ import { BasketItem } from '../../shared/models';
   `
 })
 export class BasketComponent {
-  // Mock basket items - will be replaced with real service in Phase 2
-  items = signal<BasketItem[]>([...MOCK_BASKET_ITEMS]);
+  private basketService = inject(BasketService);
+  private toastr = inject(ToastrService);
 
-  // Computed values
-  totalItems = computed(() =>
-    this.items().reduce((sum, item) => sum + item.quantity, 0)
-  );
-
-  subtotal = computed(() =>
-    this.items().reduce((sum, item) => sum + (item.price * item.quantity), 0)
-  );
-
-  shipping = computed(() => {
-    // Free shipping over $100
-    if (this.subtotal() >= 100) return 0;
-    return MOCK_DELIVERY_METHODS[0]?.price || 5;
-  });
-
-  total = computed(() => this.subtotal() + this.shipping());
+  readonly items = computed(() => this.basketService.basket()?.items ?? []);
+  readonly totalItems = this.basketService.itemCount;
+  readonly subtotal = computed(() => this.basketService.totals()?.subtotal ?? 0);
+  readonly shipping = computed(() => this.basketService.totals()?.shipping ?? 0);
+  readonly total = computed(() => this.basketService.totals()?.total ?? 0);
 
   incrementQuantity(item: BasketItem): void {
-    if (item.quantity < 10) {
-      this.items.update(items =>
-        items.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)
-      );
-    }
+    this.basketService.incrementItemQuantity(item);
   }
 
   decrementQuantity(item: BasketItem): void {
-    if (item.quantity > 1) {
-      this.items.update(items =>
-        items.map(i => i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i)
-      );
-    }
+    this.basketService.decrementItemQuantity(item);
   }
 
   removeItem(item: BasketItem): void {
-    this.items.update(items => items.filter(i => i.id !== item.id));
+    this.basketService.removeItemFromBasket(item);
+    this.toastr.info(`${item.productName} removed from basket`);
   }
 }

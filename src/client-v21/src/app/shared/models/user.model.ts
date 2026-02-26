@@ -13,3 +13,14 @@ export interface Address {
   zipcode: string;
   country?: string;
 }
+
+export interface ExternalLoginInfo {
+  provider: string;
+  providerDisplayName: string;
+  isLinked: boolean;
+}
+
+export interface UserWithExternalLogins extends User {
+  externalLogins: ExternalLoginInfo[];
+  hasPassword: boolean;
+}

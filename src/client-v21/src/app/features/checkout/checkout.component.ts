@@ -1,8 +1,18 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  afterNextRender,
+  ViewChild,
+  ElementRef,
+  OnInit
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
-import { MatStepperModule } from '@angular/material/stepper';
+import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,8 +20,16 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
-import { MOCK_BASKET_ITEMS, MOCK_DELIVERY_METHODS, MOCK_ADDRESS } from '../../shared/mock-data';
-import { BasketItem, DeliveryMethod } from '../../shared/models';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
+import { firstValueFrom } from 'rxjs';
+import { loadStripe, Stripe, StripeCardElement } from '@stripe/stripe-js';
+import { ToastrService } from 'ngx-toastr';
+import { CheckoutService } from '../../core/services/checkout.service';
+import { BasketService } from '../../core/services/basket.service';
+import { AccountService } from '../../core/services/account.service';
+import { environment } from '../../../environments/environment';
+import { DeliveryMethod } from '../../shared/models';
 
 @Component({
   selector: 'app-checkout',
@@ -25,7 +43,8 @@ import { BasketItem, DeliveryMethod } from '../../shared/models';
     MatIconModule,
     MatRadioModule,
     MatCardModule,
-    MatDividerModule
+    MatDividerModule,
+    MatProgressSpinnerModule
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -39,6 +58,15 @@ import { BasketItem, DeliveryMethod } from '../../shared/models';
             <!-- Address Step -->
             <mat-step [stepControl]="addressForm" label="Shipping Address">
               <form [formGroup]="addressForm" class="mt-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-lg font-semibold text-gray-900">Shipping Address</h2>
+                  <button mat-stroked-button
+                          (click)="saveUserAddress()"
+                          [disabled]="addressForm.invalid || !addressForm.dirty || savingAddress()">
+                    <mat-icon>save</mat-icon>
+                    Save as default address
+                  </button>
+                </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <mat-form-field appearance="outline" class="w-full">
                     <mat-label>First Name</mat-label>
@@ -102,39 +130,47 @@ import { BasketItem, DeliveryMethod } from '../../shared/models';
 
             <!-- Delivery Step -->
             <mat-step [stepControl]="deliveryForm" label="Delivery Method">
-              <form [formGroup]="deliveryForm" class="mt-6">
-                <mat-radio-group formControlName="deliveryMethod" class="flex flex-col gap-4">
-                  @for (method of deliveryMethods; track method.id) {
-                    <mat-card class="cursor-pointer hover:shadow-md transition-shadow"
-                              [class.ring-2]="selectedDeliveryMethod()?.id === method.id"
-                              [style.--tw-ring-color]="'var(--color-primary-500)'"
-                              (click)="selectDeliveryMethod(method)">
-                      <mat-card-content class="flex items-center gap-4 p-4">
-                        <mat-radio-button [value]="method.id"></mat-radio-button>
-                        <div class="flex-1">
-                          <h3 class="font-semibold text-gray-900">{{ method.shortName }}</h3>
-                          <p class="text-sm text-gray-500">{{ method.description }}</p>
-                          <p class="text-sm text-gray-500">{{ method.deliveryTime }}</p>
-                        </div>
-                        <span class="font-bold" style="color: var(--color-primary-600)">
-                          {{ method.price | currency }}
-                        </span>
-                      </mat-card-content>
-                    </mat-card>
-                  }
-                </mat-radio-group>
+              <div class="mt-6">
+                @if (loading()) {
+                  <div class="flex justify-center py-8">
+                    <mat-spinner diameter="40"></mat-spinner>
+                  </div>
+                } @else {
+                  <form [formGroup]="deliveryForm">
+                    <mat-radio-group formControlName="deliveryMethod" class="flex flex-col gap-4">
+                      @for (method of deliveryMethods(); track method.id) {
+                        <mat-card class="cursor-pointer hover:shadow-md transition-shadow"
+                                  [class.ring-2]="selectedDeliveryMethod()?.id === method.id"
+                                  [style.--tw-ring-color]="'var(--color-primary-500)'"
+                                  (click)="selectDeliveryMethod(method)">
+                          <mat-card-content class="flex items-center gap-4 p-4">
+                            <mat-radio-button [value]="method.id"></mat-radio-button>
+                            <div class="flex-1">
+                              <h3 class="font-semibold text-gray-900">{{ method.shortName }}</h3>
+                              <p class="text-sm text-gray-500">{{ method.description }}</p>
+                              <p class="text-sm text-gray-500">{{ method.deliveryTime }}</p>
+                            </div>
+                            <span class="font-bold" style="color: var(--color-primary-600)">
+                              {{ method.price | currency }}
+                            </span>
+                          </mat-card-content>
+                        </mat-card>
+                      }
+                    </mat-radio-group>
 
-                <div class="mt-6 flex gap-4">
-                  <button mat-stroked-button matStepperPrevious>
-                    <mat-icon>arrow_back</mat-icon>
-                    Back
-                  </button>
-                  <button mat-raised-button color="primary" matStepperNext [disabled]="deliveryForm.invalid">
-                    Continue to Review
-                    <mat-icon>arrow_forward</mat-icon>
-                  </button>
-                </div>
-              </form>
+                    <div class="mt-6 flex gap-4">
+                      <button mat-stroked-button matStepperPrevious>
+                        <mat-icon>arrow_back</mat-icon>
+                        Back
+                      </button>
+                      <button mat-raised-button color="primary" matStepperNext [disabled]="deliveryForm.invalid">
+                        Continue to Review
+                        <mat-icon>arrow_forward</mat-icon>
+                      </button>
+                    </div>
+                  </form>
+                }
+              </div>
             </mat-step>
 
             <!-- Review Step -->
@@ -171,7 +207,7 @@ import { BasketItem, DeliveryMethod } from '../../shared/models';
                     <mat-card-title class="text-lg">Order Items</mat-card-title>
                   </mat-card-header>
                   <mat-card-content>
-                    @for (item of items; track item.id; let last = $last) {
+                    @for (item of items(); track item.id; let last = $last) {
                       <div class="flex items-center gap-4 py-3">
                         <img [src]="item.pictureUrl" [alt]="item.productName" class="w-16 h-16 object-cover rounded">
                         <div class="flex-1">
@@ -192,9 +228,18 @@ import { BasketItem, DeliveryMethod } from '../../shared/models';
                     <mat-icon>arrow_back</mat-icon>
                     Back
                   </button>
-                  <button mat-raised-button color="primary" matStepperNext>
-                    Continue to Payment
-                    <mat-icon>arrow_forward</mat-icon>
+                  <button mat-raised-button color="primary"
+                          (click)="continueToPayment()"
+                          [disabled]="preparingPayment()">
+                    @if (preparingPayment()) {
+                      <mat-spinner diameter="20"></mat-spinner>
+                      Preparing Payment...
+                    } @else {
+                      <ng-container>
+                        Continue to Payment
+                        <mat-icon>arrow_forward</mat-icon>
+                      </ng-container>
+                    }
                   </button>
                 </div>
               </div>
@@ -208,40 +253,29 @@ import { BasketItem, DeliveryMethod } from '../../shared/models';
                     <mat-card-title class="text-lg">Payment Details</mat-card-title>
                   </mat-card-header>
                   <mat-card-content>
-                    <!-- Mock payment form - Stripe will be integrated in Phase 2 -->
-                    <div class="p-4 bg-gray-100 rounded-lg mb-4">
-                      <p class="text-sm text-gray-600 mb-4">
-                        <mat-icon class="text-blue-500 align-middle mr-1">info</mat-icon>
-                        Payment integration will be connected in Phase 2. This is a mock checkout.
-                      </p>
-
-                      <mat-form-field appearance="outline" class="w-full">
-                        <mat-label>Card Number</mat-label>
-                        <input matInput placeholder="4242 4242 4242 4242" disabled>
-                        <mat-icon matSuffix>credit_card</mat-icon>
-                      </mat-form-field>
-
-                      <div class="grid grid-cols-2 gap-4">
-                        <mat-form-field appearance="outline" class="w-full">
-                          <mat-label>Expiry</mat-label>
-                          <input matInput placeholder="12/28" disabled>
-                        </mat-form-field>
-                        <mat-form-field appearance="outline" class="w-full">
-                          <mat-label>CVC</mat-label>
-                          <input matInput placeholder="123" disabled>
-                        </mat-form-field>
-                      </div>
-                    </div>
+                    <div #cardElement class="p-3 border border-gray-300 rounded-lg min-h-[40px]"></div>
+                    @if (cardErrors()) {
+                      <p class="text-red-600 text-sm mt-2">{{ cardErrors() }}</p>
+                    }
+                    @if (!stripeReady()) {
+                      <p class="text-gray-400 text-sm mt-2">Loading payment form...</p>
+                    }
                   </mat-card-content>
                 </mat-card>
 
                 <div class="mt-6 flex gap-4">
-                  <button mat-stroked-button matStepperPrevious>
+                  <button mat-stroked-button matStepperPrevious [disabled]="submitting()">
                     <mat-icon>arrow_back</mat-icon>
                     Back
                   </button>
-                  <button mat-raised-button color="primary" (click)="placeOrder()">
-                    <mat-icon>lock</mat-icon>
+                  <button mat-raised-button color="primary"
+                          (click)="placeOrder()"
+                          [disabled]="submitting() || !stripeReady()">
+                    @if (submitting()) {
+                      <mat-spinner diameter="20"></mat-spinner>
+                    } @else {
+                      <mat-icon>lock</mat-icon>
+                    }
                     Place Order ({{ total() | currency }})
                   </button>
                 </div>
@@ -282,66 +316,178 @@ import { BasketItem, DeliveryMethod } from '../../shared/models';
     </div>
   `
 })
-export class CheckoutComponent {
+export class CheckoutComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private checkoutService = inject(CheckoutService);
+  private basketService = inject(BasketService);
+  private accountService = inject(AccountService);
+  private toastr = inject(ToastrService);
 
-  // Mock data
-  items: BasketItem[] = MOCK_BASKET_ITEMS;
-  deliveryMethods: DeliveryMethod[] = MOCK_DELIVERY_METHODS;
+  @ViewChild('stepper') stepper!: MatStepper;
+  @ViewChild('cardElement') cardElementRef!: ElementRef;
 
-  // Forms - pre-populate with mock address
+  // Stripe instances (raw refs, not signals)
+  private stripe: Stripe | null = null;
+  private cardElement: StripeCardElement | null = null;
+
+  // State signals
+  deliveryMethods = signal<DeliveryMethod[]>([]);
+  loading = signal(true);
+  submitting = signal(false);
+  stripeReady = signal(false);
+  cardErrors = signal('');
+  selectedDeliveryMethod = signal<DeliveryMethod | null>(null);
+  preparingPayment = signal(false);
+  savingAddress = signal(false);
+
+  // Forms
   addressForm = this.fb.group({
-    firstName: [MOCK_ADDRESS.firstName, Validators.required],
-    lastName: [MOCK_ADDRESS.lastName, Validators.required],
-    street: [MOCK_ADDRESS.street, Validators.required],
-    city: [MOCK_ADDRESS.city, Validators.required],
-    state: [MOCK_ADDRESS.state, Validators.required],
-    zipCode: [MOCK_ADDRESS.zipcode, Validators.required]
+    firstName: ['', Validators.required],
+    lastName: ['', Validators.required],
+    street: ['', Validators.required],
+    city: ['', Validators.required],
+    state: ['', Validators.required],
+    zipCode: ['', Validators.required]
   });
 
   deliveryForm = this.fb.group({
     deliveryMethod: [null as number | null, Validators.required]
   });
 
-  // Signals - select first delivery method by default
-  selectedDeliveryMethod = signal<DeliveryMethod | null>(
-    this.deliveryMethods.length > 0 ? this.deliveryMethods[0] : null
-  );
+  // Computed from basket service
+  readonly items = computed(() => this.basketService.basket()?.items ?? []);
+  readonly subtotal = computed(() => this.basketService.totals()?.subtotal ?? 0);
+  readonly shipping = computed(() => this.basketService.totals()?.shipping ?? 0);
+  readonly total = computed(() => this.basketService.totals()?.total ?? 0);
 
   constructor() {
-    // Initialize delivery form with default selection
-    if (this.deliveryMethods.length > 0) {
-      this.deliveryForm.patchValue({ deliveryMethod: this.deliveryMethods[0].id });
+    afterNextRender(() => { void this.initStripe(); });
+  }
+
+  async ngOnInit(): Promise<void> {
+    await Promise.all([this.loadDeliveryMethods(), this.loadUserAddress()]);
+    this.loading.set(false);
+  }
+
+  private async loadDeliveryMethods(): Promise<void> {
+    try {
+      const methods = await firstValueFrom(this.checkoutService.getDeliveryMethods());
+      this.deliveryMethods.set(methods);
+      if (methods.length > 0) {
+        this.selectedDeliveryMethod.set(methods[0]);
+        this.deliveryForm.patchValue({ deliveryMethod: methods[0].id });
+      }
+    } catch {
+      this.toastr.error('Failed to load delivery methods');
     }
   }
 
-  // Computed values
-  subtotal = computed(() =>
-    this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-  );
+  async saveUserAddress(): Promise<void> {
+    this.savingAddress.set(true);
+    try {
+      const addr = this.addressForm.value;
+      await firstValueFrom(this.accountService.updateUserAddress({
+        firstName: addr.firstName!,
+        lastName: addr.lastName!,
+        street: addr.street!,
+        city: addr.city!,
+        state: addr.state!,
+        zipcode: addr.zipCode!
+      }));
+      this.toastr.success('Address saved');
+      this.addressForm.markAsPristine();
+      this.addressForm.markAsUntouched();
+    } catch {
+      this.toastr.error('Failed to save address');
+    } finally {
+      this.savingAddress.set(false);
+    }
+  }
 
-  shipping = computed(() =>
-    this.selectedDeliveryMethod()?.price || 0
-  );
+  private async loadUserAddress(): Promise<void> {
+    try {
+      const address = await firstValueFrom(this.accountService.getUserAddress());
+      this.addressForm.patchValue({
+        firstName: address.firstName,
+        lastName: address.lastName,
+        street: address.street,
+        city: address.city,
+        state: address.state,
+        zipCode: address.zipcode
+      });
+    } catch {
+      // silent — user may not have a saved address
+    }
+  }
 
-  total = computed(() => this.subtotal() + this.shipping());
+  private async initStripe(): Promise<void> {
+    const stripe = await loadStripe(environment.stripe.publishableKey);
+    if (!stripe || !this.cardElementRef?.nativeElement) return;
+    this.stripe = stripe;
+    const elements = stripe.elements();
+    this.cardElement = elements.create('card');
+    this.cardElement.mount(this.cardElementRef.nativeElement);
+    this.cardElement.on('change', e => this.cardErrors.set(e.error?.message ?? ''));
+    this.stripeReady.set(true);
+  }
 
   selectDeliveryMethod(method: DeliveryMethod): void {
     this.selectedDeliveryMethod.set(method);
     this.deliveryForm.patchValue({ deliveryMethod: method.id });
+    this.basketService.setShippingPrice(method);
   }
 
-  placeOrder(): void {
-    // Mock order placement - navigate to success page
-    console.log('Order placed!', {
-      address: this.addressForm.value,
-      deliveryMethod: this.selectedDeliveryMethod(),
-      items: this.items,
-      total: this.total()
-    });
+  async continueToPayment(): Promise<void> {
+    this.preparingPayment.set(true);
+    try {
+      await firstValueFrom(this.basketService.createPaymentIntent());
+      this.stepper.next();
+    } catch {
+      this.toastr.error('Could not create payment intent. Please try again.');
+    } finally {
+      this.preparingPayment.set(false);
+    }
+  }
 
-    // Navigate to orders page (in real implementation, this would go to order confirmation)
-    this.router.navigateByUrl('/orders');
+  async placeOrder(): Promise<void> {
+    if (this.submitting()) return;
+    this.submitting.set(true);
+    const basket = this.basketService.basket();
+    if (!this.stripe || !this.cardElement || !basket?.clientSecret) {
+      this.submitting.set(false);
+      return;
+    }
+    try {
+      const { error, paymentIntent } = await this.stripe.confirmCardPayment(
+        basket.clientSecret,
+        { payment_method: { card: this.cardElement } }
+      );
+      if (error) {
+        this.cardErrors.set(error.message ?? 'Payment failed');
+        return;
+      }
+      if (paymentIntent?.status === 'succeeded') {
+        const addr = this.addressForm.value;
+        const order = await firstValueFrom(this.checkoutService.createOrder({
+          basketId: basket.id,
+          deliveryMethodId: this.selectedDeliveryMethod()!.id,
+          shipToAddress: {
+            firstName: addr.firstName!,
+            lastName: addr.lastName!,
+            street: addr.street!,
+            city: addr.city!,
+            state: addr.state!,
+            zipcode: addr.zipCode!
+          }
+        }));
+        this.basketService.deleteLocalBasket();
+        this.router.navigate(['/checkout/success'], { state: { order } });
+      }
+    } catch {
+      this.cardErrors.set('An unexpected error occurred. Please try again.');
+    } finally {
+      this.submitting.set(false);
+    }
   }
 }

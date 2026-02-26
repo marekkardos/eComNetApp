@@ -1,14 +1,17 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MOCK_PRODUCTS } from '../../shared/mock-data';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { firstValueFrom } from 'rxjs';
+import { ShopService } from '../../core/services/shop.service';
+import { Product } from '../../shared/models';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, CurrencyPipe, MatButtonModule, MatCardModule, MatIconModule],
+  imports: [RouterLink, CurrencyPipe, MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Hero Section -->
@@ -46,30 +49,44 @@ import { MOCK_PRODUCTS } from '../../shared/mock-data';
           <p class="text-gray-600">Check out our latest products</p>
         </div>
 
-        <!-- Product Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          @for (product of featuredProducts; track product.id) {
-            <mat-card class="cursor-pointer overflow-hidden transition-shadow hover:shadow-xl border border-gray-100">
-              <a [routerLink]="['/shop', product.id]" class="block no-underline text-inherit">
-                <div class="relative overflow-hidden bg-gray-50">
-                  <img [src]="product.pictureUrl"
-                       [alt]="product.name"
-                       class="w-full h-64 object-cover transition-transform hover:scale-110 duration-500">
-                  @if (product.id <= 3) {
+        @if (loading()) {
+          <!-- Loading Skeleton -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            @for (item of [1,2,3,4]; track item) {
+              <div class="rounded-lg overflow-hidden bg-white shadow-md animate-pulse">
+                <div class="w-full h-64 bg-gray-200"></div>
+                <div class="p-5 space-y-3">
+                  <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <div class="h-5 bg-gray-200 rounded w-3/4"></div>
+                  <div class="h-6 bg-gray-200 rounded w-1/3"></div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- Product Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            @for (product of newArrivals(); track product.id) {
+              <mat-card class="cursor-pointer overflow-hidden transition-shadow hover:shadow-xl border border-gray-100">
+                <a [routerLink]="['/shop', product.id]" class="block no-underline text-inherit">
+                  <div class="relative overflow-hidden bg-gray-50">
+                    <img [src]="product.pictureUrl"
+                         [alt]="product.name"
+                         class="w-full h-64 object-cover transition-transform hover:scale-110 duration-500">
                     <span class="absolute top-3 left-3 rounded-full text-white text-sm font-semibold shadow-lg bg-gradient-accent px-3 py-2">
                       NEW
                     </span>
-                  }
-                </div>
-                <mat-card-content class="p-5">
-                  <p class="text-sm uppercase tracking-wider text-teal-600 font-semibold mb-2">{{ product.productBrand }}</p>
-                  <h3 class="font-bold text-gray-900 mb-3 text-lg min-h-[3.5rem] overflow-hidden">{{ product.name }}</h3>
-                  <p class="text-2xl font-bold text-teal-700">{{ product.price | currency }}</p>
-                </mat-card-content>
-              </a>
-            </mat-card>
-          }
-        </div>
+                  </div>
+                  <mat-card-content class="p-5">
+                    <p class="text-sm uppercase tracking-wider text-teal-600 font-semibold mb-2">{{ product.productBrand }}</p>
+                    <h3 class="font-bold text-gray-900 mb-3 text-lg min-h-[3.5rem] overflow-hidden">{{ product.name }}</h3>
+                    <p class="text-2xl font-bold text-teal-700">{{ product.price | currency }}</p>
+                  </mat-card-content>
+                </a>
+              </mat-card>
+            }
+          </div>
+        }
 
         <!-- View All Button -->
         <div class="text-center mt-8">
@@ -116,6 +133,21 @@ import { MOCK_PRODUCTS } from '../../shared/mock-data';
     </section>
   `
 })
-export class HomeComponent {
-  featuredProducts = MOCK_PRODUCTS.slice(0, 4);
+export class HomeComponent implements OnInit {
+  private shopService = inject(ShopService);
+
+  private newArrivalsSignal = signal<Product[]>([]);
+  private loadingSignal = signal(true);
+
+  readonly newArrivals = this.newArrivalsSignal.asReadonly();
+  readonly loading = this.loadingSignal.asReadonly();
+
+  async ngOnInit(): Promise<void> {
+    try {
+      const products = await firstValueFrom(this.shopService.getNewArrivals(4));
+      this.newArrivalsSignal.set(products);
+    } finally {
+      this.loadingSignal.set(false);
+    }
+  }
 }

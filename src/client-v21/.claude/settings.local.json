@@ -20,7 +20,10 @@
       "mcp__chrome-devtools__evaluate_script",
       "mcp__chrome-devtools__take_snapshot",
       "Bash(docker ps:*)",
-      "mcp__chrome-devtools__hover"
+      "mcp__chrome-devtools__hover",
+      "Bash(head:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx ng:*)"
     ]
   }
 }

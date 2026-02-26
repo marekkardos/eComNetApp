@@ -54,13 +54,13 @@ export class BasketService {
   }
 
   setBasket(basket: Basket): void {
-    this.http.post<Basket>(`${this.baseUrl}basket`, basket).subscribe(
-      response => {
+    this.http.post<Basket>(`${this.baseUrl}basket`, basket).subscribe({
+      next: response => {
         this.basketSignal.set(response);
         this.calculateTotals();
       },
-      error => console.log(error)
-    );
+      error: err => console.error(err)
+    });
   }
 
   getCurrentBasketValue(): Basket {
@@ -115,11 +115,14 @@ export class BasketService {
   }
 
   deleteBasket(basket: Basket): void {
-    this.http.delete(`${this.baseUrl}basket/${basket.id}`).subscribe(() => {
-      this.basketSignal.set(null);
-      this.basketTotalSignal.set(null);
-      localStorage.removeItem('basket_id');
-    }, error => console.log(error));
+    this.http.delete(`${this.baseUrl}basket/${basket.id}`).subscribe({
+      next: () => {
+        this.basketSignal.set(null);
+        this.basketTotalSignal.set(null);
+        localStorage.removeItem('basket_id');
+      },
+      error: err => console.error(err)
+    });
   }
 
   private calculateTotals(): void {

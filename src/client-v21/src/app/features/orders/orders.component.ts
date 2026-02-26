@@ -1,11 +1,12 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
-import { MOCK_ORDERS } from '../../shared/mock-data';
+import { firstValueFrom } from 'rxjs';
+import { OrdersService } from '../../core/services/orders.service';
 import { Order } from '../../shared/models';
 
 @Component({
@@ -16,9 +17,9 @@ import { Order } from '../../shared/models';
     <div class="max-w-5xl mx-auto px-4 py-8">
       <h1 class="text-3xl font-bold text-gray-900 mb-8">My Orders</h1>
 
-      @if (orders.length > 0) {
+      @if (orders().length > 0) {
         <div class="space-y-4">
-          @for (order of orders; track order.id) {
+          @for (order of orders(); track order.id) {
             <mat-card class="hover:shadow-lg transition-shadow">
               <mat-card-content class="p-6">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -81,8 +82,14 @@ import { Order } from '../../shared/models';
     </div>
   `
 })
-export class OrdersComponent {
-  orders: Order[] = MOCK_ORDERS;
+export class OrdersComponent implements OnInit {
+  private ordersService = inject(OrdersService);
+  orders = signal<Order[]>([]);
+
+  async ngOnInit(): Promise<void> {
+    const orders = await firstValueFrom(this.ordersService.getOrdersForUser());
+    this.orders.set(orders);
+  }
 
   getStatusClass(status: string): string {
     switch (status.toLowerCase()) {

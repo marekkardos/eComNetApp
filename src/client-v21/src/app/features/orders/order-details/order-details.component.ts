@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, signal, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -6,7 +6,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
-import { MOCK_ORDERS } from '../../../shared/mock-data';
+import { firstValueFrom } from 'rxjs';
+import { OrdersService } from '../../../core/services/orders.service';
+import { Order } from '../../../shared/models';
 
 @Component({
   selector: 'app-order-details',
@@ -136,13 +138,22 @@ import { MOCK_ORDERS } from '../../../shared/mock-data';
     </div>
   `
 })
-export class OrderDetailsComponent {
+export class OrderDetailsComponent implements OnInit {
   id = input<string>();
+  private ordersService = inject(OrdersService);
+  order = signal<Order | null>(null);
 
-  order = computed(() => {
-    const orderId = parseInt(this.id() || '0', 10);
-    return MOCK_ORDERS.find(o => o.id === orderId) || null;
-  });
+  async ngOnInit(): Promise<void> {
+    const id = this.id();
+    if (id) {
+      try {
+        const order = await firstValueFrom(this.ordersService.getOrderDetailed(+id));
+        this.order.set(order);
+      } catch {
+        this.order.set(null);
+      }
+    }
+  }
 
   getStatusClass(status: string): string {
     switch (status.toLowerCase()) {

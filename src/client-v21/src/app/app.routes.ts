@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -24,14 +25,14 @@ export const routes: Routes = [
   {
     path: 'checkout',
     loadChildren: () => import('./features/checkout/checkout.routes').then(m => m.CHECKOUT_ROUTES),
+    canActivate: [authGuard],
     data: { breadcrumb: 'Checkout' }
-    // canActivate: [authGuard] - will be added in Phase 2
   },
   {
     path: 'orders',
     loadChildren: () => import('./features/orders/orders.routes').then(m => m.ORDERS_ROUTES),
+    canActivate: [authGuard],
     data: { breadcrumb: 'Orders' }
-    // canActivate: [authGuard] - will be added in Phase 2
   },
   {
     path: 'account',

@@ -87,6 +87,20 @@ export class ShopService {
     );
   }
 
+  getNewArrivals(count: number = 4): Observable<Product[]> {
+    const params = new HttpParams()
+      .set('sort', 'newest')
+      .set('pageSize', count.toString())
+      .set('pageIndex', '1');
+
+    return this.http.get<Pagination<Product>>(`${this.baseUrl}products`, {
+      observe: 'response',
+      params
+    }).pipe(
+      map(response => response.body?.data ?? [])
+    );
+  }
+
   getShopParams(): ShopParams {
     return this.shopParams();
   }
