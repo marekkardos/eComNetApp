@@ -17,8 +17,9 @@ namespace Api.StartupConfigurations
             });
 
             var otelEndpoint = builder.Configuration["OPEN_TELEMETRY:ENDPOINT"]
-                ??
-                throw new InvalidOperationException("Missing required configuration: OPEN_TELEMETRY:ENDPOINT");
+                ?? builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]
+                ?? throw new InvalidOperationException(
+                    "Missing required configuration: OPEN_TELEMETRY:ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT");
 
             builder.Services.AddOpenTelemetry()
                 .ConfigureResource(resource => resource.AddService(

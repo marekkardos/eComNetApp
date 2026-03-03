@@ -12,6 +12,7 @@ This document tracks planned and upcoming features for the eComNetApp platform.
   - [3. Email Confirmation for New Accounts](#3-email-confirmation-for-new-accounts)
   - [4. Link/Unlink Management for Social-Login Accounts](#4-linkunlink-management-for-social-login-accounts)
   - [5. Facebook Social Login](#5-facebook-social-login)
+  - [6. .NET Aspire Integration](#6-net-aspire-integration)
 - [Status Legend](#status-legend)
 
 ---
@@ -106,6 +107,23 @@ Add Facebook as a supported OAuth 2.0 / OpenID Connect social login provider, fo
 
 ---
 
+### 6. .NET Aspire Integration
+
+Add .NET Aspire as an alternative orchestration option alongside docker-compose for local development.
+
+**Scope**
+- ServiceDefaults project for service discovery and health checks
+- AppHost project orchestrating SQL Server, Redis, Seq, API, Angular
+- Coexistence with docker-compose (both fully functional, mutually exclusive per session)
+- Future: deployment publishers (Azure Container Apps, Docker Compose, Kubernetes)
+
+**Notes**
+- Both orchestrators share the `.data/` directory and use the same SA password
+- Requires .NET 9 SDK in addition to .NET 8 SDK
+- See [ASPIRE.md](ASPIRE.md) for setup and usage details
+
+---
+
 ## Status Legend
 
 | Status | Meaning |
@@ -121,3 +139,4 @@ Add Facebook as a supported OAuth 2.0 / OpenID Connect social login provider, fo
 | Email confirmation for new accounts | Planned |
 | Link/Unlink social accounts | Planned |
 | Facebook Login | Planned |
+| .NET Aspire Integration | In Progress |

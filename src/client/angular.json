@@ -77,6 +77,14 @@
                   "with": "src/environments/environment.container.ts"
                 }
               ]
+            },
+            "aspire": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.aspire.ts"
+                }
+              ]
             }
           }
         },
@@ -97,6 +105,9 @@
             },
             "container": {
               "browserTarget": "client:build:container"
+            },
+            "aspire": {
+              "browserTarget": "client:build:aspire"
             }
           }
         },

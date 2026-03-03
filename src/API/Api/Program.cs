@@ -9,6 +9,8 @@ try
 
     WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+    builder.AddServiceDefaults();
+
     // Create dedicated audit logger for critical security events
     // Uses AuditTo.Seq() which:
     // - Throws exceptions on write failure (guaranteed delivery)
@@ -35,6 +37,8 @@ try
     builder.AddOpenTelemetry("eComNetAPI");
 
     WebApplication app = builder.Build();
+
+    app.MapDefaultEndpoints();
 
     Startup.ConfigureApp(app, builder.Environment);
 

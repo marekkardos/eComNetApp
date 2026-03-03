@@ -1,0 +1,31 @@
+{
+  "profiles": {
+    "Full Stack": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:19888",
+        "DOTNET_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:19900",
+        "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true",
+        "ASPIRE_INCLUDE_SEEDDATA": "true",
+        "ASPIRE_INCLUDE_ANGULAR": "true",
+      },
+      "applicationUrl": "https://localhost:15888"
+    },
+    "Backend Only": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:19888",
+        "DOTNET_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:19900",
+        "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true"
+      },
+      "applicationUrl": "https://localhost:15888"
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json"
+}

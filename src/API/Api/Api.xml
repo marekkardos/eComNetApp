@@ -10,7 +10,7 @@
             Implements the BFF (Backend-for-Frontend) pattern with code exchange.
             </summary>
         </member>
-        <member name="M:Api.Controllers.ExternalAuthController.#ctor(Microsoft.AspNetCore.Identity.SignInManager{Core.Entities.Identity.AppUser},Microsoft.AspNetCore.Identity.UserManager{Core.Entities.Identity.AppUser},Api.Identity.IExternalAuthService,Api.Identity.IExternalAuthCodeService,Api.Identity.IAuthenticationServices,Microsoft.Extensions.Options.IOptions{Api.Identity.GoogleAuthSettings},Microsoft.Extensions.Logging.ILogger{Api.Controllers.ExternalAuthController})">
+        <member name="M:Api.Controllers.ExternalAuthController.#ctor(Microsoft.AspNetCore.Identity.SignInManager{Core.Entities.Identity.AppUser},Microsoft.AspNetCore.Identity.UserManager{Core.Entities.Identity.AppUser},Api.Identity.IExternalAuthService,Core.Interfaces.IExternalAuthCodeService,Api.Identity.IAuthenticationServices,Microsoft.Extensions.Options.IOptions{Api.Identity.GoogleAuthSettings},Microsoft.Extensions.Logging.ILogger{Api.Controllers.ExternalAuthController})">
             <summary>
             Controller for external authentication (social login) endpoints.
             Implements the BFF (Backend-for-Frontend) pattern with code exchange.
@@ -131,7 +131,7 @@
             Redis-backed service for managing short-lived authorization codes.
             </summary>
         </member>
-        <member name="M:Api.Identity.ExternalAuthCodeService.#ctor(Microsoft.Extensions.Caching.Distributed.IDistributedCache,Microsoft.AspNetCore.Identity.UserManager{Core.Entities.Identity.AppUser},Microsoft.Extensions.Options.IOptions{Api.Identity.GoogleAuthSettings},Microsoft.Extensions.Logging.ILogger{Api.Identity.ExternalAuthCodeService})">
+        <member name="M:Api.Identity.ExternalAuthCodeService.#ctor(StackExchange.Redis.IConnectionMultiplexer,Microsoft.AspNetCore.Identity.UserManager{Core.Entities.Identity.AppUser},Microsoft.Extensions.Options.IOptions{Api.Identity.GoogleAuthSettings},Microsoft.Extensions.Logging.ILogger{Api.Identity.ExternalAuthCodeService})">
             <summary>
             Redis-backed service for managing short-lived authorization codes.
             </summary>
@@ -169,6 +169,13 @@
         <member name="P:Api.Identity.GoogleAuthSettings.AllowedReturnUrlHosts">
             <summary>
             List of allowed hosts for the returnUrl parameter to prevent open redirect attacks.
+            </summary>
+        </member>
+        <member name="M:Api.Identity.IAuthenticationServices.GenerateLoginResponseAsync(Core.Entities.Identity.AppUser,Microsoft.AspNetCore.Http.HttpResponse)">
+            <summary>
+            Creates an access token and refresh token for the given user, sets the refresh token
+            cookie on the response, and returns a populated UserDto. Use this as the single
+            place for login/register/exchange-code response generation.
             </summary>
         </member>
         <member name="T:Api.Identity.IAuthEventsLog">
@@ -240,33 +247,6 @@
         <member name="M:Api.Identity.IAuthEventsLog.Monitor_ExternalAccountUnlinked(System.String,System.String,System.String,System.String)">
             <summary>
             External provider unlinked from account.
-            </summary>
-        </member>
-        <member name="T:Api.Identity.IExternalAuthCodeService">
-            <summary>
-            Service for managing short-lived authorization codes used in the OAuth code exchange flow.
-            These codes are single-use and expire quickly to prevent replay attacks.
-            </summary>
-        </member>
-        <member name="M:Api.Identity.IExternalAuthCodeService.GenerateCodeAsync(Core.Entities.Identity.AppUser)">
-            <summary>
-            Generates a cryptographically secure, short-lived authorization code for a user.
-            The code is stored in Redis and expires after the configured timeout.
-            </summary>
-            <param name="user">The authenticated user.</param>
-            <returns>The generated authorization code.</returns>
-        </member>
-        <member name="M:Api.Identity.IExternalAuthCodeService.ValidateAndConsumeCodeAsync(System.String)">
-            <summary>
-            Validates and consumes an authorization code, returning the associated user if valid.
-            The code is deleted after use to prevent replay attacks.
-            </summary>
-            <param name="code">The authorization code to validate.</param>
-            <returns>The user associated with the code, or null if the code is invalid or expired.</returns>
-        </member>
-        <member name="T:Api.Identity.ExternalAuthResult">
-            <summary>
-            Result of an external authentication operation.
             </summary>
         </member>
         <member name="T:Api.Identity.IExternalAuthService">

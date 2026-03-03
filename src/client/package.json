@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve --configuration=local",
     "start:container": "ng serve --host 0.0.0.0 --disable-host-check --poll 3000 --configuration=container",
+    "start:aspire": "ng serve --host 0.0.0.0 --disable-host-check --poll 500 --configuration=aspire",
     "build": "ng build",
     "build:prod": "ng build --configuration=production",
     "build:test": "ng build --configuration=test",
