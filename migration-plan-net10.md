@@ -63,21 +63,15 @@
 - **Add:** `Asp.Versioning.Mvc` 8.x + `Asp.Versioning.Mvc.ApiExplorer` 8.x
 - **Code change in `ApiVersioningExtensions.cs`:** Update `using` from `Microsoft.AspNetCore.Mvc.Versioning` → `Asp.Versioning`, update registration to chain `.AddMvc()`
 
-**Swashbuckle → Microsoft.AspNetCore.OpenApi + Scalar**
-- **Remove:** `Swashbuckle.AspNetCore` 5.6.3
-- **Add:** `Microsoft.AspNetCore.OpenApi` + `Scalar.AspNetCore` for UI
-- **Code changes required across multiple files:**
-  1. Rewrite `SwaggerServiceExtensions.cs` — currently defines 7 grouped documents (Products, Basket, Buggy, Account, ExternalAuth, Orders, Payments) with JWT security scheme and XML comments
-  2. Update `Startup.cs` — replace `AddSwaggerServicesExt()` / `UseSwaggerExt()` with `AddOpenApi()` / `MapOpenApi()` + `MapScalarApiReference()`
-  3. `services.AddEndpointsApiExplorer()` in `Startup.cs:88` likely becomes unnecessary with `AddOpenApi()`
-  4. Audit all controllers for `[ApiExplorerSettings(GroupName = "...")]` attributes — document grouping works differently with OpenAPI
-  5. Preserve JWT Bearer security definition in the OpenAPI transformer API
-  6. Preserve XML comment inclusion via OpenAPI document transformers
+**Swashbuckle → Update to .NET 10 Compatible Version**
+- **Update:** `Swashbuckle.AspNetCore` 5.6.3 → latest stable (6.x+) that supports .NET 10
+- **Code change:** Minimal — existing 7-document grouping, JWT security scheme, and XML comment configuration in `SwaggerServiceExtensions.cs` should work with updated package
+- **Decision rationale:** Lower migration risk; Swashbuckle still works and the OpenAPI + Scalar migration can be done in a follow-up
 
 #### 1b. Dead Package Removal
 
 - **Remove** `NLog.Web.AspNetCore` 4.9.3 from `Directory.Packages.props` — unused, project uses Serilog exclusively
-- **Evaluate** `Microsoft.ApplicationInsights.AspNetCore` 2.16.0 — redundant with the full OpenTelemetry + Serilog + Seq observability stack already in place. Remove if not needed, or bump to 2.22+ if keeping
+- **Remove** `Microsoft.ApplicationInsights.AspNetCore` 2.16.0 — redundant with the full OpenTelemetry + Serilog + Seq observability stack. Remove from `Directory.Packages.props` and `Api.csproj`
 
 #### 1c. Target Framework Updates (same commit as package updates)
 
@@ -169,12 +163,7 @@ These were identified during analysis and must be fixed:
        .AddSignInManager<SignInManager<AppUser>>();
    ```
 
-2. **`BuildServiceProvider()` anti-pattern (3 occurrences):**
-   - `Startup.cs:73` — inside `ConfigureApiBehaviorOptions`
-   - `PersistanceDependencies.cs:34` — inside StoreContext DbContext registration
-   - `PersistanceDependencies.cs:62` — inside AppIdentityDbContext registration
-
-   This creates a second DI container, leaks singletons, and triggers `ASP0000`. Fix by refactoring to use `IServiceProvider` from the app or registering interceptors differently.
+2. **`BuildServiceProvider()` anti-pattern (3 occurrences)** — OUT OF SCOPE for this migration. Will be addressed in a separate cleanup PR.
 
 3. **`ConfigureApiBehaviorOptions` obsolescence** — `Startup.cs:59` — review if this is obsolete in .NET 10 in favor of `IProblemDetailsService`
 
@@ -196,10 +185,10 @@ These were identified during analysis and must be fixed:
 | Risk | Severity | Mitigation |
 |------|----------|------------|
 | Core `netstandard2.0` → `net10.0` breaks downstream consumers | Low | All consumers are in-solution and already net8+ |
-| Swashbuckle removal breaks API documentation (7 grouped docs) | **High** | Most complex change — needs detailed sub-plan for multi-document grouping, JWT security, XML comments |
+| Swashbuckle update to 6.x may have breaking config changes | Low | Keeping Swashbuckle reduces risk; update incrementally |
 | MediatR 9→12 has breaking API changes | Medium | Well-documented migration, isolated registration change |
 | `IdentityBuilder` constructor removed in .NET 10 | **High** | Compile-time break — fix identified in Phase 3 |
-| `BuildServiceProvider()` behavior changes in .NET 10 | Medium | Fix the 3 instances as part of this migration |
+| `BuildServiceProvider()` behavior changes in .NET 10 | Medium | Out of scope — separate cleanup PR |
 | Docker port 80/443 → non-root user model | Medium | Update Dockerfile EXPOSE + docker-compose port mappings |
 | EF Core migrations snapshot incompatibility | Medium | Test migration idempotency, regenerate snapshot if needed |
 | SQL Server 2019→2022 data volume upgrade | Low | SQL Server 2022 reads 2019 data, but test in staging first |
@@ -220,3 +209,5 @@ These were identified during analysis and must be fixed:
 - Upgrading NUnit 3 → NUnit 4 (can be done separately)
 - C# 14 syntax modernization (can be done in follow-up)
 - `Moq` → alternative library migration (SponsorLink concern — separate decision)
+- `BuildServiceProvider()` anti-pattern fix (separate cleanup PR)
+- Swashbuckle → OpenAPI + Scalar migration (follow-up after .NET 10 migration stabilizes)
