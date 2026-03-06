@@ -13,60 +13,91 @@
 | Core.UnitTests | `net8.0` | NUnit test project |
 
 **Key Observations:**
-- Solution is on .NET 8 (November 2023 LTS) — skipping .NET 9 entirely
+- Solution is on .NET 8 (November 2023 LTS) — skipping .NET 9 entirely to .NET 10 (November 2025 LTS)
 - Core project targets `netstandard2.0` — must be migrated to `net10.0`
 - Several deprecated/archived packages are in use
 - Docker images use `mcr.microsoft.com/dotnet/aspnet:8.0` and `sdk:8.0`
 - Central Package Management (CPM) via `Directory.Packages.props` — simplifies version bumps
 - No `global.json` — SDK version is implicit
 - docker-compose uses format version `3.4`
+- `BuildServiceProvider()` anti-pattern used in 3 places (creates service locator issues)
+- Dead packages in CPM: `NLog.Web.AspNetCore` (unused, project uses Serilog)
 
 ---
 
 ## Migration Phases
 
-### Phase 1: Target Framework Updates
+### Phase 0: Prerequisites & Tooling
 
-Update all `.csproj` files from their current TFM to `net10.0`:
+1. **Install .NET 10 SDK** (10.0.103 or latest)
+2. **Add `global.json`** at solution root to pin SDK version:
+   ```json
+   {
+     "sdk": {
+       "version": "10.0.103",
+       "rollForward": "latestPatch"
+     }
+   }
+   ```
+3. **Identify code-level breaking changes** before touching anything — see Phase 5 for the full list found during analysis
+
+### Phase 1: Package Replacements & Version Bumps (atomic with TFM change)
+
+> **Critical ordering note:** TFM changes and package updates must happen together in a single commit. Changing TFMs first will break `dotnet restore` because old packages (MediatR 9, etc.) may not resolve for `net10.0`.
+
+#### 1a. Deprecated Package Swaps
+
+**MediatR (Critical — breaking API change)**
+- **Remove:** `MediatR` 9.0.0 + `MediatR.Extensions.Microsoft.DependencyInjection` 9.0.0
+- **Add:** `MediatR` 12.x (latest stable)
+- **Code change in `Startup.cs:82`:** `services.AddMediatR(typeof(BaseEntity))` → `services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<BaseEntity>())`
+
+**AutoMapper (Package consolidation)**
+- **Remove:** `AutoMapper.Extensions.Microsoft.DependencyInjection` 8.1.0
+- **Add:** `AutoMapper` 13.x (latest stable, includes DI registration natively)
+- **Code change:** `services.AddAutoMapper(typeof(MappingProfiles))` API stays the same but comes from core package
+- **Verify:** `AssertConfigurationIsValid()` in `AutoMapperService.cs:21` — AutoMapper 13 changed profile validation semantics
+
+**API Versioning (Namespace/package rename)**
+- **Remove:** `Microsoft.AspNetCore.Mvc.Versioning` 4.2.0 + `Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer` 4.2.0
+- **Add:** `Asp.Versioning.Mvc` 8.x + `Asp.Versioning.Mvc.ApiExplorer` 8.x
+- **Code change in `ApiVersioningExtensions.cs`:** Update `using` from `Microsoft.AspNetCore.Mvc.Versioning` → `Asp.Versioning`, update registration to chain `.AddMvc()`
+
+**Swashbuckle → Microsoft.AspNetCore.OpenApi + Scalar**
+- **Remove:** `Swashbuckle.AspNetCore` 5.6.3
+- **Add:** `Microsoft.AspNetCore.OpenApi` + `Scalar.AspNetCore` for UI
+- **Code changes required across multiple files:**
+  1. Rewrite `SwaggerServiceExtensions.cs` — currently defines 7 grouped documents (Products, Basket, Buggy, Account, ExternalAuth, Orders, Payments) with JWT security scheme and XML comments
+  2. Update `Startup.cs` — replace `AddSwaggerServicesExt()` / `UseSwaggerExt()` with `AddOpenApi()` / `MapOpenApi()` + `MapScalarApiReference()`
+  3. `services.AddEndpointsApiExplorer()` in `Startup.cs:88` likely becomes unnecessary with `AddOpenApi()`
+  4. Audit all controllers for `[ApiExplorerSettings(GroupName = "...")]` attributes — document grouping works differently with OpenAPI
+  5. Preserve JWT Bearer security definition in the OpenAPI transformer API
+  6. Preserve XML comment inclusion via OpenAPI document transformers
+
+#### 1b. Dead Package Removal
+
+- **Remove** `NLog.Web.AspNetCore` 4.9.3 from `Directory.Packages.props` — unused, project uses Serilog exclusively
+- **Evaluate** `Microsoft.ApplicationInsights.AspNetCore` 2.16.0 — redundant with the full OpenTelemetry + Serilog + Seq observability stack already in place. Remove if not needed, or bump to 2.22+ if keeping
+
+#### 1c. Target Framework Updates (same commit as package updates)
 
 | File | Change |
 |------|--------|
 | `Api/Api.csproj` | `net8.0` → `net10.0` |
-| `Core/Core.csproj` | `netstandard2.0` → `net10.0`, remove explicit `LangVersion` (C# 14 is default) |
+| `Core/Core.csproj` | `netstandard2.0` → `net10.0`, remove explicit `LangVersion` |
 | `Data/Data.csproj` | `net8.0` → `net10.0` |
 | `Services/Services.csproj` | `net8.0` → `net10.0` |
 | `SeedData/SeedData.csproj` | `net8.0` → `net10.0` |
 | `Api.IntegrationTests/Api.IntegrationTests.csproj` | `net8.0` → `net10.0` |
 | `Core.UnitTests/Core.UnitTests.csproj` | `net8.0` → `net10.0` |
 
-**Core project impact:** Moving from `netstandard2.0` to `net10.0` means this library is no longer consumable by .NET Framework callers. Since all consumers are already `net8.0+`, this is safe.
+**Core project considerations:**
+- Moving from `netstandard2.0` to `net10.0` means this library is no longer consumable by .NET Framework callers. All consumers are in-solution and already `net8.0+` — this is safe.
+- Core does not have `<ImplicitUsings>enable</ImplicitUsings>` (unsupported on netstandard2.0). Moving to net10.0 enables implicit usings by default, which may cause ambiguous reference errors with existing explicit `using` directives. Need to audit and remove duplicate usings.
 
-### Phase 2: Deprecated Package Replacements
+#### 1d. Microsoft Package Version Bumps (via CPM)
 
-#### 2a. MediatR (Critical — breaking API change)
-- **Remove:** `MediatR` 9.0.0 + `MediatR.Extensions.Microsoft.DependencyInjection` 9.0.0
-- **Add:** `MediatR` 12.x (latest stable)
-- **Code change:** `services.AddMediatR(typeof(BaseEntity))` → `services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<BaseEntity>())`
-
-#### 2b. AutoMapper (Package consolidation)
-- **Remove:** `AutoMapper.Extensions.Microsoft.DependencyInjection` 8.1.0
-- **Add:** `AutoMapper` 13.x (latest stable, includes DI registration natively)
-- **Code change:** Minimal — `services.AddAutoMapper(...)` stays the same, just comes from the core package now
-
-#### 2c. API Versioning (Namespace/package rename)
-- **Remove:** `Microsoft.AspNetCore.Mvc.Versioning` 4.2.0 + `Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer` 4.2.0
-- **Add:** `Asp.Versioning.Mvc` 8.x + `Asp.Versioning.Mvc.ApiExplorer` 8.x
-- **Code change:** Update `using` statements and registration in `ApiVersioningExtensions.cs`
-
-#### 2d. Swashbuckle → Microsoft.AspNetCore.OpenApi + Scalar
-- **Remove:** `Swashbuckle.AspNetCore` 5.6.3
-- **Add:** `Microsoft.AspNetCore.OpenApi` (ships with .NET 10) + `Scalar.AspNetCore` for UI
-- **Code change:** Replace `AddSwaggerServicesExt()` / `UseSwaggerExt()` with `AddOpenApi()` / `MapOpenApi()` + `MapScalarApiReference()`
-- **Note:** This is the most involved change — need to update `SwaggerExtensions.cs` and `Startup.cs`
-
-### Phase 3: Microsoft Package Version Bumps (via CPM)
-
-Update `Directory.Packages.props` versions:
+Update `Directory.Packages.props`:
 
 | Package | From | To |
 |---------|------|----|
@@ -83,62 +114,80 @@ Update `Directory.Packages.props` versions:
 | `Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore` | 8.0.0 | 10.0.x |
 | `Microsoft.Extensions.Hosting` | 8.0.0 | 10.0.x |
 | `Microsoft.Extensions.Identity.Stores` | 8.0.22 | 10.0.x |
-| `AspNetCore.HealthChecks.Redis` | 8.0.1 | 10.0.x (if available) |
-| `Microsoft.Extensions.Configuration.Abstractions` | 10.0.1 | 10.0.x (already .NET 10!) |
-| `Microsoft.Extensions.Logging.Abstractions` | 10.0.1 | 10.0.x (already .NET 10!) |
+| `Microsoft.IdentityModel.Tokens` | 8.15.0 | latest stable |
+| `System.IdentityModel.Tokens.Jwt` | 8.15.0 | latest stable |
+| `AspNetCore.HealthChecks.Redis` | 8.0.1 | latest compatible (Xabaril doesn't follow MS versioning) |
 
-Also bump test-specific packages in the per-project `Directory.Packages.props`:
+**Already at .NET 10 — no change needed:**
+- `Microsoft.Extensions.Configuration.Abstractions` 10.0.1
+- `Microsoft.Extensions.Logging.Abstractions` 10.0.1
+
+**Third-party packages to verify compatibility:**
+- `StackExchange.Redis` 2.10.1 — verify net10.0 TFM support
+- `Stripe.net` 50.0.0 — verify net10.0 TFM support (core business dependency)
+- `Ardalis.GuardClauses` 3.0.1 — may ship different API surface per TFM
+- `Serilog.*` packages (8 total) — verify compatibility, especially `Serilog.Sinks.MSSqlServer` 8.0.0
+- `OpenTelemetry.*` packages at 1.14.0 — two are beta (`EFCore` and `Process` at 1.14.0-beta.2), check for stable releases
+
+**Test packages (per-project `Directory.Packages.props`):**
 | Package | From | To |
 |---------|------|----|
 | `Microsoft.NET.Test.Sdk` | 17.8.0 | 17.12.x+ |
-| `NUnit` | 3.14.0 | 4.x or keep 3.14 |
 | `coverlet.collector` | 6.0.0 | 6.x latest |
+| `NUnit` | 3.14.0 | keep 3.14 (NUnit 4 migration is out of scope) |
+| `NUnit3TestAdapter` | 4.5.0 | latest 4.x |
+| `NUnit.Analyzers` | 3.9.0 | latest |
+| `Moq` | 4.20.72 | verify compatibility |
 
-### Phase 4: Docker Updates
+### Phase 2: Docker Updates
 
 #### Api/Dockerfile
-```dockerfile
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-```
+- `mcr.microsoft.com/dotnet/aspnet:8.0` → `aspnet:10.0`
+- `mcr.microsoft.com/dotnet/sdk:8.0` → `sdk:10.0`
+- **Port change:** .NET 10 images default to non-root user on port 8080. Current Dockerfile exposes 80/443 which are privileged ports. Must update `EXPOSE` directives and add `USER` directive (SeedData/Dockerfile already has `USER $APP_UID`, Api/Dockerfile does not)
 
 #### SeedData/Dockerfile
-```dockerfile
-FROM mcr.microsoft.com/dotnet/runtime:10.0 AS base
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-```
+- `mcr.microsoft.com/dotnet/runtime:8.0` → `runtime:10.0`
+- `mcr.microsoft.com/dotnet/sdk:8.0` → `sdk:10.0`
 
-### Phase 5: docker-compose.yml Updates
+#### docker-compose.yml
+- Update `ASPNETCORE_URLS` from `https://+:443;http://+:80` to match new port scheme (e.g., `http://+:8080`)
+- Update port mappings: `44369:80` → `44369:8080`, `44370:443` → adjust accordingly
+- Update SQL Server image from `2019-latest` to `2022-latest`
+- **Data volume risk:** `.data/MSSQL2019-DATA` mounted volume — SQL Server 2022 can read 2019 databases but verify upgrade path. Consider renaming volume.
+- Remove deprecated `version: '3.4'` field
+- Update `docker-compose.override.example.yml` if it has port/image references
 
-- Update SQL Server image from `2019-latest` to `2022-latest` (SQL Server 2019 goes EOL soon; 2022 is current)
-- Consider removing deprecated `version: '3.4'` field (modern Docker Compose ignores it)
+### Phase 3: Code-Level Breaking Changes
 
-### Phase 6: Add global.json (optional but recommended)
+These were identified during analysis and must be fixed:
 
-Pin the SDK version to prevent accidental use of a different SDK:
-```json
-{
-  "sdk": {
-    "version": "10.0.103",
-    "rollForward": "latestPatch"
-  }
-}
-```
+1. **`IdentityBuilder` constructor deprecated** — `IdentityServiceExtensions.cs:20` uses `new IdentityBuilder(builder.UserType, builder.Services)`. Chain directly off the return value of `AddIdentityCore<AppUser>()` instead:
+   ```csharp
+   services.AddIdentityCore<AppUser>()
+       .AddEntityFrameworkStores<AppIdentityDbContext>()
+       .AddSignInManager<SignInManager<AppUser>>();
+   ```
 
-### Phase 7: Code-Level Breaking Changes
+2. **`BuildServiceProvider()` anti-pattern (3 occurrences):**
+   - `Startup.cs:73` — inside `ConfigureApiBehaviorOptions`
+   - `PersistanceDependencies.cs:34` — inside StoreContext DbContext registration
+   - `PersistanceDependencies.cs:62` — inside AppIdentityDbContext registration
 
-1. **EF Core 10 breaking changes** — review for any removed APIs or behavioral changes in EF Core migrations
-2. **ASP.NET Core 10 breaking changes** — review for any middleware, authentication, or hosting changes
-3. **C# 14 opportunities** — Core project can now use latest language features without explicit `LangVersion`
-4. **Nullable reference types** — Api.csproj currently has `<Nullable>disable</Nullable>` — consider enabling (separate effort)
+   This creates a second DI container, leaks singletons, and triggers `ASP0000`. Fix by refactoring to use `IServiceProvider` from the app or registering interceptors differently.
 
-### Phase 8: Validation & Testing
+3. **`ConfigureApiBehaviorOptions` obsolescence** — `Startup.cs:59` — review if this is obsolete in .NET 10 in favor of `IProblemDetailsService`
+
+4. **Core project implicit usings** — Audit all `.cs` files in Core for `using` directives that will collide with implicit usings after moving to `net10.0`
+
+### Phase 4: Validation & Testing
 
 1. `dotnet restore` — verify all packages resolve
 2. `dotnet build` — fix any compilation errors
 3. `dotnet test` — run unit and integration tests
-4. Docker build — verify containers build correctly
-5. Update CLAUDE.md to reflect .NET 10
+4. **EF Core migration test** — verify existing migrations still apply correctly with EF Core 10 (snapshot format may differ)
+5. Docker build — verify containers build and ports work correctly
+6. Update `CLAUDE.md` to reflect .NET 10
 
 ---
 
@@ -147,11 +196,22 @@ Pin the SDK version to prevent accidental use of a different SDK:
 | Risk | Severity | Mitigation |
 |------|----------|------------|
 | Core `netstandard2.0` → `net10.0` breaks downstream consumers | Low | All consumers are in-solution and already net8+ |
-| Swashbuckle removal breaks API documentation workflow | Medium | Replace with OpenAPI + Scalar, test thoroughly |
+| Swashbuckle removal breaks API documentation (7 grouped docs) | **High** | Most complex change — needs detailed sub-plan for multi-document grouping, JWT security, XML comments |
 | MediatR 9→12 has breaking API changes | Medium | Well-documented migration, isolated registration change |
-| EF Core migrations incompatibility | Low | Existing migrations should work; new ones will use EF 10 |
-| Third-party packages not yet supporting net10.0 | Low | .NET 10 has been GA since Nov 2025; most packages support it |
-| SQL Server 2019 image compatibility | Low | Upgrade to 2022 in docker-compose |
+| `IdentityBuilder` constructor removed in .NET 10 | **High** | Compile-time break — fix identified in Phase 3 |
+| `BuildServiceProvider()` behavior changes in .NET 10 | Medium | Fix the 3 instances as part of this migration |
+| Docker port 80/443 → non-root user model | Medium | Update Dockerfile EXPOSE + docker-compose port mappings |
+| EF Core migrations snapshot incompatibility | Medium | Test migration idempotency, regenerate snapshot if needed |
+| SQL Server 2019→2022 data volume upgrade | Low | SQL Server 2022 reads 2019 data, but test in staging first |
+| Third-party packages (Stripe, Redis, Serilog) compatibility | Low | .NET 10 GA since Nov 2025; verify before starting |
+| OpenTelemetry beta packages may not have stable .NET 10 versions | Medium | Check for stable releases; may need to swap to alternatives |
+
+## Rollback Strategy
+
+- All changes on feature branch `claude/migrate-dotnet-10-N5Vfb`
+- If migration fails partway, `git reset` to last working commit
+- Keep existing Docker images tagged for rollback
+- No database schema changes in this migration — rollback is clean
 
 ## Out of Scope
 
@@ -159,3 +219,4 @@ Pin the SDK version to prevent accidental use of a different SDK:
 - Enabling nullable reference types across the solution
 - Upgrading NUnit 3 → NUnit 4 (can be done separately)
 - C# 14 syntax modernization (can be done in follow-up)
+- `Moq` → alternative library migration (SponsorLink concern — separate decision)
