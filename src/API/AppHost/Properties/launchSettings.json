@@ -10,7 +10,7 @@
         "DOTNET_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:19900",
         "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true",
         "ASPIRE_INCLUDE_SEEDDATA": "true",
-        "ASPIRE_INCLUDE_ANGULAR": "true",
+        "ASPIRE_INCLUDE_ANGULAR": "true"
       },
       "applicationUrl": "https://localhost:15888"
     },
